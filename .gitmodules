@@ -1,3 +1,9 @@
+[submodule "Loo-Cast-Game"]
+	path = Loo-Cast-Game
+	url = https://github.com/GHF-Studios/Loo-Cast-Game
+[submodule "Spacetime-Engine"]
+    path = Spacetime-Engine
+    url = https://github.com/GHF-Studios/Spacetime-Engine
 [submodule "Vapor"]
 	path = Vapor
 	url = https://github.com/GHF-Studios/Vapor
