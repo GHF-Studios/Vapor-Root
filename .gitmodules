@@ -1,0 +1,12 @@
+[submodule "Vapor"]
+	path = Vapor
+	url = https://github.com/GHF-Studios/Vapor
+[submodule "Vapor-SDK"]
+	path = Vapor-SDK
+	url = https://github.com/GHF-Studios/Vapor-SDK
+[submodule "Vapor-Launcher"]
+	path = Vapor-Launcher
+	url = https://github.com/GHF-Studios/Vapor-Launcher
+[submodule "Vapor-Examples"]
+	path = Vapor-Examples
+	url = https://github.com/GHF-Studios/Vapor-Examples
