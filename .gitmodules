@@ -7,6 +7,9 @@
 [submodule "Vapor-Launcher"]
 	path = Vapor-Launcher
 	url = https://github.com/GHF-Studios/Vapor-Launcher
+[submodule "Vapor-Shell"]
+	path = Vapor-Shell
+	url = https://github.com/GHF-Studios/Vapor-Shell
 [submodule "Vapor-Examples"]
 	path = Vapor-Examples
 	url = https://github.com/GHF-Studios/Vapor-Examples
