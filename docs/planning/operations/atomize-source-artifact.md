@@ -17,14 +17,15 @@ The source exists in the corpus register and is not already `atomized`.
    joined inside sentences, bullets, tables, warnings, captions, and examples.
 3. Preserve source wording verbatim when already atomic. When splitting is
    necessary, add only enough grammar for each candidate to stand alone.
-4. Give each candidate a globally unique descriptive name and record its kind,
-   source location, temporal scope, and coverage link.
-5. Place candidates under `planning-atomized/<topic>/` without comparing or
-   reconciling them.
-6. Account for every source passage in one extraction-coverage record.
-7. When extraction and fidelity are complete, move the unchanged source to
+4. Give each candidate a globally unique descriptive name.
+5. Place its exact text as one linked line under the matching
+   `planning-atomized/<source-set>/<topic>/` hierarchy.
+6. Record its name, kind, source location, temporal scope, coverage link, and
+   stage under the mirrored `planning-evidence/assertion-metadata/` hierarchy.
+7. Account for every source passage in one extraction-coverage record.
+8. When extraction and fidelity are complete, move the unchanged source to
    `planning-evidence/source-artifacts/<source-set>/`.
-8. Mark the source `atomized` only after that evidence move; otherwise leave
+9. Mark the source `atomized` only after that evidence move; otherwise leave
    its incomplete state explicit in intake.
 
 ## Boundaries

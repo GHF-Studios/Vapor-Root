@@ -62,11 +62,15 @@ Process one source document at a time:
 3. Preserve modality, uncertainty, temporality, questions, and owner direction.
 4. Give every candidate a descriptive name unique across atomized, active, and
    superseded planning.
-5. Place candidates under `planning-atomized/<topic>/` without checking them
+5. Place each exact candidate as one linked line under the matching
+   `planning-atomized/<source-set>/<topic>/` hierarchy without checking it
    against any other material.
-6. Account for every source passage in one extraction record under
+6. Store its ID, kind, source, temporal scope, extraction coverage, and current
+   stage under the mirrored
+   `planning-evidence/assertion-metadata/<source-set>/<topic>/` hierarchy.
+7. Account for every source passage in one extraction record under
    `planning-evidence/extraction-coverage/`.
-7. After extraction and fidelity are complete, move the unchanged source to
+8. After extraction and fidelity are complete, move the unchanged source to
    `planning-evidence/source-artifacts/<source-set>/` and mark it `atomized`.
 
 Atomization must not test truth, inspect implementation for validation, resolve
@@ -74,14 +78,15 @@ conflicts, modernize claims, deduplicate across sources, or promote candidates.
 
 ## Hybrid assertion organization
 
-Topic files containing multiple atomic assertions are the default. Use a
-dedicated file when an assertion needs independent ownership, movement, or
-review. Folder hierarchy expresses topic and workstream only; it never changes
-lifecycle state or evidentiary weight.
+Topic files containing multiple one-line atomic assertions are the default. Use
+a dedicated assertion file when independent ownership, movement, or review
+makes that clearer. Atomized, active, and superseded planning mirror the
+assertion-metadata hierarchy. Folder hierarchy expresses source set, topic, and
+workstream only; it never changes lifecycle state or evidentiary weight.
 
-An assertion's unique descriptive name is its identifier even when it shares a
-file with other assertions. Enumeration is the last naming-disambiguation
-resort.
+An assertion's unique descriptive name is its identifier, appears in its
+metadata evidence, and is the link label beside its one-line text. Enumeration
+is the last naming-disambiguation resort.
 
 ## Promotion gate
 
@@ -126,7 +131,7 @@ noticed, but do not claim exhaustive higher-order coverage.
 A review has one terminal outcome:
 
 - `promoted`: remove the candidate from `planning-atomized/` and add the
-  accepted assertion to `planning-active/`;
+  accepted one-line assertion to the mirrored location in `planning-active/`;
 - `rejected`: remove the candidate from `planning-atomized/` and retain its
   terminal review record only;
 - `duplicate`: remove the candidate from `planning-atomized/` and retain its
@@ -136,6 +141,11 @@ When an accepted candidate makes an active assertion obsolete, the same atomic
 review transaction moves the obsolete assertion to `planning-superseded/`.
 No known-stale assertion may remain active. Changing an active assertion
 requires a new atomized replacement candidate and the full review protocol.
+
+Every stage transition updates the assertion's metadata stage and assertion-list
+link in the same transaction. Promotion also adds its terminal review-record
+link. Metadata never substitutes for the one-line assertion or changes its
+lifecycle state by itself.
 
 Superseded assertions are never current doctrine, but they remain mandatory
 pairwise review material. Reactivating one requires a new atomized candidate;
@@ -148,6 +158,11 @@ Each completely atomized source remains unchanged under
 `planning-evidence/extraction-coverage/`. It identifies the source, maps every
 passage to candidate names or a non-assertive classification, records extraction
 ambiguities, and states whether extraction is complete.
+
+Each assertion has one metadata entry under the source/topic-mirrored
+`planning-evidence/assertion-metadata/` hierarchy. That entry is authoritative
+for identity and lifecycle metadata; the planning-stage file is authoritative
+for the compact assertion text and stage membership.
 
 Every terminal candidate outcome has one record under
 `planning-evidence/review-records/`. The record contains:
@@ -164,15 +179,20 @@ assertions active by themselves.
 ## Assertion format
 
 ```markdown
+- [Unique Descriptive Name](matching-metadata#entry): Exact assertion text.
+```
+
+Matching assertion metadata uses this shape:
+
+```markdown
 ### Unique Descriptive Name
 
+- ID: Unique Descriptive Name
+- Stage: atomized | active | superseded
 - Kind: descriptive assertion | definition | observation | decision | proposal | normative direction | open question | uncertainty
 - Source: retained source artifact and location
 - Temporal scope: current | source-era | timeless | explicitly dated | unknown
 - Extraction coverage: extraction evidence
-
-Exact assertion text.
+- Assertion list: mirrored compact assertion file
+- Review record: terminal review evidence, once reviewed
 ```
-
-Active and superseded entries replace `Extraction coverage` with their terminal
-review-record link while retaining original provenance and temporal scope.

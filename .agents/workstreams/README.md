@@ -5,11 +5,19 @@ work. The governing behavior lives in [`AGENTS.md`](../../AGENTS.md).
 
 ## Ordered work
 
-1. `vapor-shell-exploration` — foreground
+1. `source-atomization-raw-info-dump` — foreground
+2. corpus atomization under the unchanged global gate
+3. `vapor-shell-exploration` — suspended
 
 ## Open workstreams
 
-- [`vapor-shell-exploration`](open/vapor-shell-exploration.md) — foreground.
+- [`source-atomization-raw-info-dump`](open/source-atomization-raw-info-dump.md)
+  — foreground.
+- [`planning-assertion-representation`](open/planning-assertion-representation.md)
+  — complete, awaiting later commit/closure.
+- [`source-atomization-portable-multi-repo-development`](open/source-atomization-portable-multi-repo-development.md)
+  — complete, awaiting later commit/closure.
+- [`vapor-shell-exploration`](open/vapor-shell-exploration.md) — suspended.
 
 ## Closed workstreams
 

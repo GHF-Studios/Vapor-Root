@@ -8,6 +8,10 @@ immutable doctrine.
 The [canonical planning protocol](../planning/README.md) governs admission,
 replacement, and retirement.
 
+Each assertion occupies one linked line. Its identity, provenance, lifecycle
+metadata, and review evidence live under the matching hierarchy in
+`planning-evidence/assertion-metadata/`.
+
 ## Active assertions
 
 None yet.

@@ -7,6 +7,9 @@ Superseded assertions are historical, not current doctrine. They remain part of
 the mandatory pairwise comparison corpus defined by the
 [canonical planning protocol](../planning/README.md).
 
+Each assertion occupies one linked line under mirrored topic hierarchy, with
+its metadata retained in `planning-evidence/assertion-metadata/`.
+
 ## Superseded assertions
 
 None yet.

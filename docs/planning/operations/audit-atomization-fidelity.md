@@ -12,14 +12,16 @@ The source already has atomized candidates or an extraction-coverage record.
 
 ## Behavior
 
-1. Read the source, coverage record, and every candidate attributed to it.
+1. Read the source, coverage record, compact assertion lines, and mirrored
+   metadata attributed to it.
 2. Map every substantive passage to candidates or an explicit classification:
    non-assertive structure, within-source duplicate, source metadata, or
    unresolved extraction ambiguity.
 3. Find omissions, combined non-atomic units, invented meaning, semantic drift,
    unnecessary paraphrase, missing modality or temporal framing, bad source
    locations, duplicate names, and incomplete coverage.
-4. Repair only the extraction, candidate metadata, register state, and coverage.
+4. Repair only the extraction, compact assertion representation, candidate
+   metadata, register state, and coverage.
 5. Retain the source unchanged, moving it from intake to
    `planning-evidence/source-artifacts/<source-set>/` only when complete.
 6. Mark it `atomized` only when extraction is complete, faithful, and stored as

@@ -9,7 +9,7 @@ Promote <candidate-name>.
 ## Availability
 
 Every registered source is `atomized`, and the named candidate exists uniquely
-in atomized planning with source and extraction evidence.
+in atomized planning with mirrored metadata and extraction evidence.
 
 ## Behavior
 
@@ -24,9 +24,10 @@ in atomized planning with source and extraction evidence.
    higher-order coverage.
 6. Write the review record and apply exactly one terminal outcome:
    `promoted`, `rejected`, or `duplicate`.
-7. Remove the processed candidate from atomized planning. A promotion updates
-   active and superseded planning without leaving a known-stale active
-   assertion behind.
+7. Remove the processed candidate line from atomized planning. A promotion
+   moves it into the mirrored active hierarchy, updates its metadata, and
+   updates superseded planning without leaving a known-stale active assertion
+   behind.
 
 ## Pivot conditions
 

@@ -36,10 +36,10 @@ None.
 ## Atomized
 
 - [2026-07-05-vapor-shell-exploration.md](../planning-evidence/source-artifacts/raw-input/vapor-shell/2026-07-05-vapor-shell-exploration.md)
+- [portable-multi-repo-development.md](../planning-evidence/source-artifacts/bootstrap/portable-multi-repo-development.md)
 
 ## Unprocessed bootstrap sources
 
-- [portable-multi-repo-development.md](source-corpus/bootstrap/portable-multi-repo-development.md)
 - [raw-info-dump.md](source-corpus/bootstrap/raw-info-dump.md)
 - [root-readme.md](source-corpus/bootstrap/root-readme.md)
 
