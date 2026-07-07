@@ -13,3 +13,6 @@
 [submodule "Vapor-Examples"]
 	path = Vapor-Examples
 	url = https://github.com/GHF-Studios/Vapor-Examples
+[submodule "Loo-Cast"]
+	path = Loo-Cast
+	url = https://github.com/GHF-Studios/Loo-Cast

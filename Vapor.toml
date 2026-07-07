@@ -1,72 +1,12 @@
-# Umbrella workspace and self-hosting distribution policy.
-[workspace]
-id = "ghf-studios.vapor-root"
+schema = 1
 
-# Cargo projects governed together by Vapor-Root. These are projects, not
-# nested Vapor workspaces; each retains its own Cargo workspace internally.
-[[workspace.cargo]]
-name = "core"
-manifest = "Vapor/Cargo.toml"
-documentation = true
+[root]
+id = "ghf-studios/vapor-root"
+version = "0.5.0"
+repository = "https://github.com/GHF-Studios/Vapor-Root"
+default-packagepack = "ghf-studios/loo-cast/loo-cast-packagepack"
 
-[[workspace.cargo]]
-name = "sdk"
-manifest = "Vapor-SDK/Cargo.toml"
-documentation = true
-binaries = ["vapor_sdk_cli"]
-
-[[workspace.cargo]]
-name = "launcher"
-manifest = "Vapor-Launcher/Cargo.toml"
-documentation = true
-binaries = ["vapor_launcher_cli"]
-
-[[workspace.cargo]]
-name = "shell"
-manifest = "Vapor-Shell/Cargo.toml"
-documentation = true
-binaries = ["vapor"]
-
-[[workspace.cargo]]
-name = "examples"
-manifest = "Vapor-Examples/Cargo.toml"
-documentation = true
-
-[distribution.application]
-app_id = 2122620
-depot_id = 2122621
-development_branch = "vapor-dev"
-
-[[distribution.payload]]
-root = "source"
-from = "Vapor.toml"
-to = "Vapor.toml"
-required = true
-
-[[distribution.payload]]
-root = "installation"
-from = "bin"
-to = "bin"
-required = true
-
-[[distribution.payload]]
-root = "installation"
-from = "lib"
-to = "lib"
-
-[[distribution.payload]]
-root = "installation"
-from = "packages/toolchain"
-to = "packages/toolchain"
-required = true
-
-[[distribution.payload]]
-root = "installation"
-from = "docs"
-to = "docs"
-required = true
-
-[[distribution.payload]]
-root = "source"
-from = ".vapor/scripts"
-to = "workflows"
+[root.steam]
+app-id = 2122620
+depot-id = 2122621
+development-branch = "vapor-dev"
