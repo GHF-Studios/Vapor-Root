@@ -5,7 +5,6 @@ name = "vapor-root"
 organization = "ghf-studios"
 version = "0.5.0"
 repository = "https://github.com/GHF-Studios/Vapor-Root"
-default-packagepack = "ghf-studios/loo-cast/loo-cast-packagepack"
 
 [root.steam]
 app-id = 2122620
