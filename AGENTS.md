@@ -3,6 +3,25 @@
 This file bootstraps AI work in Vapor-Root. It does not replace the canonical
 planning protocol.
 
+## Product scope orientation
+
+Vapor-Root is the application/depot source root. It is not the installed Steam
+application directory and not a normal custom-content workspace. Vapor-Registry
+is separate registry authority infrastructure. Loo-Cast is normal first-party
+custom content and should use the Workshop/content model rather than app/root
+publication paths.
+
+User-facing product instructions belong in `README.md` and the Shell docs under
+`Vapor-Shell/crates/vapor_shell/docs/`. Planning docs and this file are agent
+protocol and review infrastructure; do not let them substitute for beginner or
+operator documentation.
+
+Current shell grammar uses `source *` for source selection, `content *` for
+Workshop-backed content lifecycle, `root *` for app/depot workflows, and
+`setup self *` for installed app command-environment setup. Backend tools such
+as Cargo, Git, SteamCMD, and SteamUGC remain controlled providers rather than
+raw public tool domains.
+
 ## Session startup
 
 Before presenting or performing planning work, read these files in order:

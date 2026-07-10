@@ -1,6 +1,6 @@
 # Workstream — Atomize Bootstrap Raw Info Dump
 
-- State: foreground
+- State: suspended
 - Goal: mechanically atomize the registered bootstrap `raw-info-dump.md`
   source using compact assertion lines and mirrored metadata evidence.
 - Ordered successor: another pending source after an honest document boundary.
@@ -20,6 +20,8 @@
 
 - Activated after the assertion-representation migration.
 - Read the complete source and confirmed its registered `unprocessed` state.
+- Suspended to allow the owner-requested Workshop/content superpass to run as
+  the foreground mutation scope.
 
 ## Owned uncommitted changes
 
