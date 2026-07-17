@@ -17,9 +17,9 @@ root package
 root publish --dry-run
 ```
 
-Quick local commands are host-only by default. Release app/depot and content
-workflows use `--release-targets` to consume the target matrix declared in
-`Vapor.toml`, such as Linux plus Windows/MSVC.
+Release app/depot and content workflows consume the target matrix declared in
+`Vapor.toml` by default, such as Linux plus Windows GNU/LLVM. Use `--host-only` for
+quick local smoke passes that should not build or stage every runtime target.
 
 Real app/depot publication still requires manual interactive confirmation:
 
