@@ -15,6 +15,32 @@ if [ ! -x "$vapor" ]; then
     fi
 fi
 
+mode="${1:-shell}"
+if [ "$#" -gt 0 ]; then
+    shift
+fi
+
+if [ "${VAPOR_LAUNCHER_TERMINAL:-0}" != "1" ] && { [ ! -t 0 ] || [ ! -t 1 ]; }; then
+    konsole=
+    if [ -x /usr/bin/konsole ]; then
+        konsole=/usr/bin/konsole
+    elif command -v konsole >/dev/null 2>&1; then
+        konsole=$(command -v konsole)
+    fi
+    if [ -n "$konsole" ]; then
+        exec env VAPOR_LAUNCHER_TERMINAL=1 \
+            "$konsole" --nofork -p tabtitle="Vapor Shell" --workdir "$app_root" \
+            -e "$0" "$mode" "$@"
+    fi
+    echo "Vapor launch wrapper"
+    echo
+    echo "error: Steam started Vapor without a terminal, and Konsole was not found"
+    echo "  checked: /usr/bin/konsole and PATH"
+    echo
+    echo "Install Konsole or run the Vapor Shell launch option from a terminal."
+    exit 127
+fi
+
 if [ ! -x "$vapor" ]; then
     echo "Vapor launch wrapper"
     echo
@@ -27,11 +53,6 @@ if [ ! -x "$vapor" ]; then
     echo
     echo "Starting an interactive shell so the window stays open."
     exec "${SHELL:-/bin/sh}" -i
-fi
-
-mode="${1:-shell}"
-if [ "$#" -gt 0 ]; then
-    shift
 fi
 
 case "$mode" in
