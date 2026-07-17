@@ -4,7 +4,9 @@ Vapor-Root is the first-party application source root for Vapor. It assembles
 the Steam-installed Vapor app, SDK, launcher, shell, tools, docs, and app/depot
 payload. It is source, not the Steam installation itself.
 
-Most day-to-day work happens through the installed `bin/vapor` shell. Source
+Most day-to-day work happens through the installed Vapor Shell. Bootstrap
+installs may start from `bin/vapor`; release app payloads use
+`bin/<target>/vapor[.exe]` through `.vapor/launch/<platform>/` wrappers. Source
 repositories stay outside the Steam app root and are opened explicitly:
 
 ```text
@@ -15,6 +17,10 @@ root package
 root publish --dry-run
 ```
 
+Quick local commands are host-only by default. Release app/depot and content
+workflows use `--release-targets` to consume the target matrix declared in
+`Vapor.toml`, such as Linux plus Windows/MSVC.
+
 Real app/depot publication still requires manual interactive confirmation:
 
 ```text
@@ -24,8 +30,9 @@ root publish --account ACCOUNT --yes
 ## Product Topology
 
 - **Steam installation/app root**: the installed app directory that owns
-  `bin/vapor`, app-local Rust/Cargo, Git, SteamCMD, caches, generated output,
-  installed content, indexes, locks, and receipts.
+  `bin/<target>/vapor[.exe]`, optional bootstrap `bin/vapor`, app-local
+  Rust/Cargo, Git, SteamCMD, caches, generated output, installed content,
+  indexes, locks, and receipts.
 - **Vapor-Root**: this source-stage application root. It packages and publishes
   the complete Steam app/depot.
 - **Vapor-Registry**: separate registry authority infrastructure. It is not a
