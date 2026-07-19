@@ -6,14 +6,20 @@ set "SCRIPT_DIR=%~dp0"
 for %%I in ("%SCRIPT_DIR%\..") do set "APP_ROOT=%%~fI"
 set "VAPOR=%APP_ROOT%\bin\%TARGET%\vapor.exe"
 set "INSTALLER=%APP_ROOT%\bin\%TARGET%\vapor-installer.exe"
+set "LOG_DIR=%APP_ROOT%\.vapor\logs"
+set "LAUNCH_LOG=%LOG_DIR%\launch-wrapper.log"
 
 if not exist "%VAPOR%" (
     if exist "%CD%\bin\%TARGET%\vapor.exe" (
         set "APP_ROOT=%CD%"
         set "VAPOR=%CD%\bin\%TARGET%\vapor.exe"
         set "INSTALLER=%CD%\bin\%TARGET%\vapor-installer.exe"
+        set "LOG_DIR=%APP_ROOT%\.vapor\logs"
+        set "LAUNCH_LOG=%LOG_DIR%\launch-wrapper.log"
     )
 )
+
+if not exist "%LOG_DIR%" mkdir "%LOG_DIR%" >nul 2>nul
 
 set "MODE=%~1"
 if "%MODE%"=="" (
@@ -32,6 +38,16 @@ shift /1
 goto collect_args
 
 :args_done
+call :log "mode=%MODE% app_root=%APP_ROOT% terminal=%VAPOR_LAUNCHER_TERMINAL%"
+if /I not "%VAPOR_LAUNCHER_TERMINAL%"=="1" (
+    call :log "opening visible command prompt"
+    set "VAPOR_LAUNCHER_TERMINAL=1"
+    start "Vapor %MODE%" /wait /D "%APP_ROOT%" "%ComSpec%" /c ""%~f0" "%MODE%" %FORWARD_ARGS%"
+    set "STATUS=!ERRORLEVEL!"
+    call :log "visible command prompt exited with status !STATUS!"
+    exit /b !STATUS!
+)
+
 if /I "%MODE%"=="installer" goto installer
 if /I "%MODE%"=="vapor-installer" goto installer
 if not exist "%VAPOR%" goto missing_vapor
@@ -102,5 +118,12 @@ set "STATUS=%ERRORLEVEL%"
 echo.
 echo Vapor exited with status %STATUS%.
 echo Starting an interactive command prompt. Close this window when you are done.
+call :log "vapor exited with status %STATUS%; keeping command prompt open"
 cmd /k
 exit /b %STATUS%
+
+:log
+if defined LAUNCH_LOG (
+    >> "%LAUNCH_LOG%" echo [%DATE% %TIME%] vapor-launch: %~1
+)
+exit /b 0
