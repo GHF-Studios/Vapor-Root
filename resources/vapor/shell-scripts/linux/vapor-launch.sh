@@ -41,6 +41,47 @@ launch_terminal() {
     return 0
 }
 
+host_loader() {
+    for candidate in \
+        /run/host/lib64/ld-linux-x86-64.so.2 \
+        /run/host/usr/lib64/ld-linux-x86-64.so.2 \
+        /run/host/lib/ld-linux-x86-64.so.2 \
+        /run/host/usr/lib/ld-linux-x86-64.so.2 \
+        /run/host/lib/x86_64-linux-gnu/ld-linux-x86-64.so.2 \
+        /run/host/usr/lib/x86_64-linux-gnu/ld-linux-x86-64.so.2
+    do
+        if [ -x "$candidate" ]; then
+            printf '%s\n' "$candidate"
+            return 0
+        fi
+    done
+    return 1
+}
+
+launch_host_konsole() {
+    if [ ! -x /run/host/usr/bin/konsole ]; then
+        return 0
+    fi
+    loader=$(host_loader) || {
+        log "host Konsole exists but no host dynamic loader was found under /run/host"
+        return 0
+    }
+    host_library_path="/run/host/usr/lib:/run/host/usr/lib64:/run/host/usr/lib/x86_64-linux-gnu:/run/host/usr/lib/pulseaudio:/run/host/usr/lib/libproxy:/run/host/usr/lib/qt6/plugins:/run/host/usr/lib/x86_64-linux-gnu/qt6/plugins:/run/host/lib:/run/host/lib64:/run/host/lib/x86_64-linux-gnu"
+    launch_terminal "host-konsole" env \
+        -u LD_LIBRARY_PATH \
+        -u LD_PRELOAD \
+        -u LD_AUDIT \
+        -u STEAM_RUNTIME_LIBRARY_PATH \
+        PATH="/run/host/usr/local/bin:/run/host/usr/bin:/run/host/bin:${PATH:-/usr/bin:/bin}" \
+        QT_PLUGIN_PATH="/run/host/usr/lib/qt6/plugins:/run/host/usr/lib/x86_64-linux-gnu/qt6/plugins${QT_PLUGIN_PATH:+:$QT_PLUGIN_PATH}" \
+        XDG_DATA_DIRS="/run/host/usr/local/share:/run/host/usr/share:/usr/share${XDG_DATA_DIRS:+:$XDG_DATA_DIRS}" \
+        VAPOR_LAUNCHER_TERMINAL=1 \
+        VAPOR_LAUNCHER_HOLD_ON_EXIT=1 \
+        "$loader" --library-path "$host_library_path" \
+        /run/host/usr/bin/konsole --nofork -p tabtitle="$terminal_title" --workdir "$app_root" \
+        -e "$0" "$mode" "$@"
+}
+
 run_command() {
     set +e
     "$@"
@@ -87,6 +128,7 @@ if [ "${VAPOR_LAUNCHER_TERMINAL:-0}" != "1" ] && { [ ! -t 0 ] || [ ! -t 1 ]; }; 
     fi
     log "no controlling terminal; mode=$mode app_root=$app_root container=${container:-unset} pressure_vessel_runtime=${PRESSURE_VESSEL_RUNTIME:-unset}"
     if [ "${container:-}" = "pressure-vessel" ] || [ -n "${PRESSURE_VESSEL_RUNTIME:-}" ]; then
+        launch_host_konsole "$@"
         if command -v xterm >/dev/null 2>&1; then
             xterm=$(command -v xterm)
             launch_terminal "steam-runtime-xterm" env VAPOR_LAUNCHER_TERMINAL=1 VAPOR_LAUNCHER_HOLD_ON_EXIT=1 \
