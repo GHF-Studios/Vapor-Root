@@ -27,6 +27,7 @@ if "%MODE%"=="" (
 ) else (
     shift /1
 )
+if "%ComSpec%"=="" set "ComSpec=cmd.exe"
 set "VAPOR_STEAM_LAUNCH=1"
 set "VAPOR_LAUNCH_MODE=%MODE%"
 
@@ -38,10 +39,11 @@ shift /1
 goto collect_args
 
 :args_done
-call :log "mode=%MODE% app_root=%APP_ROOT% terminal=%VAPOR_LAUNCHER_TERMINAL%"
+call :log "mode=%MODE% app_root=%APP_ROOT% terminal=%VAPOR_LAUNCHER_TERMINAL% hold=%VAPOR_LAUNCHER_HOLD_ON_EXIT%"
 if /I not "%VAPOR_LAUNCHER_TERMINAL%"=="1" (
     call :log "opening visible command prompt"
     set "VAPOR_LAUNCHER_TERMINAL=1"
+    set "VAPOR_LAUNCHER_HOLD_ON_EXIT=1"
     start "Vapor %MODE%" /wait /D "%APP_ROOT%" "%ComSpec%" /c ""%~f0" "%MODE%" %FORWARD_ARGS%"
     set "STATUS=!ERRORLEVEL!"
     call :log "visible command prompt exited with status !STATUS!"
@@ -119,7 +121,7 @@ echo.
 echo Vapor exited with status %STATUS%.
 echo Starting an interactive command prompt. Close this window when you are done.
 call :log "vapor exited with status %STATUS%; keeping command prompt open"
-cmd /k
+"%ComSpec%" /k
 exit /b %STATUS%
 
 :log

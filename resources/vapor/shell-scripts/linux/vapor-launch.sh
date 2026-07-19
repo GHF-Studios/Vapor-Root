@@ -88,11 +88,12 @@ run_command() {
     status=$?
     set -e
     log "command exited with status $status: $*"
-    if [ "$status" -ne 0 ] && [ "${VAPOR_LAUNCHER_HOLD_ON_EXIT:-0}" = "1" ]; then
+    if [ "${VAPOR_LAUNCHER_HOLD_ON_EXIT:-0}" = "1" ]; then
         echo
         echo "Vapor exited with status $status."
         echo "Log: $launch_log"
         echo "Starting an interactive shell. Close this window when you are done."
+        log "keeping terminal open after command status $status"
         exec "${SHELL:-/bin/sh}" -i
     fi
     exit "$status"
