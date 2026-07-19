@@ -6,7 +6,7 @@ payload. It is source, not the Steam installation itself.
 
 Most day-to-day work happens through the installed Vapor Shell. Bootstrap
 installs may start from `bin/vapor`; release app payloads use
-`bin/<target>/vapor[.exe]` through `.vapor/launch/<platform>/` wrappers. Source
+`bin/<target>/vapor[.exe]` through `bin/vapor-launch.*` wrappers. Source
 repositories stay outside the Steam app root and are opened explicitly:
 
 ```text
@@ -17,9 +17,11 @@ root package
 root publish --dry-run
 ```
 
-Release app/depot and content workflows consume the target matrix declared in
-`Vapor.toml` by default, such as Linux plus Windows GNU/LLVM. Use `--host-only` for
-quick local smoke passes that should not build or stage every runtime target.
+Release app/depot workflows consume the target matrix declared in
+`App-Source.vapor.toml` by default, such as Linux plus Windows GNU/LLVM. Use
+`--host-only` for quick local smoke passes that should not build or stage every
+runtime target. Real app publication rejects host-only/custom target subsets
+and publishes the complete declared Linux+Windows matrix.
 
 Real app/depot publication still requires manual interactive confirmation:
 
@@ -30,7 +32,8 @@ root publish --account ACCOUNT --yes
 ## Product Topology
 
 - **Steam installation/app root**: the installed app directory that owns
-  `bin/<target>/vapor[.exe]`, optional bootstrap `bin/vapor`, app-local
+  `App.vapor.toml`, `bin/vapor-launch.*`, `bin/<target>/vapor[.exe]`,
+  optional bootstrap `bin/vapor`, app-local
   Rust/Cargo, Git, SteamCMD, caches, generated output, installed content,
   indexes, locks, and receipts.
 - **Vapor-Root**: this source-stage application root. It packages and publishes
@@ -84,18 +87,17 @@ for layout, receipts, fingerprints, and repair behavior.
 
 ## Setup And Recovery
 
-Installed setup is explicit:
+Vapor Installer owns installed setup:
 
 ```text
-setup self status
-setup self install
-setup self repair
-setup self package install
+vapor-installer install
+vapor-installer uninstall
+vapor-installer dev-env install
+vapor-installer dev-env uninstall
 ```
 
-Setup manages the app-local command environment inside the Steam installation.
-It does not silently repair prerequisites during builds, publishes, or content
-operations.
+The default install prepares player-mode Git, SteamCMD, registry checkout, and
+generated `.vapor/` state. Developer mode is an explicit upgrade.
 
 ## Planning
 

@@ -1,15 +1,17 @@
 @echo off
-setlocal EnableExtensions
+setlocal EnableExtensions EnableDelayedExpansion
 
 set "TARGET=x86_64-pc-windows-gnullvm"
 set "SCRIPT_DIR=%~dp0"
-for %%I in ("%SCRIPT_DIR%\..\..\..") do set "APP_ROOT=%%~fI"
+for %%I in ("%SCRIPT_DIR%\..") do set "APP_ROOT=%%~fI"
 set "VAPOR=%APP_ROOT%\bin\%TARGET%\vapor.exe"
+set "INSTALLER=%APP_ROOT%\bin\%TARGET%\vapor-installer.exe"
 
 if not exist "%VAPOR%" (
     if exist "%CD%\bin\%TARGET%\vapor.exe" (
         set "APP_ROOT=%CD%"
         set "VAPOR=%CD%\bin\%TARGET%\vapor.exe"
+        set "INSTALLER=%CD%\bin\%TARGET%\vapor-installer.exe"
     )
 )
 
@@ -19,6 +21,8 @@ if "%MODE%"=="" (
 ) else (
     shift /1
 )
+set "VAPOR_STEAM_LAUNCH=1"
+set "VAPOR_LAUNCH_MODE=%MODE%"
 
 set "FORWARD_ARGS="
 :collect_args
@@ -28,13 +32,32 @@ shift /1
 goto collect_args
 
 :args_done
+if /I "%MODE%"=="installer" goto installer
+if /I "%MODE%"=="vapor-installer" goto installer
 if not exist "%VAPOR%" goto missing_vapor
+
+set "INSTALLER_LOG=%APP_ROOT%\.vapor\logs\installer.log"
+if exist "%INSTALLER%" (
+    call "%INSTALLER%" --quiet install --app-root "%APP_ROOT%"
+    if errorlevel 1 (
+        set "VAPOR_INSTALLER_INSTALL_FAILED=vapor-installer exited with status !ERRORLEVEL!"
+        set "VAPOR_INSTALLER_LOG=%INSTALLER_LOG%"
+    )
+) else (
+    set "VAPOR_INSTALLER_INSTALL_FAILED=vapor-installer is missing for %TARGET%"
+    set "VAPOR_INSTALLER_LOG=%INSTALLER_LOG%"
+)
 
 if /I "%MODE%"=="play" goto play
 if /I "%MODE%"=="loo-cast" goto play
 if /I "%MODE%"=="shell" goto shell
 if /I "%MODE%"=="vapor-shell" goto shell
 goto command
+
+:installer
+if not exist "%INSTALLER%" goto missing_installer
+call "%INSTALLER%" %FORWARD_ARGS%
+goto after_vapor
 
 :play
 call "%VAPOR%" --startup-script loo-cast %FORWARD_ARGS%
@@ -56,6 +79,18 @@ echo   target:  %TARGET%
 echo   checked: %VAPOR%
 echo.
 echo This Steam install is missing the platform binary for this launch option.
+echo Update or reinstall the app on the selected Steam branch, then try again.
+set "STATUS=9009"
+goto keep_open
+
+:missing_installer
+echo Vapor launch wrapper
+echo.
+echo error: expected Vapor Installer executable is missing
+echo   target:  %TARGET%
+echo   checked: %INSTALLER%
+echo.
+echo This Steam install is missing the platform installer for this launch option.
 echo Update or reinstall the app on the selected Steam branch, then try again.
 set "STATUS=9009"
 goto keep_open

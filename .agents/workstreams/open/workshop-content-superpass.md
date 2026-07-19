@@ -8,9 +8,11 @@
 - Depends on: owner direction in the current session.
 - Semantic mutation claim: Vapor-Shell source/content command grammar,
   Workshop/content lifecycle implementation, Loo-Cast content publication
-  metadata and scripts, Vapor-Root user/agent docs for the shell model.
+  metadata and scripts, Vapor-Root user/agent docs for the shell model, and
+  Vapor-Installer bootstrap/lifecycle ownership.
 - Path claims: `Vapor-Shell/crates/vapor_shell/**`, `Loo-Cast/**`,
-  `README.md`, `AGENTS.md`, `.agents/workstreams/README.md`, and this record.
+  `Vapor-Installer/**`, `.vapor/launch/**`, `README.md`, `AGENTS.md`,
+  `.agents/workstreams/README.md`, and this record.
 
 ## Completed
 
@@ -324,6 +326,124 @@
 - Root/depot staging now copies selected `bin/<target>/` directories instead
   of the whole `bin/` tree and copies only launch-wrapper platform directories
   implied by the selected targets.
+- Captured the Steam installscript decision: because Valve installscript
+  support does not provide the same Windows/Linux/SteamOS bootstrap behavior,
+  Vapor does not use `installscript.vdf` for runtime bootstrap.
+- Added `Vapor-Installer` as a root-local Cargo/Vapor project with a
+  visual-first no-argument installer surface plus narrow headless
+  `install`, `uninstall`, and `dev-env` install/uninstall/status commands.
+- Implemented installer-owned player-mode install for app-local Git, SteamCMD,
+  `.vapor/registry` Vapor-Registry checkout/update, installer logs,
+  diagnostics directories, content cache/download directories, and receipts.
+- Implemented explicit installer-owned development environment install/uninstall
+  for Rust/Cargo and cross-build tooling; normal player-mode install does not
+  install Rust/Cargo. Top-level `vapor-installer uninstall` removes both
+  developer-mode tooling and player-mode mutable app-root state, while
+  `dev-env uninstall` is only a downgrade back to player mode.
+- Updated Steam launch wrappers so Play/Shell run headless
+  `vapor-installer install --app-root <app-root>` before handing off to
+  target-specific `vapor`, reporting installer failure through the first
+  visible Shell with the installer log path.
+- Removed the user-facing Shell `setup` command group. Metadata/workflow
+  diagnostics point to `vapor-installer`, and normal workflow validation no
+  longer blocks on legacy app-root acceptance state.
+- Removed root setup-payload staging from Shell and SteamPipe generation:
+  `root package`/`root publish` are runtime-only and no longer accept
+  `--include-setup-payload`.
+- Updated distribution staging/tests so root-local Vapor projects such as
+  `Vapor-Installer` are discovered even before they become Git submodules, and
+  staged target directories include `vapor-installer` alongside `vapor` when
+  promoted.
+- Refactored `Vapor-Installer` from monolithic source files into documented
+  modules for CLI/TUI, model, app-root discovery, acquisition, filesystem
+  confinement, Git bootstrap, runtime bootstrap, development environment, and
+  path policy.
+- Initialized and pushed the standalone `GHF-Studios/Vapor-Installer` Git
+  repository at `b0e9e78`, then registered `Vapor-Installer` as a
+  `Vapor-Root` submodule.
+- Verified installer and Shell slices with `cargo fmt --check`, focused
+  Vapor-Shell command/workspace/distribution tests, strict
+  `cargo clippy -p vapor_shell --all-targets -- -D warnings`,
+  `cargo test` and strict Clippy in `Vapor-Installer`, plus a local
+  `vapor-installer uninstall --dry-run` preview against the local Steam app
+  root.
+- Built/promoted Linux and Windows runtime-matrix binaries for `vapor` and
+  `vapor-installer` into the local Steam app root, staged a runtime-only depot
+  containing both platform launch wrappers and no `packages/setup`, and
+  published AppID `2122620` to `vapor-dev` as build `24274710`; depot
+  `2122621` manifest `6914390332829415382`.
+- Ran the newly shipped local `vapor-installer install` against the
+  local Steam app root. Local player-mode status is ready: app-local Git,
+  SteamCMD, Vapor-Registry, and generated state directories are present.
+- Republished the simplified installer command model to Steam AppID `2122620`
+  branch `vapor-dev` as build `24275153`; depot `2122621` manifest
+  `7777478068318923421`, baseline manifest `6914390332829415382`.
+- Added a first-class Steam Installer wrapper mode. Linux/Windows wrapper
+  argument `installer` opens `vapor-installer` directly and skips the quiet
+  player-mode install used by Play/Shell. Published to Steam AppID `2122620`
+  branch `vapor-dev` as build `24275599`; depot `2122621` manifest
+  `8367995713019312839`, baseline manifest `7777478068318923421`.
+- Began the hard pivot away from the mono-depot runtime shape: `Vapor.toml`
+  now requires `[root.steam.depots.<name>]` with common, Linux, and Windows
+  depot IDs before root publication can proceed.
+- Implemented split root staging under `output/root/content/{common,linux,windows}`:
+  common receives OS-neutral app files, Linux receives Linux launch/runtime
+  files, and Windows receives Windows launch/runtime files plus required runtime
+  DLLs.
+- Updated SteamPipe generation so `root publish --dry-run` writes one app-build
+  VDF plus one depot-build VDF per staged depot, and command output prints the
+  staged depot roots and Steamworks OS rule expectation.
+- Updated distribution, command, manifest, and Steam development docs for the
+  package/depot pivot and current launch-option model.
+- Verified the split-depot Shell slice with `cargo fmt --all --check`,
+  `cargo test -p vapor_shell --test distribution`,
+  `cargo clippy -p vapor_shell --all-targets -- -D warnings`, and
+  `cargo test -p vapor_shell --all-targets`.
+- Recorded the real Steamworks DepotIDs in `App-Source.vapor.toml`: common
+  `2122621`, Linux `2122622`, and Windows `2122623`.
+- Replaced hardcoded depot file membership in Shell staging with manifest-owned
+  depot include lists. Each depot now declares its own `include` entries with
+  source/installation roots, from/to mappings, exclusions, and optional runtime
+  target filters.
+- Re-verified the manifest-driven depot staging slice with
+  `cargo clippy -p vapor_shell --all-targets -- -D warnings` and
+  `cargo test -p vapor_shell --all-targets`; root `Vapor.toml` also parses as
+  valid TOML.
+- Moved generated SteamPipe VDF file bodies out of Rust format strings and into
+  checked-in templates under `resources/steam/steampipe-templates/`.
+- Removed the bulky distribution staging tests and kept validation on real
+  staging/dry-run command paths instead of historical negative-path assertions.
+- Clarified the Windows runtime DLL contract: `libunwind.dll` is still required
+  for the Windows GNU runtime, but build promotion/import must place it under
+  `bin/x86_64-pc-windows-gnullvm/`; depot staging includes that runtime bin
+  directory instead of copying directly from development toolchain paths.
+- Removed the obsolete Shell self-setup package copy/status module. Setup
+  packages are no longer reported in metadata and are no longer an alternate
+  install path; install/uninstall lifecycle belongs to Vapor-Installer.
+- Re-verified after the template/sample cleanup with `cargo fmt --all --check`,
+  `cargo clippy -p vapor_shell --all-targets -- -D warnings`, and
+  `cargo test -p vapor_shell --all-targets`.
+- Split app-source and installed-app root manifests: Vapor-Root now uses
+  `App-Source.vapor.toml`; the shipped app root uses `App.vapor.toml`; ordinary
+  workspaces/content/registry still use `Vapor.toml`.
+- Removed source-root `.vapor` payloads. Source-controlled launch/scripts now
+  live under `resources/vapor/shell-scripts/` and
+  `resources/vapor/vapor-scripts/`; installed app-root `.vapor/` is reserved
+  for generated disposable state.
+- Removed Shell-owned public setup command surfaces, setup package staging,
+  PATH/location registration, and the remaining setup install/repair/uninstall
+  implementation. Shell now only inspects app-local tool readiness and points
+  missing prerequisites at Vapor-Installer.
+- Re-verified the renamed manifests, resource layout, and setup trim with
+  `cargo fmt --all --check`, `cargo clippy -p vapor_shell --all-targets -- -D
+  warnings`, and `cargo test -p vapor_shell --all-targets`.
+- Re-verified Vapor-Installer with `cargo fmt --all --check`, `cargo clippy
+  --all-targets -- -D warnings`, and `cargo test --all-targets`.
+- Ran a temp app-root staging smoke with fake app-local Rust/Git readiness:
+  `root package --host-only` staged common and Linux depots, then
+  `root publish --dry-run --skip-build` generated app/common/linux/windows VDFs
+  and confirmed the Windows depot stages `vapor.exe`, `vapor-installer.exe`,
+  and `libunwind.dll`.
 
 ## Owned uncommitted changes
 
@@ -334,37 +454,46 @@
   docs, and tests.
 - Vapor core/SDK toolchain metadata updated for stable Rust `1.97.0`.
 - Loo-Cast content manifests with real PublishedFileIds and public visibility
-- Loo-Cast content manifests with real PublishedFileIds and public visibility
   intent, the `spacetime-engine` shipped executable declaration, and placeholder
   first-party Rust payloads.
 - Vapor-Examples now includes the extracted terminal runtime proof projects and
   updated README/workspace registration.
 - Vapor-Root workstream record update.
+- Vapor-Installer submodule registration, root launch wrapper install calls,
+  installer-owned setup/Steam/distribution docs, and Shell removal of setup
+  command/setup-payload surfaces.
+- Manifest-driven split-depot root staging, SteamPipe VDF generation, manifest
+  schema docs, root `App-Source.vapor.toml` configured with DepotIDs 2122621,
+  2122622, and 2122623, runtime `App.vapor.toml`, and source resources under
+  `resources/vapor/` and `resources/steam/`.
 
 ## Remaining
 
 - Do not publish the extracted topology until the owner explicitly starts that
   authority boundary; the live Workshop items currently still reflect the last
   published terminal-proof-in-Loo-Cast state.
+- Run `root publish --skip-build --dry-run` from the real installed app root
+  after local deploy, then publish to `vapor-dev` only after reviewing the real
+  staged payload. Publication is no longer blocked on missing DepotIDs.
 - Implement and test the Windows/MSVC content build/runtime path before friend
   testing: Windows depot binary availability, app-local setup, target-specific
   runtime outputs, and ABI policy. The example dynamic loader now has a Windows
   implementation, but it has not yet been compiled or run under MSVC.
-- Do not point live Steam launch options at `.vapor/launch/...` until a new
-  depot containing those wrapper files is published. Existing published depots
-  can only launch files they already contain. Windows launch options also need
-  a shipped Windows `bin\vapor.exe`; wrapper scripts alone are not enough.
-  After the depot includes them, use Linux Play
-  `.vapor/launch/linux/vapor.sh play`, Linux Shell
-  `.vapor/launch/linux/vapor.sh shell`, Windows Play
-  `.vapor\launch\windows\vapor.cmd play`, and Windows Shell
-  `.vapor\launch\windows\vapor.cmd shell`. Those wrappers expect
+- Steam launch options for the runtime depot are Linux Play
+  `bin/vapor-launch.sh play`, Linux Shell `bin/vapor-launch.sh shell`, Linux
+  Installer `bin/vapor-launch.sh installer`, Windows Play
+  `bin\vapor-launch.cmd play`, Windows Shell `bin\vapor-launch.cmd shell`, and
+  Windows Installer `bin\vapor-launch.cmd installer`. Play/Shell wrapper modes
+  run quiet `vapor-installer install` first; Installer mode opens
+  `vapor-installer` directly. Those wrappers expect
   `bin/x86_64-unknown-linux-gnu/vapor` and
-  `bin\x86_64-pc-windows-msvc\vapor.exe` respectively.
-- Run the owner-controlled long bootstrap from a fresh runtime-only depot
-  install: `setup self install`, open the Vapor and Loo-Cast sources, locally
-  deploy root and selected first-party content, then iterate on the startup
-  path.
+  `bin/x86_64-unknown-linux-gnu/vapor-installer`, plus
+  `bin\x86_64-pc-windows-gnullvm\vapor.exe` and
+  `bin\x86_64-pc-windows-gnullvm\vapor-installer.exe` respectively.
+- Run the owner-controlled installer install path from a fresh runtime-only depot
+  install, open the Vapor and Loo-Cast sources only for development work,
+  locally deploy root and selected first-party content, then iterate on the
+  startup path.
 - Continue the content model pass: packagepack/game/engine dependency semantics,
   legal modding declarations, content-shipped executable/library semantics,
   command-domain naming, contextual help, and an explicit command design for
@@ -382,8 +511,6 @@
 
 ## Smallest resume action
 
-Use the owner's Windows laptop to compile the corrected `Vapor-Examples`
-terminal proof and Vapor Shell under `x86_64-pc-windows-msvc`, then stage one
-dry-run content package and one app/depot package with both Linux and Windows
-runtime targets before deciding whether to republish Workshop content or update
-the app/depot payload.
+Review the current source/submodule diffs, locally deploy into the real Steam
+app root, run `root publish --skip-build --dry-run`, then publish to `vapor-dev`
+only after the real staged common/Linux/Windows payload is confirmed.

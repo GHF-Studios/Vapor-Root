@@ -13,3 +13,6 @@
 [submodule "Vapor-Examples"]
 	path = Vapor-Examples
 	url = https://github.com/GHF-Studios/Vapor-Examples
+[submodule "Vapor-Installer"]
+	path = Vapor-Installer
+	url = https://github.com/GHF-Studios/Vapor-Installer
