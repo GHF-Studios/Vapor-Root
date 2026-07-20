@@ -51,14 +51,14 @@ shift /1
 goto collect_args
 
 :args_done
-call :log "mode=%MODE% app_root=%APP_ROOT% terminal=%VAPOR_LAUNCHER_TERMINAL% hold=%VAPOR_LAUNCHER_HOLD_ON_EXIT%"
+if defined LAUNCH_LOG >> "%LAUNCH_LOG%" echo [%DATE% %TIME%] vapor-launch: mode=%MODE% app_root="%APP_ROOT%" terminal=%VAPOR_LAUNCHER_TERMINAL% hold=%VAPOR_LAUNCHER_HOLD_ON_EXIT%
 pushd "%APP_ROOT%" >nul 2>nul
-if errorlevel 1 call :log "could not change directory to app root"
+if errorlevel 1 if defined LAUNCH_LOG >> "%LAUNCH_LOG%" echo [%DATE% %TIME%] vapor-launch: could not change directory to app root
 
 echo Vapor launch wrapper
 echo   mode: %MODE%
-echo   app root: %APP_ROOT%
-echo   log: %LAUNCH_LOG%
+echo   app root: "%APP_ROOT%"
+echo   log: "%LAUNCH_LOG%"
 echo.
 
 if /I "%MODE%"=="installer" goto installer
@@ -72,7 +72,7 @@ set "VAPOR_INSTALLER_LOG=%INSTALLER_LOG%"
 goto installer_bootstrap_done
 
 :run_installer_bootstrap
-call "%INSTALLER%" --quiet install --app-root "%APP_ROOT%"
+"%INSTALLER%" --quiet install --app-root "%APP_ROOT%"
 if errorlevel 1 goto installer_bootstrap_failed
 goto installer_bootstrap_done
 
@@ -91,22 +91,22 @@ goto command
 
 :installer
 if not exist "%INSTALLER%" goto missing_installer
-call "%INSTALLER%" %FORWARD_ARGS%
+"%INSTALLER%" %FORWARD_ARGS%
 set "STATUS=%ERRORLEVEL%"
 goto done
 
 :play
-call "%VAPOR%" --startup-script loo-cast %FORWARD_ARGS%
+"%VAPOR%" --startup-script loo-cast %FORWARD_ARGS%
 set "STATUS=%ERRORLEVEL%"
 goto done
 
 :shell
-call "%VAPOR%" %FORWARD_ARGS%
+"%VAPOR%" %FORWARD_ARGS%
 set "STATUS=%ERRORLEVEL%"
 goto done
 
 :command
-call "%VAPOR%" %MODE% %FORWARD_ARGS%
+"%VAPOR%" "%MODE%" %FORWARD_ARGS%
 set "STATUS=%ERRORLEVEL%"
 goto done
 
@@ -131,18 +131,13 @@ set "STATUS=9009"
 goto done
 
 :done
-call :log "vapor exited with status %STATUS%"
+if defined LAUNCH_LOG >> "%LAUNCH_LOG%" echo [%DATE% %TIME%] vapor-launch: vapor exited with status %STATUS%
 if not defined VAPOR_LAUNCHER_HOLD_ON_EXIT goto done_no_hold_message
 echo.
 echo Vapor exited with status %STATUS%.
-echo Log: %LAUNCH_LOG%
+echo Log: "%LAUNCH_LOG%"
 echo This command prompt will stay open. Close it when you are done.
 
 :done_no_hold_message
 popd >nul 2>nul
 exit /b %STATUS%
-
-:log
-if not defined LAUNCH_LOG exit /b 0
->> "%LAUNCH_LOG%" echo [%DATE% %TIME%] vapor-launch: %~1
-exit /b 0
