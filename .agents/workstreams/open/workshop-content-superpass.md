@@ -448,8 +448,9 @@
   terminal launch and argument forwarding, `bin/vapor-launch.*` owns
   launch-target dispatch and terminal hold behavior, and Vapor Shell no longer
   performs its own no-terminal relaunch.
-- Renamed launch wrapper environment/output from loose mode wording to
-  `VAPOR_LAUNCH_TARGET`, `VAPOR_LAUNCH_TERMINAL`, and `VAPOR_LAUNCH_HOLD`.
+- Replaced launch wrapper environment IPC with explicit wrapper arguments and
+  app-local bootstrap failure state under
+  `.vapor/state/installer/bootstrap-failure.txt`.
 - Routed installer-launched helper stdout/stderr through
   `<app-root>/.vapor/logs/installer.log` so launch-time player bootstrap no
   longer leaks curl/tar/PowerShell/rustup output into the Steam-visible shell.

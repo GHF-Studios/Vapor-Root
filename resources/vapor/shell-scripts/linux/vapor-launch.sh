@@ -3,17 +3,15 @@ set -eu
 
 target="x86_64-unknown-linux-gnu"
 
-if [ -n "${VAPOR_APP_ROOT:-}" ]; then
-    app_root=$VAPOR_APP_ROOT
-else
-    script_dir=$(CDPATH= cd -- "$(dirname -- "$0")" 2>/dev/null && pwd || pwd)
-    app_root=$(CDPATH= cd -- "$script_dir/.." 2>/dev/null && pwd || pwd)
-fi
+script_dir=$(CDPATH= cd -- "$(dirname -- "$0")" 2>/dev/null && pwd || pwd)
+app_root=$(CDPATH= cd -- "$script_dir/.." 2>/dev/null && pwd || pwd)
 
 vapor="$app_root/bin/$target/vapor"
 installer="$app_root/bin/$target/vapor-installer"
 log_dir="$app_root/.vapor/logs"
 launch_log="$log_dir/launch-wrapper.log"
+bootstrap_state_dir="$app_root/.vapor/state/installer"
+bootstrap_failure="$bootstrap_state_dir/bootstrap-failure.txt"
 
 mkdir -p "$log_dir" 2>/dev/null || true
 
@@ -28,7 +26,7 @@ run_command() {
     status=$?
     set -e
     log "command exited with status $status: $*"
-    if [ "${VAPOR_LAUNCH_HOLD:-0}" = "1" ]; then
+    if [ "$hold_terminal" = "1" ]; then
         echo
         echo "Vapor exited with status $status."
         echo "Log: $launch_log"
@@ -39,17 +37,32 @@ run_command() {
     exit "$status"
 }
 
+clear_bootstrap_failure() {
+    rm -f "$bootstrap_failure" 2>/dev/null || true
+}
+
+write_bootstrap_failure() {
+    mkdir -p "$bootstrap_state_dir" 2>/dev/null || true
+    {
+        printf '%s\n' "$1"
+        printf '%s\n' "$installer_log"
+    } >"$bootstrap_failure" 2>/dev/null || true
+}
+
+hold_terminal=0
+if [ "${1:-}" = "--hold" ]; then
+    hold_terminal=1
+    shift
+fi
+
 launch_target="${1:-shell}"
 if [ "$#" -gt 0 ]; then
     shift
 fi
 
-export VAPOR_APP_ROOT="$app_root"
 export VAPOR_HOME="$app_root"
 export CARGO_HOME="$app_root/cargo-home"
 export RUSTUP_HOME="$app_root/rustup-home"
-export VAPOR_STEAM_LAUNCH=1
-export VAPOR_LAUNCH_TARGET="$launch_target"
 
 launch_path="$app_root/bin/$target:$app_root/cargo-home/bin:$app_root/tools/steamcmd:$app_root/tools/zig:$app_root/tools/cross/bin:$app_root/tools/llvm-mingw/bin"
 for toolchain in "$app_root"/rustup-home/toolchains/*; do
@@ -60,7 +73,7 @@ done
 export PATH="$launch_path:${PATH:-}"
 
 cd "$app_root" 2>/dev/null || true
-log "launch_target=$launch_target app_root=$app_root terminal=${VAPOR_LAUNCH_TERMINAL:-0} hold=${VAPOR_LAUNCH_HOLD:-0}"
+log "launch_target=$launch_target app_root=$app_root hold=$hold_terminal"
 
 echo "Vapor launch wrapper"
 echo "  launch target: $launch_target"
@@ -94,17 +107,16 @@ if [ ! -x "$vapor" ]; then
 fi
 
 installer_log="$app_root/.vapor/logs/installer.log"
+clear_bootstrap_failure
 if [ -x "$installer" ]; then
     if "$installer" --quiet install --app-root "$app_root"; then
         :
     else
         installer_status=$?
-        export VAPOR_INSTALLER_INSTALL_FAILED="vapor-installer exited with status $installer_status"
-        export VAPOR_INSTALLER_LOG="$installer_log"
+        write_bootstrap_failure "vapor-installer exited with status $installer_status"
     fi
 else
-    export VAPOR_INSTALLER_INSTALL_FAILED="vapor-installer is missing for $target"
-    export VAPOR_INSTALLER_LOG="$installer_log"
+    write_bootstrap_failure "vapor-installer is missing for $target"
 fi
 
 case "$launch_target" in
