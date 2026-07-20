@@ -45,9 +45,20 @@ if [ "$#" -gt 0 ]; then
 fi
 
 export VAPOR_APP_ROOT="$app_root"
+export VAPOR_HOME="$app_root"
+export CARGO_HOME="$app_root/cargo-home"
+export RUSTUP_HOME="$app_root/rustup-home"
 export VAPOR_STEAM_LAUNCH=1
 export VAPOR_LAUNCH_MODE="$mode"
 export VAPOR_TERMINAL_RELAUNCHED=1
+
+launch_path="$app_root/bin/$target:$app_root/cargo-home/bin:$app_root/tools/steamcmd:$app_root/tools/zig:$app_root/tools/cross/bin:$app_root/tools/llvm-mingw/bin"
+for toolchain in "$app_root"/rustup-home/toolchains/*; do
+    if [ -d "$toolchain/bin" ]; then
+        launch_path="$toolchain/bin:$launch_path"
+    fi
+done
+export PATH="$launch_path:${PATH:-}"
 
 cd "$app_root" 2>/dev/null || true
 log "mode=$mode app_root=$app_root terminal=${VAPOR_LAUNCHER_TERMINAL:-0} hold=${VAPOR_LAUNCHER_HOLD_ON_EXIT:-0}"

@@ -39,9 +39,14 @@ set "MODE=shell"
 :mode_ready
 
 set "VAPOR_APP_ROOT=%APP_ROOT%"
+set "VAPOR_HOME=%APP_ROOT%"
+set "CARGO_HOME=%APP_ROOT%\cargo-home"
+set "RUSTUP_HOME=%APP_ROOT%\rustup-home"
 set "VAPOR_STEAM_LAUNCH=1"
 set "VAPOR_LAUNCH_MODE=%MODE%"
 set "VAPOR_TERMINAL_RELAUNCHED=1"
+set "PATH=%APP_ROOT%\bin\%TARGET%;%APP_ROOT%\cargo-home\bin;%APP_ROOT%\tools\steamcmd;%APP_ROOT%\tools\zig;%APP_ROOT%\tools\cross\bin;%APP_ROOT%\tools\llvm-mingw\bin;%PATH%"
+for /d %%T in ("%APP_ROOT%\rustup-home\toolchains\*") do if exist "%%~fT\bin" set "PATH=%%~fT\bin;%PATH%"
 
 set "FORWARD_ARGS="
 :collect_args
@@ -136,7 +141,12 @@ if not defined VAPOR_LAUNCHER_HOLD_ON_EXIT goto done_no_hold_message
 echo.
 echo Vapor exited with status %STATUS%.
 echo Log: "%LAUNCH_LOG%"
-echo This command prompt will stay open. Close it when you are done.
+echo Starting an interactive command prompt. Type exit when you are done.
+if defined ComSpec (
+    "%ComSpec%" /D /K
+) else (
+    cmd.exe /D /K
+)
 
 :done_no_hold_message
 popd >nul 2>nul
