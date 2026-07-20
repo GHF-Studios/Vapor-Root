@@ -16,3 +16,6 @@
 [submodule "Vapor-Installer"]
 	path = Vapor-Installer
 	url = https://github.com/GHF-Studios/Vapor-Installer
+[submodule "Vapor-Entrypoint"]
+	path = Vapor-Entrypoint
+	url = https://github.com/GHF-Studios/Vapor-Entrypoint

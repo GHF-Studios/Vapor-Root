@@ -1,8 +1,8 @@
 # Vapor-Root
 
 Vapor-Root is the first-party application source root for Vapor. It assembles
-the Steam-installed Vapor app, SDK, launcher, shell, tools, docs, and app/depot
-payload. It is source, not the Steam installation itself.
+the Steam-installed Vapor app, SDK, launcher, shell, entrypoint, tools, docs,
+and app/depot payload. It is source, not the Steam installation itself.
 
 Most day-to-day work happens through the installed Vapor Shell. Bootstrap
 installs may start from `bin/vapor`; release app payloads use
@@ -60,6 +60,7 @@ git submodule update --init --recursive
 Key checkouts:
 
 - [`Vapor-Shell`](Vapor-Shell/) — installed shell and command model.
+- [`Vapor-Entrypoint`](Vapor-Entrypoint/) — Steam-facing terminal entrypoint.
 - [`Vapor-SDK`](Vapor-SDK/) — SDK surface.
 - [`Vapor-Launcher`](Vapor-Launcher/) — launcher surface.
 - [`Vapor`](Vapor/) — core application workspace.
