@@ -40,16 +40,12 @@ goto collect_args
 
 :args_done
 call :log "mode=%MODE% app_root=%APP_ROOT% terminal=%VAPOR_LAUNCHER_TERMINAL% hold=%VAPOR_LAUNCHER_HOLD_ON_EXIT%"
-if /I not "%VAPOR_LAUNCHER_TERMINAL%"=="1" (
-    call :log "opening visible command prompt"
-    set "VAPOR_LAUNCHER_TERMINAL=1"
-    set "VAPOR_LAUNCHER_HOLD_ON_EXIT=1"
-    set "VAPOR_TERMINAL_RELAUNCHED=1"
-    start "Vapor %MODE%" /wait /D "%APP_ROOT%" "%ComSpec%" /c ""%~f0" "%MODE%" %FORWARD_ARGS%"
-    set "STATUS=!ERRORLEVEL!"
-    call :log "visible command prompt exited with status !STATUS!"
-    exit /b !STATUS!
-)
+set "VAPOR_LAUNCHER_TERMINAL=1"
+set "VAPOR_LAUNCHER_HOLD_ON_EXIT=1"
+set "VAPOR_TERMINAL_RELAUNCHED=1"
+call :log "using current command prompt"
+pushd "%APP_ROOT%" >nul 2>nul
+if errorlevel 1 call :log "could not change directory to app root"
 
 if /I "%MODE%"=="installer" goto installer
 if /I "%MODE%"=="vapor-installer" goto installer
