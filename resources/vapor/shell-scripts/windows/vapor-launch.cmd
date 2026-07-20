@@ -44,6 +44,7 @@ if /I not "%VAPOR_LAUNCHER_TERMINAL%"=="1" (
     call :log "opening visible command prompt"
     set "VAPOR_LAUNCHER_TERMINAL=1"
     set "VAPOR_LAUNCHER_HOLD_ON_EXIT=1"
+    set "VAPOR_TERMINAL_RELAUNCHED=1"
     start "Vapor %MODE%" /wait /D "%APP_ROOT%" "%ComSpec%" /c ""%~f0" "%MODE%" %FORWARD_ARGS%"
     set "STATUS=!ERRORLEVEL!"
     call :log "visible command prompt exited with status !STATUS!"

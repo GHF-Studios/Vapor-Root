@@ -1,4 +1,4 @@
-#!/usr/bin/env sh
+#!/bin/sh
 set -eu
 
 target="x86_64-unknown-linux-gnu"
@@ -41,6 +41,10 @@ launch_terminal() {
     return 0
 }
 
+child_path() {
+    printf '%s\n' "$app_root/bin/$target:$app_root/cargo-home/bin:$app_root/rustup/bin:$app_root/tools/steamcmd:/usr/bin:/bin"
+}
+
 host_loader() {
     for candidate in \
         /run/host/lib64/ld-linux-x86-64.so.2 \
@@ -67,6 +71,7 @@ launch_host_konsole() {
         return 0
     }
     host_library_path="/run/host/usr/lib:/run/host/usr/lib64:/run/host/usr/lib/x86_64-linux-gnu:/run/host/usr/lib/pulseaudio:/run/host/usr/lib/libproxy:/run/host/usr/lib/qt6/plugins:/run/host/usr/lib/x86_64-linux-gnu/qt6/plugins:/run/host/lib:/run/host/lib64:/run/host/lib/x86_64-linux-gnu"
+    command_path=$(child_path)
     launch_terminal "host-konsole" env \
         -u LD_LIBRARY_PATH \
         -u LD_PRELOAD \
@@ -77,9 +82,15 @@ launch_host_konsole() {
         XDG_DATA_DIRS="/run/host/usr/local/share:/run/host/usr/share:/usr/share${XDG_DATA_DIRS:+:$XDG_DATA_DIRS}" \
         VAPOR_LAUNCHER_TERMINAL=1 \
         VAPOR_LAUNCHER_HOLD_ON_EXIT=1 \
+        VAPOR_TERMINAL_RELAUNCHED=1 \
         "$loader" --library-path "$host_library_path" \
-        /run/host/usr/bin/konsole --nofork -p tabtitle="$terminal_title" --workdir "$app_root" \
-        -e "$0" "$mode" "$@"
+        /run/host/usr/bin/konsole --nofork --hold -p tabtitle="$terminal_title" --workdir "$app_root" \
+        -e /usr/bin/env \
+        PATH="$command_path" \
+        VAPOR_LAUNCHER_TERMINAL=1 \
+        VAPOR_LAUNCHER_HOLD_ON_EXIT=1 \
+        VAPOR_TERMINAL_RELAUNCHED=1 \
+        "$0" "$mode" "$@"
 }
 
 run_command() {
@@ -127,13 +138,19 @@ if [ "${VAPOR_LAUNCHER_TERMINAL:-0}" != "1" ] && { [ ! -t 0 ] || [ ! -t 1 ]; }; 
     if [ "$mode" = "installer" ] || [ "$mode" = "vapor-installer" ]; then
         terminal_title="Vapor Installer"
     fi
+    command_path=$(child_path)
     log "no controlling terminal; mode=$mode app_root=$app_root container=${container:-unset} pressure_vessel_runtime=${PRESSURE_VESSEL_RUNTIME:-unset}"
     if [ "${container:-}" = "pressure-vessel" ] || [ -n "${PRESSURE_VESSEL_RUNTIME:-}" ]; then
         launch_host_konsole "$@"
         if command -v xterm >/dev/null 2>&1; then
             xterm=$(command -v xterm)
-            launch_terminal "steam-runtime-xterm" env VAPOR_LAUNCHER_TERMINAL=1 VAPOR_LAUNCHER_HOLD_ON_EXIT=1 \
-                "$xterm" -T "$terminal_title" -e "$0" "$mode" "$@"
+            launch_terminal "steam-runtime-xterm" env VAPOR_LAUNCHER_TERMINAL=1 VAPOR_LAUNCHER_HOLD_ON_EXIT=1 VAPOR_TERMINAL_RELAUNCHED=1 \
+                "$xterm" -hold -T "$terminal_title" -e /usr/bin/env \
+                PATH="$command_path" \
+                VAPOR_LAUNCHER_TERMINAL=1 \
+                VAPOR_LAUNCHER_HOLD_ON_EXIT=1 \
+                VAPOR_TERMINAL_RELAUNCHED=1 \
+                "$0" "$mode" "$@"
         fi
     fi
     konsole=
@@ -145,19 +162,24 @@ if [ "${VAPOR_LAUNCHER_TERMINAL:-0}" != "1" ] && { [ ! -t 0 ] || [ ! -t 1 ]; }; 
         konsole=$(command -v konsole)
     fi
     if [ -n "$konsole" ]; then
-        launch_terminal "konsole" env VAPOR_LAUNCHER_TERMINAL=1 VAPOR_LAUNCHER_HOLD_ON_EXIT=1 \
-            "$konsole" --nofork -p tabtitle="$terminal_title" --workdir "$app_root" \
-            -e "$0" "$mode" "$@"
-    fi
-    if command -v x-terminal-emulator >/dev/null 2>&1; then
-        x_terminal_emulator=$(command -v x-terminal-emulator)
-        launch_terminal "x-terminal-emulator" env VAPOR_LAUNCHER_TERMINAL=1 VAPOR_LAUNCHER_HOLD_ON_EXIT=1 \
-            "$x_terminal_emulator" -e "$0" "$mode" "$@"
+        launch_terminal "konsole" env VAPOR_LAUNCHER_TERMINAL=1 VAPOR_LAUNCHER_HOLD_ON_EXIT=1 VAPOR_TERMINAL_RELAUNCHED=1 \
+            "$konsole" --nofork --hold -p tabtitle="$terminal_title" --workdir "$app_root" \
+            -e /usr/bin/env \
+            PATH="$command_path" \
+            VAPOR_LAUNCHER_TERMINAL=1 \
+            VAPOR_LAUNCHER_HOLD_ON_EXIT=1 \
+            VAPOR_TERMINAL_RELAUNCHED=1 \
+            "$0" "$mode" "$@"
     fi
     if command -v xterm >/dev/null 2>&1; then
         xterm=$(command -v xterm)
-        launch_terminal "xterm" env VAPOR_LAUNCHER_TERMINAL=1 VAPOR_LAUNCHER_HOLD_ON_EXIT=1 \
-            "$xterm" -T "$terminal_title" -e "$0" "$mode" "$@"
+        launch_terminal "xterm" env VAPOR_LAUNCHER_TERMINAL=1 VAPOR_LAUNCHER_HOLD_ON_EXIT=1 VAPOR_TERMINAL_RELAUNCHED=1 \
+            "$xterm" -hold -T "$terminal_title" -e /usr/bin/env \
+            PATH="$command_path" \
+            VAPOR_LAUNCHER_TERMINAL=1 \
+            VAPOR_LAUNCHER_HOLD_ON_EXIT=1 \
+            VAPOR_TERMINAL_RELAUNCHED=1 \
+            "$0" "$mode" "$@"
     fi
     message="Steam started Vapor without a terminal, and no usable desktop terminal could be launched.
 
