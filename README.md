@@ -6,8 +6,9 @@ payload. It is source, not the Steam installation itself.
 
 Most day-to-day work happens through the installed Vapor Shell. Bootstrap
 installs may start from `bin/vapor`; release app payloads use
-`bin/<target>/vapor[.exe]` through `bin/vapor-launch.*` wrappers. Source
-repositories stay outside the Steam app root and are opened explicitly:
+`bin/<target>/vapor-entrypoint[.exe]`, which opens the platform terminal and
+runs the matching `bin/vapor-launch.*` script. Source repositories stay outside
+the Steam app root and are opened explicitly:
 
 ```text
 source open /path/to/Vapor-Root
@@ -32,10 +33,10 @@ root publish --account ACCOUNT --yes
 ## Product Topology
 
 - **Steam installation/app root**: the installed app directory that owns
-  `App.vapor.toml`, `bin/vapor-launch.*`, `bin/<target>/vapor[.exe]`,
-  optional bootstrap `bin/vapor`, app-local
-  Rust/Cargo, Git, SteamCMD, caches, generated output, installed content,
-  indexes, locks, and receipts.
+  `App.vapor.toml`, `bin/vapor-launch.*`,
+  `bin/<target>/vapor-entrypoint[.exe]`, `bin/<target>/vapor[.exe]`,
+  optional bootstrap `bin/vapor`, app-local Rust/Cargo, SteamCMD, caches,
+  generated output, installed content, indexes, locks, and receipts.
 - **Vapor-Root**: this source-stage application root. It packages and publishes
   the complete Steam app/depot.
 - **Vapor-Registry**: separate registry authority infrastructure. It is not a
@@ -96,8 +97,8 @@ vapor-installer dev-env install
 vapor-installer dev-env uninstall
 ```
 
-The default install prepares player-mode Git, SteamCMD, registry checkout, and
-generated `.vapor/` state. Developer mode is an explicit upgrade.
+The default install prepares player-mode SteamCMD and generated `.vapor/`
+state. Developer mode is an explicit upgrade.
 
 ## Planning
 

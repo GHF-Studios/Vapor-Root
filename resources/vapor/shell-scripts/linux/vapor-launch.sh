@@ -3,94 +3,23 @@ set -eu
 
 target="x86_64-unknown-linux-gnu"
 
-script_dir=$(CDPATH= cd -- "$(dirname -- "$0")" 2>/dev/null && pwd || pwd)
-app_root=$(CDPATH= cd -- "$script_dir/.." 2>/dev/null && pwd || pwd)
+if [ -n "${VAPOR_APP_ROOT:-}" ]; then
+    app_root=$VAPOR_APP_ROOT
+else
+    script_dir=$(CDPATH= cd -- "$(dirname -- "$0")" 2>/dev/null && pwd || pwd)
+    app_root=$(CDPATH= cd -- "$script_dir/.." 2>/dev/null && pwd || pwd)
+fi
+
 vapor="$app_root/bin/$target/vapor"
 installer="$app_root/bin/$target/vapor-installer"
 log_dir="$app_root/.vapor/logs"
 launch_log="$log_dir/launch-wrapper.log"
-
-if [ ! -x "$vapor" ]; then
-    cwd=$(pwd)
-    if [ -x "$cwd/bin/$target/vapor" ]; then
-        app_root=$cwd
-        vapor="$app_root/bin/$target/vapor"
-        installer="$app_root/bin/$target/vapor-installer"
-        log_dir="$app_root/.vapor/logs"
-        launch_log="$log_dir/launch-wrapper.log"
-    fi
-fi
 
 mkdir -p "$log_dir" 2>/dev/null || true
 
 log() {
     timestamp=$(date '+%Y-%m-%dT%H:%M:%S%z' 2>/dev/null || date 2>/dev/null || echo "unknown-time")
     printf '%s vapor-launch[%s]: %s\n' "$timestamp" "$$" "$*" >>"$launch_log" 2>/dev/null || true
-}
-
-launch_terminal() {
-    label=$1
-    shift
-    log "trying terminal '$label': $*"
-    if "$@" >>"$launch_log" 2>&1; then
-        log "terminal '$label' exited successfully"
-        exit 0
-    fi
-    status=$?
-    log "terminal '$label' exited with status $status"
-    return 0
-}
-
-child_path() {
-    printf '%s\n' "$app_root/bin/$target:$app_root/cargo-home/bin:$app_root/rustup/bin:$app_root/tools/steamcmd:/usr/bin:/bin"
-}
-
-host_loader() {
-    for candidate in \
-        /run/host/lib64/ld-linux-x86-64.so.2 \
-        /run/host/usr/lib64/ld-linux-x86-64.so.2 \
-        /run/host/lib/ld-linux-x86-64.so.2 \
-        /run/host/usr/lib/ld-linux-x86-64.so.2 \
-        /run/host/lib/x86_64-linux-gnu/ld-linux-x86-64.so.2 \
-        /run/host/usr/lib/x86_64-linux-gnu/ld-linux-x86-64.so.2
-    do
-        if [ -x "$candidate" ]; then
-            printf '%s\n' "$candidate"
-            return 0
-        fi
-    done
-    return 1
-}
-
-launch_host_konsole() {
-    if [ ! -x /run/host/usr/bin/konsole ]; then
-        return 0
-    fi
-    loader=$(host_loader) || {
-        log "host Konsole exists but no host dynamic loader was found under /run/host"
-        return 0
-    }
-    host_library_path="/run/host/usr/lib:/run/host/usr/lib64:/run/host/usr/lib/x86_64-linux-gnu:/run/host/usr/lib/pulseaudio:/run/host/usr/lib/libproxy:/run/host/usr/lib/qt6/plugins:/run/host/usr/lib/x86_64-linux-gnu/qt6/plugins:/run/host/lib:/run/host/lib64:/run/host/lib/x86_64-linux-gnu"
-    command_path=$(child_path)
-    launch_terminal "host-konsole" env \
-        -u LD_LIBRARY_PATH \
-        -u LD_PRELOAD \
-        -u LD_AUDIT \
-        -u STEAM_RUNTIME_LIBRARY_PATH \
-        PATH="/run/host/usr/local/bin:/run/host/usr/bin:/run/host/bin:${PATH:-/usr/bin:/bin}" \
-        QT_PLUGIN_PATH="/run/host/usr/lib/qt6/plugins:/run/host/usr/lib/x86_64-linux-gnu/qt6/plugins${QT_PLUGIN_PATH:+:$QT_PLUGIN_PATH}" \
-        XDG_DATA_DIRS="/run/host/usr/local/share:/run/host/usr/share:/usr/share${XDG_DATA_DIRS:+:$XDG_DATA_DIRS}" \
-        VAPOR_LAUNCHER_TERMINAL=1 \
-        VAPOR_LAUNCHER_HOLD_ON_EXIT=1 \
-        VAPOR_TERMINAL_RELAUNCHED=1 \
-        "$loader" --library-path "$host_library_path" \
-        /run/host/usr/bin/konsole --nofork --hold -p tabtitle="$terminal_title" --workdir "$app_root" \
-        -e /usr/bin/env \
-        PATH="$command_path" \
-        VAPOR_LAUNCHER_TERMINAL=1 \
-        VAPOR_LAUNCHER_HOLD_ON_EXIT=1 \
-        VAPOR_TERMINAL_RELAUNCHED=1 \
-        "$0" "$mode" "$@"
 }
 
 run_command() {
@@ -110,125 +39,48 @@ run_command() {
     exit "$status"
 }
 
-show_error_dialog() {
-    title=$1
-    message=$2
-    if [ -n "${STEAM_ZENITY:-}" ] && [ -x "$STEAM_ZENITY" ]; then
-        "$STEAM_ZENITY" --error --title="$title" --text="$message" >/dev/null 2>&1 || true
-        return
-    fi
-    if command -v zenity >/dev/null 2>&1; then
-        zenity --error --title="$title" --text="$message" >/dev/null 2>&1 || true
-        return
-    fi
-    if command -v kdialog >/dev/null 2>&1; then
-        kdialog --title "$title" --error "$message" >/dev/null 2>&1 || true
-    fi
-}
-
 mode="${1:-shell}"
 if [ "$#" -gt 0 ]; then
     shift
 fi
+
+export VAPOR_APP_ROOT="$app_root"
 export VAPOR_STEAM_LAUNCH=1
 export VAPOR_LAUNCH_MODE="$mode"
+export VAPOR_TERMINAL_RELAUNCHED=1
 
-if [ "${VAPOR_LAUNCHER_TERMINAL:-0}" != "1" ] && { [ ! -t 0 ] || [ ! -t 1 ]; }; then
-    terminal_title="Vapor Shell"
-    if [ "$mode" = "installer" ] || [ "$mode" = "vapor-installer" ]; then
-        terminal_title="Vapor Installer"
-    fi
-    command_path=$(child_path)
-    log "no controlling terminal; mode=$mode app_root=$app_root container=${container:-unset} pressure_vessel_runtime=${PRESSURE_VESSEL_RUNTIME:-unset}"
-    if [ "${container:-}" = "pressure-vessel" ] || [ -n "${PRESSURE_VESSEL_RUNTIME:-}" ]; then
-        launch_host_konsole "$@"
-        if command -v xterm >/dev/null 2>&1; then
-            xterm=$(command -v xterm)
-            launch_terminal "steam-runtime-xterm" env VAPOR_LAUNCHER_TERMINAL=1 VAPOR_LAUNCHER_HOLD_ON_EXIT=1 VAPOR_TERMINAL_RELAUNCHED=1 \
-                "$xterm" -hold -T "$terminal_title" -e /usr/bin/env \
-                PATH="$command_path" \
-                VAPOR_LAUNCHER_TERMINAL=1 \
-                VAPOR_LAUNCHER_HOLD_ON_EXIT=1 \
-                VAPOR_TERMINAL_RELAUNCHED=1 \
-                "$0" "$mode" "$@"
-        fi
-    fi
-    konsole=
-    if [ -x /usr/bin/konsole ]; then
-        konsole=/usr/bin/konsole
-    elif [ -x /run/host/usr/bin/konsole ]; then
-        konsole=/run/host/usr/bin/konsole
-    elif command -v konsole >/dev/null 2>&1; then
-        konsole=$(command -v konsole)
-    fi
-    if [ -n "$konsole" ]; then
-        launch_terminal "konsole" env VAPOR_LAUNCHER_TERMINAL=1 VAPOR_LAUNCHER_HOLD_ON_EXIT=1 VAPOR_TERMINAL_RELAUNCHED=1 \
-            "$konsole" --nofork --hold -p tabtitle="$terminal_title" --workdir "$app_root" \
-            -e /usr/bin/env \
-            PATH="$command_path" \
-            VAPOR_LAUNCHER_TERMINAL=1 \
-            VAPOR_LAUNCHER_HOLD_ON_EXIT=1 \
-            VAPOR_TERMINAL_RELAUNCHED=1 \
-            "$0" "$mode" "$@"
-    fi
-    if command -v xterm >/dev/null 2>&1; then
-        xterm=$(command -v xterm)
-        launch_terminal "xterm" env VAPOR_LAUNCHER_TERMINAL=1 VAPOR_LAUNCHER_HOLD_ON_EXIT=1 VAPOR_TERMINAL_RELAUNCHED=1 \
-            "$xterm" -hold -T "$terminal_title" -e /usr/bin/env \
-            PATH="$command_path" \
-            VAPOR_LAUNCHER_TERMINAL=1 \
-            VAPOR_LAUNCHER_HOLD_ON_EXIT=1 \
-            VAPOR_TERMINAL_RELAUNCHED=1 \
-            "$0" "$mode" "$@"
-    fi
-    message="Steam started Vapor without a terminal, and no usable desktop terminal could be launched.
+cd "$app_root" 2>/dev/null || true
+log "mode=$mode app_root=$app_root terminal=${VAPOR_LAUNCHER_TERMINAL:-0} hold=${VAPOR_LAUNCHER_HOLD_ON_EXIT:-0}"
 
-Log: $launch_log
-
-Install a terminal emulator, update/reinstall Vapor, or run:
-$0 shell"
-    show_error_dialog "Vapor launch wrapper" "$message"
-    echo "Vapor launch wrapper"
-    echo
-    echo "error: Steam started Vapor without a terminal, and no usable desktop terminal could be launched"
-    echo "  log: $launch_log"
-    echo
-    echo "Install a terminal emulator, update/reinstall Vapor, or run:"
-    echo "  $0 shell"
-    exit 127
-fi
+echo "Vapor launch wrapper"
+echo "  mode: $mode"
+echo "  app root: $app_root"
+echo "  log: $launch_log"
+echo
 
 case "$mode" in
     installer|vapor-installer)
         if [ ! -x "$installer" ]; then
-            echo "Vapor launch wrapper"
-            echo
             echo "error: expected Vapor Installer executable is missing"
             echo "  target:  $target"
             echo "  checked: $installer"
             echo
             echo "This Steam install is missing the platform installer for this launch option."
             echo "Update or reinstall the app on the selected Steam branch, then try again."
-            echo
-            echo "Starting an interactive shell so the window stays open."
-            exec "${SHELL:-/bin/sh}" -i
+            exit 127
         fi
         run_command "$installer" "$@"
         ;;
 esac
 
 if [ ! -x "$vapor" ]; then
-    echo "Vapor launch wrapper"
-    echo
     echo "error: expected Vapor executable is missing"
     echo "  target:  $target"
     echo "  checked: $vapor"
     echo
     echo "This Steam install is missing the platform binary for this launch option."
     echo "Update or reinstall the app on the selected Steam branch, then try again."
-    echo
-    echo "Starting an interactive shell so the window stays open."
-    exec "${SHELL:-/bin/sh}" -i
+    exit 127
 fi
 
 installer_log="$app_root/.vapor/logs/installer.log"
