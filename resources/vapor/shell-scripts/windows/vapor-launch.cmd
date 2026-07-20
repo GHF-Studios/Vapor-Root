@@ -1,14 +1,25 @@
 @echo off
-setlocal EnableExtensions EnableDelayedExpansion
+setlocal EnableExtensions
 
 set "TARGET=x86_64-pc-windows-gnullvm"
 
-if not "%VAPOR_APP_ROOT%"=="" (
-    set "APP_ROOT=%VAPOR_APP_ROOT%"
-) else (
-    set "SCRIPT_DIR=%~dp0"
-    for %%I in ("%SCRIPT_DIR%\..") do set "APP_ROOT=%%~fI"
-)
+if defined VAPOR_APP_ROOT goto app_root_from_env
+set "SCRIPT_DIR=%~dp0"
+pushd "%SCRIPT_DIR%\.." >nul 2>nul
+if errorlevel 1 goto app_root_from_script_fallback
+set "APP_ROOT=%CD%"
+popd >nul 2>nul
+goto app_root_ready
+
+:app_root_from_script_fallback
+set "APP_ROOT=%SCRIPT_DIR%\.."
+goto app_root_ready
+
+:app_root_from_env
+set "APP_ROOT=%VAPOR_APP_ROOT%"
+goto app_root_ready
+
+:app_root_ready
 
 set "VAPOR=%APP_ROOT%\bin\%TARGET%\vapor.exe"
 set "INSTALLER=%APP_ROOT%\bin\%TARGET%\vapor-installer.exe"
@@ -18,11 +29,14 @@ set "LAUNCH_LOG=%LOG_DIR%\launch-wrapper.log"
 if not exist "%LOG_DIR%" mkdir "%LOG_DIR%" >nul 2>nul
 
 set "MODE=%~1"
-if "%MODE%"=="" (
-    set "MODE=shell"
-) else (
-    shift /1
-)
+if "%MODE%"=="" goto default_mode
+shift /1
+goto mode_ready
+
+:default_mode
+set "MODE=shell"
+
+:mode_ready
 
 set "VAPOR_APP_ROOT=%APP_ROOT%"
 set "VAPOR_STEAM_LAUNCH=1"
@@ -52,16 +66,22 @@ if /I "%MODE%"=="vapor-installer" goto installer
 if not exist "%VAPOR%" goto missing_vapor
 
 set "INSTALLER_LOG=%APP_ROOT%\.vapor\logs\installer.log"
-if exist "%INSTALLER%" (
-    call "%INSTALLER%" --quiet install --app-root "%APP_ROOT%"
-    if errorlevel 1 (
-        set "VAPOR_INSTALLER_INSTALL_FAILED=vapor-installer exited with status !ERRORLEVEL!"
-        set "VAPOR_INSTALLER_LOG=%INSTALLER_LOG%"
-    )
-) else (
-    set "VAPOR_INSTALLER_INSTALL_FAILED=vapor-installer is missing for %TARGET%"
-    set "VAPOR_INSTALLER_LOG=%INSTALLER_LOG%"
-)
+if exist "%INSTALLER%" goto run_installer_bootstrap
+set "VAPOR_INSTALLER_INSTALL_FAILED=vapor-installer is missing for %TARGET%"
+set "VAPOR_INSTALLER_LOG=%INSTALLER_LOG%"
+goto installer_bootstrap_done
+
+:run_installer_bootstrap
+call "%INSTALLER%" --quiet install --app-root "%APP_ROOT%"
+if errorlevel 1 goto installer_bootstrap_failed
+goto installer_bootstrap_done
+
+:installer_bootstrap_failed
+set "VAPOR_INSTALLER_INSTALL_FAILED=vapor-installer exited with status %ERRORLEVEL%"
+set "VAPOR_INSTALLER_LOG=%INSTALLER_LOG%"
+goto installer_bootstrap_done
+
+:installer_bootstrap_done
 
 if /I "%MODE%"=="play" goto play
 if /I "%MODE%"=="loo-cast" goto play
@@ -112,17 +132,17 @@ goto done
 
 :done
 call :log "vapor exited with status %STATUS%"
-if defined VAPOR_LAUNCHER_HOLD_ON_EXIT (
-    echo.
-    echo Vapor exited with status %STATUS%.
-    echo Log: %LAUNCH_LOG%
-    echo This command prompt will stay open. Close it when you are done.
-)
+if not defined VAPOR_LAUNCHER_HOLD_ON_EXIT goto done_no_hold_message
+echo.
+echo Vapor exited with status %STATUS%.
+echo Log: %LAUNCH_LOG%
+echo This command prompt will stay open. Close it when you are done.
+
+:done_no_hold_message
 popd >nul 2>nul
 exit /b %STATUS%
 
 :log
-if defined LAUNCH_LOG (
-    >> "%LAUNCH_LOG%" echo [%DATE% %TIME%] vapor-launch: %~1
-)
+if not defined LAUNCH_LOG exit /b 0
+>> "%LAUNCH_LOG%" echo [%DATE% %TIME%] vapor-launch: %~1
 exit /b 0
