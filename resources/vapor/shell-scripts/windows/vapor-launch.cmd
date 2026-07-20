@@ -1,6 +1,18 @@
 @echo off
 setlocal EnableExtensions EnableDelayedExpansion
 
+if "%ComSpec%"=="" set "ComSpec=cmd.exe"
+call :main %*
+set "STATUS=%ERRORLEVEL%"
+echo.
+echo Vapor exited with status %STATUS%.
+if defined LAUNCH_LOG echo Log: %LAUNCH_LOG%
+echo Starting an interactive command prompt. Close this window when you are done.
+call :log "vapor exited with status %STATUS%; keeping command prompt open"
+"%ComSpec%" /k
+exit /b %STATUS%
+
+:main
 set "TARGET=x86_64-pc-windows-gnullvm"
 set "SCRIPT_DIR=%~dp0"
 for %%I in ("%SCRIPT_DIR%\..") do set "APP_ROOT=%%~fI"
@@ -27,7 +39,6 @@ if "%MODE%"=="" (
 ) else (
     shift /1
 )
-if "%ComSpec%"=="" set "ComSpec=cmd.exe"
 set "VAPOR_STEAM_LAUNCH=1"
 set "VAPOR_LAUNCH_MODE=%MODE%"
 
@@ -46,6 +57,11 @@ set "VAPOR_TERMINAL_RELAUNCHED=1"
 call :log "using current command prompt"
 pushd "%APP_ROOT%" >nul 2>nul
 if errorlevel 1 call :log "could not change directory to app root"
+echo Vapor launch wrapper
+echo   mode: %MODE%
+echo   app root: %APP_ROOT%
+echo   log: %LAUNCH_LOG%
+echo.
 
 if /I "%MODE%"=="installer" goto installer
 if /I "%MODE%"=="vapor-installer" goto installer
@@ -72,19 +88,19 @@ goto command
 :installer
 if not exist "%INSTALLER%" goto missing_installer
 call "%INSTALLER%" %FORWARD_ARGS%
-goto after_vapor
+exit /b %ERRORLEVEL%
 
 :play
 call "%VAPOR%" --startup-script loo-cast %FORWARD_ARGS%
-goto after_vapor
+exit /b %ERRORLEVEL%
 
 :shell
 call "%VAPOR%" %FORWARD_ARGS%
-goto after_vapor
+exit /b %ERRORLEVEL%
 
 :command
 call "%VAPOR%" %MODE% %FORWARD_ARGS%
-goto after_vapor
+exit /b %ERRORLEVEL%
 
 :missing_vapor
 echo Vapor launch wrapper
@@ -95,8 +111,7 @@ echo   checked: %VAPOR%
 echo.
 echo This Steam install is missing the platform binary for this launch option.
 echo Update or reinstall the app on the selected Steam branch, then try again.
-set "STATUS=9009"
-goto keep_open
+exit /b 9009
 
 :missing_installer
 echo Vapor launch wrapper
@@ -107,19 +122,7 @@ echo   checked: %INSTALLER%
 echo.
 echo This Steam install is missing the platform installer for this launch option.
 echo Update or reinstall the app on the selected Steam branch, then try again.
-set "STATUS=9009"
-goto keep_open
-
-:after_vapor
-set "STATUS=%ERRORLEVEL%"
-
-:keep_open
-echo.
-echo Vapor exited with status %STATUS%.
-echo Starting an interactive command prompt. Close this window when you are done.
-call :log "vapor exited with status %STATUS%; keeping command prompt open"
-"%ComSpec%" /k
-exit /b %STATUS%
+exit /b 9009
 
 :log
 if defined LAUNCH_LOG (
