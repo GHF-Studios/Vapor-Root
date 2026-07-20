@@ -444,6 +444,15 @@
   `root publish --dry-run --skip-build` generated app/common/linux/windows VDFs
   and confirmed the Windows depot stages `vapor.exe`, `vapor-installer.exe`,
   and `libunwind.dll`.
+- Simplified Steam launch ownership: `vapor-entrypoint[.exe]` now owns only
+  terminal launch and argument forwarding, `bin/vapor-launch.*` owns
+  launch-target dispatch and terminal hold behavior, and Vapor Shell no longer
+  performs its own no-terminal relaunch.
+- Renamed launch wrapper environment/output from loose mode wording to
+  `VAPOR_LAUNCH_TARGET`, `VAPOR_LAUNCH_TERMINAL`, and `VAPOR_LAUNCH_HOLD`.
+- Routed installer-launched helper stdout/stderr through
+  `<app-root>/.vapor/logs/installer.log` so launch-time player bootstrap no
+  longer leaks curl/tar/PowerShell/rustup output into the Steam-visible shell.
 
 ## Owned uncommitted changes
 
@@ -479,13 +488,15 @@
   testing: Windows depot binary availability, app-local setup, target-specific
   runtime outputs, and ABI policy. The example dynamic loader now has a Windows
   implementation, but it has not yet been compiled or run under MSVC.
-- Steam launch options for the runtime depot are Linux Play
-  `bin/vapor-launch.sh play`, Linux Shell `bin/vapor-launch.sh shell`, Linux
-  Installer `bin/vapor-launch.sh installer`, Windows Play
-  `bin\vapor-launch.cmd play`, Windows Shell `bin\vapor-launch.cmd shell`, and
-  Windows Installer `bin\vapor-launch.cmd installer`. Play/Shell wrapper modes
-  run quiet `vapor-installer install` first; Installer mode opens
-  `vapor-installer` directly. Those wrappers expect
+- Steam launch options for the runtime depot use native entrypoints: Linux Play
+  executable `bin/x86_64-unknown-linux-gnu/vapor-entrypoint` with argument
+  `play`, Linux Shell the same executable with argument `shell`, Linux
+  Installer the same executable with argument `installer`, Windows Play
+  executable `bin\x86_64-pc-windows-gnullvm\vapor-entrypoint.exe` with
+  argument `play`, Windows Shell the same executable with argument `shell`, and
+  Windows Installer the same executable with argument `installer`. Play/Shell
+  launch targets run quiet `vapor-installer install` first; the Installer
+  launch target opens `vapor-installer` directly. Those wrappers expect
   `bin/x86_64-unknown-linux-gnu/vapor` and
   `bin/x86_64-unknown-linux-gnu/vapor-installer`, plus
   `bin\x86_64-pc-windows-gnullvm\vapor.exe` and

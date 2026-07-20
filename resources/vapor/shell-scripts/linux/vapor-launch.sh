@@ -28,7 +28,7 @@ run_command() {
     status=$?
     set -e
     log "command exited with status $status: $*"
-    if [ "${VAPOR_LAUNCHER_HOLD_ON_EXIT:-0}" = "1" ]; then
+    if [ "${VAPOR_LAUNCH_HOLD:-0}" = "1" ]; then
         echo
         echo "Vapor exited with status $status."
         echo "Log: $launch_log"
@@ -39,7 +39,7 @@ run_command() {
     exit "$status"
 }
 
-mode="${1:-shell}"
+launch_target="${1:-shell}"
 if [ "$#" -gt 0 ]; then
     shift
 fi
@@ -49,8 +49,7 @@ export VAPOR_HOME="$app_root"
 export CARGO_HOME="$app_root/cargo-home"
 export RUSTUP_HOME="$app_root/rustup-home"
 export VAPOR_STEAM_LAUNCH=1
-export VAPOR_LAUNCH_MODE="$mode"
-export VAPOR_TERMINAL_RELAUNCHED=1
+export VAPOR_LAUNCH_TARGET="$launch_target"
 
 launch_path="$app_root/bin/$target:$app_root/cargo-home/bin:$app_root/tools/steamcmd:$app_root/tools/zig:$app_root/tools/cross/bin:$app_root/tools/llvm-mingw/bin"
 for toolchain in "$app_root"/rustup-home/toolchains/*; do
@@ -61,15 +60,15 @@ done
 export PATH="$launch_path:${PATH:-}"
 
 cd "$app_root" 2>/dev/null || true
-log "mode=$mode app_root=$app_root terminal=${VAPOR_LAUNCHER_TERMINAL:-0} hold=${VAPOR_LAUNCHER_HOLD_ON_EXIT:-0}"
+log "launch_target=$launch_target app_root=$app_root terminal=${VAPOR_LAUNCH_TERMINAL:-0} hold=${VAPOR_LAUNCH_HOLD:-0}"
 
 echo "Vapor launch wrapper"
-echo "  mode: $mode"
+echo "  launch target: $launch_target"
 echo "  app root: $app_root"
 echo "  log: $launch_log"
 echo
 
-case "$mode" in
+case "$launch_target" in
     installer|vapor-installer)
         if [ ! -x "$installer" ]; then
             echo "error: expected Vapor Installer executable is missing"
@@ -108,7 +107,7 @@ else
     export VAPOR_INSTALLER_LOG="$installer_log"
 fi
 
-case "$mode" in
+case "$launch_target" in
     play|loo-cast)
         run_command "$vapor" --startup-script loo-cast "$@"
         ;;
@@ -116,6 +115,6 @@ case "$mode" in
         run_command "$vapor" "$@"
         ;;
     *)
-        run_command "$vapor" "$mode" "$@"
+        run_command "$vapor" "$launch_target" "$@"
         ;;
 esac

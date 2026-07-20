@@ -28,23 +28,22 @@ set "LAUNCH_LOG=%LOG_DIR%\launch-wrapper.log"
 
 if not exist "%LOG_DIR%" mkdir "%LOG_DIR%" >nul 2>nul
 
-set "MODE=%~1"
-if "%MODE%"=="" goto default_mode
+set "LAUNCH_TARGET=%~1"
+if "%LAUNCH_TARGET%"=="" goto default_launch_target
 shift /1
-goto mode_ready
+goto launch_target_ready
 
-:default_mode
-set "MODE=shell"
+:default_launch_target
+set "LAUNCH_TARGET=shell"
 
-:mode_ready
+:launch_target_ready
 
 set "VAPOR_APP_ROOT=%APP_ROOT%"
 set "VAPOR_HOME=%APP_ROOT%"
 set "CARGO_HOME=%APP_ROOT%\cargo-home"
 set "RUSTUP_HOME=%APP_ROOT%\rustup-home"
 set "VAPOR_STEAM_LAUNCH=1"
-set "VAPOR_LAUNCH_MODE=%MODE%"
-set "VAPOR_TERMINAL_RELAUNCHED=1"
+set "VAPOR_LAUNCH_TARGET=%LAUNCH_TARGET%"
 set "PATH=%APP_ROOT%\bin\%TARGET%;%APP_ROOT%\cargo-home\bin;%APP_ROOT%\tools\steamcmd;%APP_ROOT%\tools\zig;%APP_ROOT%\tools\cross\bin;%APP_ROOT%\tools\llvm-mingw\bin;%PATH%"
 for /d %%T in ("%APP_ROOT%\rustup-home\toolchains\*") do if exist "%%~fT\bin" set "PATH=%%~fT\bin;%PATH%"
 
@@ -56,18 +55,18 @@ shift /1
 goto collect_args
 
 :args_done
-if defined LAUNCH_LOG >> "%LAUNCH_LOG%" echo [%DATE% %TIME%] vapor-launch: mode=%MODE% app_root="%APP_ROOT%" terminal=%VAPOR_LAUNCHER_TERMINAL% hold=%VAPOR_LAUNCHER_HOLD_ON_EXIT%
+if defined LAUNCH_LOG >> "%LAUNCH_LOG%" echo [%DATE% %TIME%] vapor-launch: launch_target=%LAUNCH_TARGET% app_root="%APP_ROOT%" terminal=%VAPOR_LAUNCH_TERMINAL% hold=%VAPOR_LAUNCH_HOLD%
 pushd "%APP_ROOT%" >nul 2>nul
 if errorlevel 1 if defined LAUNCH_LOG >> "%LAUNCH_LOG%" echo [%DATE% %TIME%] vapor-launch: could not change directory to app root
 
 echo Vapor launch wrapper
-echo   mode: %MODE%
+echo   launch target: %LAUNCH_TARGET%
 echo   app root: "%APP_ROOT%"
 echo   log: "%LAUNCH_LOG%"
 echo.
 
-if /I "%MODE%"=="installer" goto installer
-if /I "%MODE%"=="vapor-installer" goto installer
+if /I "%LAUNCH_TARGET%"=="installer" goto installer
+if /I "%LAUNCH_TARGET%"=="vapor-installer" goto installer
 if not exist "%VAPOR%" goto missing_vapor
 
 set "INSTALLER_LOG=%APP_ROOT%\.vapor\logs\installer.log"
@@ -88,10 +87,10 @@ goto installer_bootstrap_done
 
 :installer_bootstrap_done
 
-if /I "%MODE%"=="play" goto play
-if /I "%MODE%"=="loo-cast" goto play
-if /I "%MODE%"=="shell" goto shell
-if /I "%MODE%"=="vapor-shell" goto shell
+if /I "%LAUNCH_TARGET%"=="play" goto play
+if /I "%LAUNCH_TARGET%"=="loo-cast" goto play
+if /I "%LAUNCH_TARGET%"=="shell" goto shell
+if /I "%LAUNCH_TARGET%"=="vapor-shell" goto shell
 goto command
 
 :installer
@@ -111,7 +110,7 @@ set "STATUS=%ERRORLEVEL%"
 goto done
 
 :command
-"%VAPOR%" "%MODE%" %FORWARD_ARGS%
+"%VAPOR%" "%LAUNCH_TARGET%" %FORWARD_ARGS%
 set "STATUS=%ERRORLEVEL%"
 goto done
 
@@ -137,7 +136,7 @@ goto done
 
 :done
 if defined LAUNCH_LOG >> "%LAUNCH_LOG%" echo [%DATE% %TIME%] vapor-launch: vapor exited with status %STATUS%
-if not defined VAPOR_LAUNCHER_HOLD_ON_EXIT goto done_no_hold_message
+if not defined VAPOR_LAUNCH_HOLD goto done_no_hold_message
 echo.
 echo Vapor exited with status %STATUS%.
 echo Log: "%LAUNCH_LOG%"
