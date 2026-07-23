@@ -514,8 +514,11 @@
 - Added `Vapor-Server-Root/docs/decisions-and-backlog.md` to persist the server
   boundaries, current scaffold behavior, near-term backlog, non-goals, and open
   questions. Corrected the local workspace shape so service repositories are
-  checked out as `Vapor-Server-Root/services/*` submodules, not as sibling
-  top-level checkouts.
+  checked out as root-level `Vapor-Server-Root/Vapor-*-Server` submodules,
+  matching `Vapor-Root`, not as sibling top-level checkouts.
+- Recorded the current VPS baseline direction without secrets: direct
+  Caddy/systemd hosting can use Ubuntu 26.04 LTS, while choosing Plesk would
+  require a currently supported Plesk OS such as Ubuntu 24.04 LTS.
 
 ## Owned uncommitted changes
 
