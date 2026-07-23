@@ -512,6 +512,9 @@
   those commits while keeping the root submodule worktrees deinitialized
   locally. Updated local RustRover project metadata so the new server root and
   sibling service repos are visible as Git/Cargo project roots.
+- Added `Vapor-Server-Root/docs/decisions-and-backlog.md` to persist the server
+  boundaries, current scaffold behavior, near-term backlog, non-goals, and open
+  questions while keeping service submodule worktrees deinitialized locally.
 
 ## Owned uncommitted changes
 
