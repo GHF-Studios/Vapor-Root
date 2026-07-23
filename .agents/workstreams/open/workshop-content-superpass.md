@@ -519,6 +519,12 @@
 - Recorded the current VPS baseline direction without secrets: direct
   Caddy/systemd hosting can use Ubuntu 26.04 LTS, while choosing Plesk would
   require a currently supported Plesk OS such as Ubuntu 24.04 LTS.
+- Confirmed key-based root SSH reachability to the new Ubuntu 26.04 VPS without
+  persisting secrets, moved `Vapor-Identity-Server` from an ad-hoc registry-file
+  scaffold to SQLite/SQLx schema bootstrap, and added first-pass
+  `Vapor-Server-Root` deployment automation for no-Plesk Caddy/systemd hosting,
+  root-level submodule deployment, server-local env files, SQLite state, systemd
+  units, Caddy routing for `vapor.ghf-studios.site`, and local health checks.
 
 ## Owned uncommitted changes
 
