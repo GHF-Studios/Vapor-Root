@@ -506,6 +506,12 @@
   scaffolds, and diagnostics serves health plus opt-in upload and
   token-protected list/download/export scaffolds. `Vapor-Server-Root` now
   points its submodules at those service commits.
+- Migrated the four server service binaries from hand-rolled standard-library
+  HTTP parsing to Axum/Tokio scaffolds, added service `.gitignore` files for
+  `target/` and local `state/`, and advanced `Vapor-Server-Root` gitlinks to
+  those commits while keeping the root submodule worktrees deinitialized
+  locally. Updated local RustRover project metadata so the new server root and
+  sibling service repos are visible as Git/Cargo project roots.
 
 ## Owned uncommitted changes
 
