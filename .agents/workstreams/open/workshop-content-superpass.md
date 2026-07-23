@@ -499,6 +499,13 @@
   README/AGENTS scaffolds, while `Vapor-Server-Root` has the orchestration
   scaffold, route map, example Caddy config, systemd notes, `server-root.toml`,
   and service submodules pointing at the pushed service commits.
+- Added and pushed minimal no-dependency Rust service binaries for the four
+  server services: homepage serves health/home/license/Impressum placeholders,
+  docs serves health/current docs plus token-protected current-doc upload and
+  export, identity serves health/status plus token-protected init/export
+  scaffolds, and diagnostics serves health plus opt-in upload and
+  token-protected list/download/export scaffolds. `Vapor-Server-Root` now
+  points its submodules at those service commits.
 
 ## Owned uncommitted changes
 
