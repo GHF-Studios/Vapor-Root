@@ -25,7 +25,8 @@ review can place an assertion in active planning.
 - Bootstrap: 3 retained Vapor-Root source documents.
 - Glossary: 125 pages imported from the Loo-Cast glossary.
 - Tech glossary: 27 pages imported from the Loo-Cast tech glossary.
-- Raw input: 1 retained direct owner/assistant exploration transcript.
+- Raw input: 1 atomized owner/assistant exploration transcript and 2 retained
+  unprocessed owner/assistant planning captures.
 - Loo-Cast source: the `origin/develop` glossary snapshot used during import.
 - Authority on import: none; every source and extracted candidate is unvetted.
 
@@ -203,4 +204,5 @@ None.
 
 ## Unprocessed raw-input sources
 
-None.
+- [2026-07-22-diagnostics-registry-infrastructure-planning.md](source-corpus/raw-input/vapor-diagnostics/2026-07-22-diagnostics-registry-infrastructure-planning.md)
+- [2026-07-23-vapor-server-root-topology.md](source-corpus/raw-input/vapor-server/2026-07-23-vapor-server-root-topology.md)

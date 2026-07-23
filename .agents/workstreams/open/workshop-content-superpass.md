@@ -454,6 +454,51 @@
 - Routed installer-launched helper stdout/stderr through
   `<app-root>/.vapor/logs/installer.log` so launch-time player bootstrap no
   longer leaks curl/tar/PowerShell/rustup output into the Steam-visible shell.
+- Drafted an unapproved private-test diagnostics rewrite away from
+  Git/Vapor-Registry transport:
+  `--send-diagnostics` now captures a local structured run under
+  `.vapor/diagnostics/runs/YYYY-MM-DD/<unix_timestamp>-<machine_id>-<platform>-<run_id>/`
+  with `metadata.toml`, `vapor.log`, and `.vapor/diagnostics/latest.toml`.
+- Drafted diagnostics metadata for run identity, generated local machine identity,
+  hostname when available, platform, app root, executable, startup/direct/script
+  context, installation identity/readiness, selected source, launch target,
+  selected packagepack, engine handoff, command/script steps, redacted errors,
+  upload request state, and exit state.
+- Drafted removal of normal UX for arbitrary `--diagnostics-registry PATH` and Git-backed
+  diagnostics push. `diagnostics upload` now uses a future HTTP-server transport
+  seam that currently reports not configured; `diagnostics upload --dry-run`
+  previews the local run and transport without sending.
+- Drafted redaction for obvious password/token/secret/key/auth/ticket/credential/
+  cookie arguments and log text, including entrypoint forwarded-argument logs;
+  stopped capturing broad diagnostics registry environment values, avoided
+  full-command launch-wrapper logging, and disallowed real diagnostics uploads
+  from scripts.
+- Drafted launch PATH boundary cleanup: Steam launch scripts and the Linux
+  entrypoint now expose only app-facing `bin/<target>` and `bin` paths, while
+  workflow child commands filter inherited app-local raw tool paths and invoke
+  low-level tools by exact app-local paths instead of PATH exposure.
+- Verified the diagnostics/PATH slice with app-local Cargo by absolute path:
+  `cargo fmt --all --check` in Vapor-Shell and Vapor-Entrypoint,
+  `cargo test -p vapor_shell --lib`,
+  `cargo test -p vapor_shell --test command`,
+  `cargo clippy -p vapor_shell --all-targets -- -D warnings`,
+  `cargo test --all-targets` in Vapor-Entrypoint,
+  `cargo clippy --all-targets -- -D warnings` in Vapor-Entrypoint, and
+  `git diff --check` in Vapor-Root, Vapor-Shell, and Vapor-Entrypoint.
+- Captured the diagnostics, registry, server, privacy, GitHub issue strategy,
+  launch UX, installer lifecycle, and app-local tooling planning surface as
+  unprocessed planning intake under
+  `docs/planning-intake/source-corpus/raw-input/vapor-diagnostics/`.
+- Captured the intended Vapor server-root topology as unprocessed planning
+  intake: `Vapor-Server-Root` beside `Vapor-Root`, with service submodules for
+  homepage, docs, identity, and diagnostics, single-domain path routing,
+  composed export/import, and future MCP/ACP capability-surface notes.
+- Initialized the new Vapor server repository set locally and on GitHub:
+  `Vapor-Homepage-Server`, `Vapor-Docs-Server`,
+  `Vapor-Identity-Server`, and `Vapor-Diagnostics-Server` each have initial
+  README/AGENTS scaffolds, while `Vapor-Server-Root` has the orchestration
+  scaffold, route map, example Caddy config, systemd notes, `server-root.toml`,
+  and service submodules pointing at the pushed service commits.
 
 ## Owned uncommitted changes
 
@@ -476,6 +521,17 @@
   schema docs, root `App-Source.vapor.toml` configured with DepotIDs 2122621,
   2122622, and 2122623, runtime `App.vapor.toml`, and source resources under
   `resources/vapor/` and `resources/steam/`.
+- Local-first diagnostics capture/metadata/upload seam, diagnostics command
+  grammar/docs/tests, and launch/workflow PATH boundary cleanup. This slice is
+  an unapproved draft under planning review, not accepted architecture.
+- Raw planning intake capture for diagnostics, registry, server, privacy,
+  GitHub issue strategy, launch UX, installer lifecycle, and app-local tooling
+  boundaries.
+- Raw planning intake capture for Vapor server-root/service repository
+  topology and future MCP/ACP capability-surface notes.
+- Initial pushed scaffolds for `Vapor-Server-Root`,
+  `Vapor-Homepage-Server`, `Vapor-Docs-Server`,
+  `Vapor-Identity-Server`, and `Vapor-Diagnostics-Server`.
 
 ## Remaining
 
@@ -523,6 +579,6 @@
 
 ## Smallest resume action
 
-Review the current source/submodule diffs, locally deploy into the real Steam
-app root, run `root publish --skip-build --dry-run`, then publish to `vapor-dev`
-only after the real staged common/Linux/Windows payload is confirmed.
+Keep implementation paused for the diagnostics slice. First review the
+persisted planning intake capture, then scope only the local diagnostics capture
+MVP before shrinking or replacing the current unapproved draft.
