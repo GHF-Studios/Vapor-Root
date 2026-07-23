@@ -525,6 +525,13 @@
   `Vapor-Server-Root` deployment automation for no-Plesk Caddy/systemd hosting,
   root-level submodule deployment, server-local env files, SQLite state, systemd
   units, Caddy routing for `vapor.ghf-studios.site`, and local health checks.
+- Ran the first real VPS bootstrap/deploy on Ubuntu 26.04: installed Caddy,
+  Rust/Cargo/build dependencies, created the `vapor` system user, generated
+  server-local env/token files, cloned/built the root-level service submodules,
+  installed/restarted systemd units, initialized the SQLite identity database,
+  tightened state permissions, and verified Caddy plus all four Vapor services
+  running with local health checks. DNS for `vapor.ghf-studios.site` remains
+  the external/public-HTTPS blocker.
 
 ## Owned uncommitted changes
 
