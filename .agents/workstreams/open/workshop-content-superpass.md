@@ -509,12 +509,13 @@
 - Migrated the four server service binaries from hand-rolled standard-library
   HTTP parsing to Axum/Tokio scaffolds, added service `.gitignore` files for
   `target/` and local `state/`, and advanced `Vapor-Server-Root` gitlinks to
-  those commits while keeping the root submodule worktrees deinitialized
-  locally. Updated local RustRover project metadata so the new server root and
-  sibling service repos are visible as Git/Cargo project roots.
+  those commits. Updated local RustRover project metadata so the new server
+  root and service submodules are visible as Git/Cargo project roots.
 - Added `Vapor-Server-Root/docs/decisions-and-backlog.md` to persist the server
   boundaries, current scaffold behavior, near-term backlog, non-goals, and open
-  questions while keeping service submodule worktrees deinitialized locally.
+  questions. Corrected the local workspace shape so service repositories are
+  checked out as `Vapor-Server-Root/services/*` submodules, not as sibling
+  top-level checkouts.
 
 ## Owned uncommitted changes
 
