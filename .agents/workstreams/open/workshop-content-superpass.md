@@ -543,6 +543,12 @@
   `/etc/vapor-server/root.env`, the timer is enabled/active, the first
   timer-triggered deploy completed successfully against `main`, and public/local
   health checks still pass.
+- Added and deployed root-level state export/restore scripts in
+  `Vapor-Server-Root`. Verified a real root-only VPS export bundle under
+  `/var/backups/vapor-server` containing `/var/lib/vapor-server` state,
+  manifest metadata, docs state, identity SQLite state, and diagnostics state,
+  explicitly excluding `/etc/vapor-server` env/token files. Restore exists as an
+  explicit `--yes` operation and has not been run against the live VPS.
 
 ## Owned uncommitted changes
 
