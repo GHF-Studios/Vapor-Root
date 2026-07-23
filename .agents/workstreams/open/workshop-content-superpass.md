@@ -566,8 +566,10 @@
   script for a restricted `vapor-gh-actions` deploy user. Generated a dedicated
   local deploy key outside the repo, installed only its public key on the VPS,
   and verified that the restricted key can run `sudo -n systemctl start
-  vapor-deploy.service` successfully. GitHub CLI auth is currently invalid, so
-  repository secrets and branch protection remain a dashboard/re-auth step.
+  vapor-deploy.service` successfully. The GitHub Actions workflow now no-ops
+  successfully until deployment secrets are configured. GitHub CLI auth is
+  currently invalid, so repository secrets and branch protection remain a
+  dashboard/re-auth step.
 
 ## Owned uncommitted changes
 
