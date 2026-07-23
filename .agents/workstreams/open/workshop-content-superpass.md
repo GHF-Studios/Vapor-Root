@@ -562,6 +562,12 @@
   for HTTPS or SSH-tunnel use only. Server-local identity env keys were ensured
   on the VPS without printing secrets; real Steam/GitHub credentials are still
   unset.
+- Added GitHub Actions deploy-trigger plumbing in `Vapor-Server-Root` and a VPS
+  script for a restricted `vapor-gh-actions` deploy user. Generated a dedicated
+  local deploy key outside the repo, installed only its public key on the VPS,
+  and verified that the restricted key can run `sudo -n systemctl start
+  vapor-deploy.service` successfully. GitHub CLI auth is currently invalid, so
+  repository secrets and branch protection remain a dashboard/re-auth step.
 
 ## Owned uncommitted changes
 
