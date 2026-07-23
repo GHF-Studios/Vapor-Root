@@ -532,6 +532,12 @@
   tightened state permissions, and verified Caddy plus all four Vapor services
   running with local health checks. DNS for `vapor.ghf-studios.site` remains
   the external/public-HTTPS blocker.
+- Added and deployed domain-independent operations scripts: pre-DNS public HTTP
+  fallback routing, SSH/UFW hardening, public HTTP health checks, token-protected
+  docs upload smoke testing, and diagnostics upload/redaction smoke testing.
+  Verified key-only SSH still works, UFW allows only SSH/HTTP/HTTPS inbound,
+  Caddy serves the IP fallback, docs placeholder upload succeeds, and diagnostics
+  redaction is applied on disk.
 
 ## Owned uncommitted changes
 
