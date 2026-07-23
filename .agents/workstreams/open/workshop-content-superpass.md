@@ -538,6 +538,11 @@
   Verified key-only SSH still works, UFW allows only SSH/HTTP/HTTPS inbound,
   Caddy serves the IP fallback, docs placeholder upload succeeds, and diagnostics
   redaction is applied on disk.
+- Added and deployed `Vapor-Server-Root` automatic branch polling through
+  `vapor-deploy.timer`. The VPS now stores non-secret deployment settings in
+  `/etc/vapor-server/root.env`, the timer is enabled/active, the first
+  timer-triggered deploy completed successfully against `main`, and public/local
+  health checks still pass.
 
 ## Owned uncommitted changes
 
