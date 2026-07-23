@@ -549,6 +549,19 @@
   manifest metadata, docs state, identity SQLite state, and diagnostics state,
   explicitly excluding `/etc/vapor-server` env/token files. Restore exists as an
   explicit `--yes` operation and has not been run against the live VPS.
+- Added and deployed the real pre-DNS docs publish path: `Vapor-Docs-Server`
+  accepts safe `tar.gz` docs-tree uploads and serves static docs assets, while
+  `Vapor-Server-Root` has SSH-based docs bundle build/upload helpers that keep
+  the docs admin token server-local. Published the curated Vapor docs bundle
+  from `Vapor-Root` to the VPS; `/docs/`, mdBook pages, Shell markdown, and
+  docs metadata are reachable through the temporary IP fallback.
+- Added and deployed `Vapor-Identity-Server` real verification seams:
+  Steam ticket verification via server-side Steam Web API config, GitHub token
+  verification via GitHub API config, fail-closed readiness when credentials are
+  missing, admin profile listing, and a read-only Basic-auth dashboard intended
+  for HTTPS or SSH-tunnel use only. Server-local identity env keys were ensured
+  on the VPS without printing secrets; real Steam/GitHub credentials are still
+  unset.
 
 ## Owned uncommitted changes
 
