@@ -21,11 +21,12 @@ log() {
 }
 
 run_command() {
+    command_label=${1:-"<command>"}
     set +e
     "$@"
     status=$?
     set -e
-    log "command exited with status $status: $*"
+    log "command exited with status $status: $command_label"
     if [ "$hold_terminal" = "1" ]; then
         echo
         echo "Vapor exited with status $status."
@@ -60,16 +61,7 @@ if [ "$#" -gt 0 ]; then
     shift
 fi
 
-export VAPOR_HOME="$app_root"
-export CARGO_HOME="$app_root/cargo-home"
-export RUSTUP_HOME="$app_root/rustup-home"
-
-launch_path="$app_root/bin/$target:$app_root/cargo-home/bin:$app_root/tools/steamcmd:$app_root/tools/zig:$app_root/tools/cross/bin:$app_root/tools/llvm-mingw/bin"
-for toolchain in "$app_root"/rustup-home/toolchains/*; do
-    if [ -d "$toolchain/bin" ]; then
-        launch_path="$toolchain/bin:$launch_path"
-    fi
-done
+launch_path="$app_root/bin/$target:$app_root/bin"
 export PATH="$launch_path:${PATH:-}"
 
 cd "$app_root" 2>/dev/null || true

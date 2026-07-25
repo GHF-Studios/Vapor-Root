@@ -44,11 +44,7 @@ set "LAUNCH_TARGET=shell"
 
 :launch_target_ready
 
-set "VAPOR_HOME=%APP_ROOT%"
-set "CARGO_HOME=%APP_ROOT%\cargo-home"
-set "RUSTUP_HOME=%APP_ROOT%\rustup-home"
-set "PATH=%APP_ROOT%\bin\%TARGET%;%APP_ROOT%\cargo-home\bin;%APP_ROOT%\tools\steamcmd;%APP_ROOT%\tools\zig;%APP_ROOT%\tools\cross\bin;%APP_ROOT%\tools\llvm-mingw\bin;%PATH%"
-for /d %%T in ("%APP_ROOT%\rustup-home\toolchains\*") do if exist "%%~fT\bin" set "PATH=%%~fT\bin;%PATH%"
+set "PATH=%APP_ROOT%\bin\%TARGET%;%APP_ROOT%\bin;%PATH%"
 
 set "FORWARD_ARGS="
 :collect_args

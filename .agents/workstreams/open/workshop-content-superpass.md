@@ -457,13 +457,13 @@
 - Drafted an unapproved private-test diagnostics rewrite away from
   Git/Vapor-Registry transport:
   `--send-diagnostics` now captures a local structured run under
-  `.vapor/diagnostics/runs/YYYY-MM-DD/<unix_timestamp>-<machine_id>-<platform>-<run_id>/`
+  `.vapor/diagnostics/runs/YYYY-MM-DD/<unix_timestamp>-<platform>-<short-random>/`
   with `metadata.toml`, `vapor.log`, and `.vapor/diagnostics/latest.toml`.
-- Drafted diagnostics metadata for run identity, generated local machine identity,
-  hostname when available, platform, app root, executable, startup/direct/script
-  context, installation identity/readiness, selected source, launch target,
-  selected packagepack, engine handoff, command/script steps, redacted errors,
-  upload request state, and exit state.
+- Drafted diagnostics metadata for run identity, coarse platform, app root,
+  executable, startup/direct/script context, installation identity/readiness,
+  selected source, launch target, selected packagepack, engine handoff,
+  command/script steps, redacted errors, upload request state, and exit state;
+  diagnostics deliberately avoids hostnames and persistent machine identifiers.
 - Drafted removal of normal UX for arbitrary `--diagnostics-registry PATH` and Git-backed
   diagnostics push. `diagnostics upload` now uses a future HTTP-server transport
   seam that currently reports not configured; `diagnostics upload --dry-run`
