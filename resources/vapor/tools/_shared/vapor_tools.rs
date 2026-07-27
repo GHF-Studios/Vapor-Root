@@ -427,7 +427,9 @@ pub fn ide_run_main() -> Result<(), String> {
     match workflow.as_str() {
         "app-status" => run_tool("production/app_setup/status.rs", &app_root, &[]),
         "setup-development" => {
-            println!("This installs/reconciles app-local Rust/Cargo, Zig, llvm-mingw, and app-root tools.");
+            println!(
+                "This installs/reconciles app-local Rust/Cargo, Zig, llvm-mingw, and app-root tools."
+            );
             let answer = prompt("Proceed with setup_development.rs? [y/N] ")?;
             if !is_yes(&answer) {
                 println!("cancelled");
@@ -477,7 +479,9 @@ pub fn ide_run_main() -> Result<(), String> {
         }
         "vapor-shell-interactive" => {
             require_executable(&vapor, "app-local Vapor shell")?;
-            println!("Opening the app-local Vapor shell. Use source commands to choose the active source workspace.");
+            println!(
+                "Opening the app-local Vapor shell. Use source commands to choose the active source workspace."
+            );
             run_status(&mut Command::new(&vapor))
         }
         "app-binaries-status" => {
@@ -525,7 +529,9 @@ pub fn ide_run_main() -> Result<(), String> {
         }
         "root-deploy-host" => {
             require_executable(&vapor, "app-local Vapor shell")?;
-            println!("Publish already-built app/root host-target outputs locally into the installed app root.");
+            println!(
+                "Publish already-built app/root host-target outputs locally into the installed app root."
+            );
             run_status(Command::new(&vapor).args(["root", "deploy", "--host-only", "--skip-docs"]))
         }
         "root-publish" => {
