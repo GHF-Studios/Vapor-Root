@@ -2,7 +2,7 @@
 
 use std::{
     env, fs,
-    io::{Write, stdin, stdout},
+    io::{stdin, stdout, Write},
     path::{Path, PathBuf},
     process::{Command, Stdio},
 };
@@ -139,6 +139,10 @@ const GENERATED_RUN_CONFIGURATION_STEMS: &[&str] = &[
     "00_Initial_Setup_Check_App_Environment",
     "00_Initial_Setup_Install_Developer_Tools",
     "10_Source_Workspaces_Check_Source_Checkout",
+    "10_Source_Workspaces_Clone_Vapor_Root",
+    "10_Source_Workspaces_Clone_Loo_Cast",
+    "10_Source_Workspaces_Clone_Vapor_Registry",
+    "10_Source_Workspaces_Clone_Vapor_Server_Root",
     "10_Source_Workspaces_Create_Basic_Content_Workspace",
     "20_Development_Workflows_Open_Vapor_Shell",
     "20_Development_Workflows_Check_App_Binaries",
@@ -313,10 +317,11 @@ pub fn create_superworkspace_main() -> Result<(), String> {
     println!();
     println!("Next");
     println!(
-        "  {} --super-workspace {} --all",
+        "  {} --super-workspace {} SOURCE_NAME",
         tool_command("development/source_setup/clone.rs", Some(&app_root)),
         shell_arg(&root)
     );
+    println!("  clone only the source you want to work on");
     println!(
         "  {} --super-workspace {}",
         tool_command("development/ide_setup/patch_rustrover.rs", Some(&app_root)),
@@ -328,11 +333,16 @@ pub fn create_superworkspace_main() -> Result<(), String> {
 pub fn clone_source_main() -> Result<(), String> {
     let app_root = resolve_app_root(arg_path("--app-root").or_else(candidate_app_root_from_exe))?;
     let super_root = super_workspace_root()?;
-    let all = has_flag("--all");
+    if has_flag("--all") {
+        return Err(
+            "bulk source cloning is intentionally unsupported; run clone.rs once per source name"
+                .to_owned(),
+        );
+    }
     let requested = positional_values();
-    if !all && requested.is_empty() {
+    if requested.len() != 1 {
         return Err(format!(
-            "usage: clone.rs --super-workspace /path/to/SuperWorkspace (--all | {})",
+            "usage: clone.rs --super-workspace /path/to/SuperWorkspace SOURCE_NAME\nknown sources: {}",
             SOURCE_PRESETS
                 .iter()
                 .map(|source| source.name)
@@ -340,23 +350,14 @@ pub fn clone_source_main() -> Result<(), String> {
                 .join("|")
         ));
     }
-    let selected = if all {
-        SOURCE_PRESETS.to_vec()
-    } else {
-        requested
-            .iter()
-            .map(|name| source_preset(name))
-            .collect::<Result<Vec<_>, _>>()?
-    };
+    let source = source_preset(&requested[0])?;
     let sources_root = super_root.join(SOURCES_DIR);
     fs::create_dir_all(&sources_root)
         .map_err(io("create source clone directory", &sources_root))?;
-    for source in selected {
-        clone_source(&sources_root, source)?;
-        record_source_clone(&super_root, &app_root, source)?;
-    }
+    clone_source(&sources_root, source)?;
+    record_source_clone(&super_root, &app_root, source)?;
     println!();
-    println!("Source clones ready under {}", sources_root.display());
+    println!("Source clone ready under {}", sources_root.display());
     Ok(())
 }
 
@@ -446,6 +447,34 @@ pub fn ide_run_main() -> Result<(), String> {
             &app_root,
             &["--super-workspace", &super_root.to_string_lossy()],
         ),
+        workflow if workflow.starts_with("source-clone:") => {
+            let source_name = workflow
+                .strip_prefix("source-clone:")
+                .ok_or_else(|| format!("invalid source clone workflow: {workflow}"))?;
+            let source = source_preset(source_name)?;
+            println!("Clone one source into the SuperWorkspace.");
+            println!("  source: {}", source.name);
+            println!("  remote: {}", source.remote);
+            println!(
+                "  target: {}",
+                super_root.join(SOURCES_DIR).join(source.name).display()
+            );
+            println!();
+            let answer = prompt("Clone this source now? [y/N] ")?;
+            if !is_yes(&answer) {
+                println!("cancelled");
+                return Ok(());
+            }
+            run_tool(
+                "development/source_setup/clone.rs",
+                &app_root,
+                &[
+                    "--super-workspace",
+                    &super_root.to_string_lossy(),
+                    source.name,
+                ],
+            )
+        }
         "source-init-basic-content" => {
             require_executable(&vapor, "app-local Vapor shell")?;
             println!("Create a new source workspace from the basic content template.");
@@ -2061,12 +2090,7 @@ fn discover_cargo_project_registrations(
 ) -> Result<Vec<CargoProjectRegistration>, String> {
     let source_root = root.join(SOURCES_DIR);
     if !source_root.is_dir() {
-        return Err(format!(
-            "super-workspace has no source clone directory: {}\nrun: {} --super-workspace {} --all",
-            source_root.display(),
-            tool_command("development/source_setup/clone.rs", None),
-            shell_arg(root)
-        ));
+        return Ok(Vec::new());
     }
     let manifests = discover_cargo_manifests(&source_root)?
         .into_iter()
@@ -2357,36 +2381,40 @@ fn verify_rustrover_setup(
     )?;
     checks.push("shim cargo accepts rustup-style +toolchain directives".to_owned());
 
-    let launcher_metadata = cargo_metadata_no_deps(
-        super_root,
-        &toolchain_shim.cargo,
-        "sources/Vapor-Root/Vapor-Launcher/Cargo.toml",
-    )?;
-    require_metadata_names(
-        "Vapor-Launcher",
-        &launcher_metadata,
-        &[
-            "vapor_launcher_cli",
-            "vapor_launcher_core",
-            "vapor_core",
-            "clap",
-            "dialoguer",
-            "owo-colors",
-        ],
-    )?;
-    checks.push("shim cargo metadata sees launcher registry and path dependencies".to_owned());
+    let launcher_manifest = "sources/Vapor-Root/Vapor-Launcher/Cargo.toml";
+    if super_root.join(launcher_manifest).is_file() {
+        let launcher_metadata =
+            cargo_metadata_no_deps(super_root, &toolchain_shim.cargo, launcher_manifest)?;
+        require_metadata_names(
+            "Vapor-Launcher",
+            &launcher_metadata,
+            &[
+                "vapor_launcher_cli",
+                "vapor_launcher_core",
+                "vapor_core",
+                "clap",
+                "dialoguer",
+                "owo-colors",
+            ],
+        )?;
+        checks.push("shim cargo metadata sees launcher registry and path dependencies".to_owned());
+    } else {
+        checks.push("launcher source not mounted; skipped launcher metadata check".to_owned());
+    }
 
-    let shell_metadata = cargo_metadata_no_deps(
-        super_root,
-        &toolchain_shim.cargo,
-        "sources/Vapor-Root/Vapor-Shell/Cargo.toml",
-    )?;
-    require_metadata_names(
-        "Vapor-Shell",
-        &shell_metadata,
-        &["vapor_shell", "clap", "clap-repl"],
-    )?;
-    checks.push("shim cargo metadata sees shell workspace dependencies".to_owned());
+    let shell_manifest = "sources/Vapor-Root/Vapor-Shell/Cargo.toml";
+    if super_root.join(shell_manifest).is_file() {
+        let shell_metadata =
+            cargo_metadata_no_deps(super_root, &toolchain_shim.cargo, shell_manifest)?;
+        require_metadata_names(
+            "Vapor-Shell",
+            &shell_metadata,
+            &["vapor_shell", "clap", "clap-repl"],
+        )?;
+        checks.push("shim cargo metadata sees shell workspace dependencies".to_owned());
+    } else {
+        checks.push("shell source not mounted; skipped shell metadata check".to_owned());
+    }
 
     Ok(checks)
 }
@@ -2525,7 +2553,7 @@ fn rustrover_run_configurations() -> Vec<RunConfiguration> {
     vec![
         RunConfiguration {
             name: "Check app environment",
-            folder: "00 Initial setup",
+            folder: "00 Initial setup / Environment",
             file_stem: "00_Initial_Setup_Check_App_Environment",
             kind: Shell,
             working_directory: ".",
@@ -2533,7 +2561,7 @@ fn rustrover_run_configurations() -> Vec<RunConfiguration> {
         },
         RunConfiguration {
             name: "Install developer tools",
-            folder: "00 Initial setup",
+            folder: "00 Initial setup / Tooling",
             file_stem: "00_Initial_Setup_Install_Developer_Tools",
             kind: Konsole,
             working_directory: ".",
@@ -2541,15 +2569,47 @@ fn rustrover_run_configurations() -> Vec<RunConfiguration> {
         },
         RunConfiguration {
             name: "Check source checkout",
-            folder: "10 Source workspaces",
+            folder: "10 Source workspaces / Status",
             file_stem: "10_Source_Workspaces_Check_Source_Checkout",
             kind: Shell,
             working_directory: ".",
             command: "source-status",
         },
         RunConfiguration {
+            name: "Clone source: Vapor Root",
+            folder: "10 Source workspaces / Clone",
+            file_stem: "10_Source_Workspaces_Clone_Vapor_Root",
+            kind: Konsole,
+            working_directory: ".",
+            command: "source-clone:Vapor-Root",
+        },
+        RunConfiguration {
+            name: "Clone source: Loo-Cast",
+            folder: "10 Source workspaces / Clone",
+            file_stem: "10_Source_Workspaces_Clone_Loo_Cast",
+            kind: Konsole,
+            working_directory: ".",
+            command: "source-clone:Loo-Cast",
+        },
+        RunConfiguration {
+            name: "Clone source: Vapor Registry",
+            folder: "10 Source workspaces / Clone",
+            file_stem: "10_Source_Workspaces_Clone_Vapor_Registry",
+            kind: Konsole,
+            working_directory: ".",
+            command: "source-clone:Vapor-Registry",
+        },
+        RunConfiguration {
+            name: "Clone source: Vapor Server Root",
+            folder: "10 Source workspaces / Clone",
+            file_stem: "10_Source_Workspaces_Clone_Vapor_Server_Root",
+            kind: Konsole,
+            working_directory: ".",
+            command: "source-clone:Vapor-Server-Root",
+        },
+        RunConfiguration {
             name: "Create basic content workspace",
-            folder: "10 Source workspaces",
+            folder: "10 Source workspaces / Create",
             file_stem: "10_Source_Workspaces_Create_Basic_Content_Workspace",
             kind: Konsole,
             working_directory: "$APP_ROOT",
@@ -2557,7 +2617,7 @@ fn rustrover_run_configurations() -> Vec<RunConfiguration> {
         },
         RunConfiguration {
             name: "Open Vapor Shell",
-            folder: "20 Development workflows",
+            folder: "20 Development workflows / Shell",
             file_stem: "20_Development_Workflows_Open_Vapor_Shell",
             kind: Konsole,
             working_directory: "$APP_ROOT",
@@ -2565,7 +2625,7 @@ fn rustrover_run_configurations() -> Vec<RunConfiguration> {
         },
         RunConfiguration {
             name: "Check app binaries",
-            folder: "20 Development workflows",
+            folder: "20 Development workflows / App",
             file_stem: "20_Development_Workflows_Check_App_Binaries",
             kind: Shell,
             working_directory: "$APP_ROOT",
@@ -2573,7 +2633,7 @@ fn rustrover_run_configurations() -> Vec<RunConfiguration> {
         },
         RunConfiguration {
             name: "Check content",
-            folder: "20 Development workflows",
+            folder: "20 Development workflows / Content",
             file_stem: "20_Development_Workflows_Check_Content",
             kind: Shell,
             working_directory: "$APP_ROOT",
@@ -2581,7 +2641,7 @@ fn rustrover_run_configurations() -> Vec<RunConfiguration> {
         },
         RunConfiguration {
             name: "Build app",
-            folder: "20 Development workflows",
+            folder: "20 Development workflows / App",
             file_stem: "20_Development_Workflows_Build_App",
             kind: Konsole,
             working_directory: "$APP_ROOT",
@@ -2589,7 +2649,7 @@ fn rustrover_run_configurations() -> Vec<RunConfiguration> {
         },
         RunConfiguration {
             name: "Deploy app",
-            folder: "20 Development workflows",
+            folder: "20 Development workflows / App",
             file_stem: "20_Development_Workflows_Deploy_App",
             kind: Konsole,
             working_directory: "$APP_ROOT",
@@ -2597,7 +2657,7 @@ fn rustrover_run_configurations() -> Vec<RunConfiguration> {
         },
         RunConfiguration {
             name: "Build content",
-            folder: "20 Development workflows",
+            folder: "20 Development workflows / Content",
             file_stem: "20_Development_Workflows_Build_Content",
             kind: Konsole,
             working_directory: "$APP_ROOT",
@@ -2605,7 +2665,7 @@ fn rustrover_run_configurations() -> Vec<RunConfiguration> {
         },
         RunConfiguration {
             name: "Deploy content",
-            folder: "20 Development workflows",
+            folder: "20 Development workflows / Content",
             file_stem: "20_Development_Workflows_Deploy_Content",
             kind: Konsole,
             working_directory: "$APP_ROOT",
@@ -2613,7 +2673,7 @@ fn rustrover_run_configurations() -> Vec<RunConfiguration> {
         },
         RunConfiguration {
             name: "Publish app",
-            folder: "30 Publishing",
+            folder: "30 Publishing / Steam app",
             file_stem: "30_Publishing_Publish_App",
             kind: Konsole,
             working_directory: "$APP_ROOT",
@@ -2621,7 +2681,7 @@ fn rustrover_run_configurations() -> Vec<RunConfiguration> {
         },
         RunConfiguration {
             name: "Publish content",
-            folder: "30 Publishing",
+            folder: "30 Publishing / Workshop content",
             file_stem: "30_Publishing_Publish_Content",
             kind: Konsole,
             working_directory: "$APP_ROOT",
