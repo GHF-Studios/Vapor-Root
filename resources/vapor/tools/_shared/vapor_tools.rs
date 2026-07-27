@@ -2,7 +2,7 @@
 
 use std::{
     env, fs,
-    io::{stdin, stdout, Write},
+    io::{Write, stdin, stdout},
     path::{Path, PathBuf},
     process::{Command, Stdio},
 };
