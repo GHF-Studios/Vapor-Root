@@ -9,10 +9,13 @@
 - Semantic mutation claim: Vapor-Shell source/content command grammar,
   Workshop/content lifecycle implementation, Loo-Cast content publication
   metadata and scripts, Vapor-Root user/agent docs for the shell model, and
-  Vapor-Installer bootstrap/lifecycle ownership.
+  app-root tool ownership with `vapor-installer` as a launch/legacy shim.
 - Path claims: `Vapor-Shell/crates/vapor_shell/**`, `Loo-Cast/**`,
-  `Vapor-Installer/**`, `.vapor/launch/**`, `README.md`, `AGENTS.md`,
-  `.agents/workstreams/README.md`, and this record.
+  `Vapor-Installer/**`, `Vapor-Entrypoint/**`, `.vapor/launch/**`,
+  `App-Source.vapor.toml`, `README.md`, `AGENTS.md`,
+  `.agents/workstreams/README.md`, `../SuperWorkspace.vapor.toml`,
+  `resources/vapor/tools/**`,
+  and this record.
 
 ## Completed
 
@@ -587,8 +590,107 @@
   updated README/workspace registration.
 - Vapor-Root workstream record update.
 - Vapor-Installer submodule registration, root launch wrapper install calls,
-  installer-owned setup/Steam/distribution docs, and Shell removal of setup
-  command/setup-payload surfaces.
+  earlier installer-owned setup/Steam/distribution docs, and Shell removal of
+  setup command/setup-payload surfaces; this has since been superseded by the
+  script-owned setup migration below.
+- Added an app-root `resources/vapor/tools` layer for local app-root setup,
+  teardown, development toolchain install/removal, RustRover patching, source
+  status, and SuperWorkspace creation/source-clone workflows. Vapor-Root owns the source
+  payload for these tools so root builds can ship them into the installed app.
+- Replaced `Vapor-Installer`'s compiled setup implementation with a small
+  launcher that dispatches into the shared app-root tool implementation.
+- Added script-owned player teardown and kept symlink cleanup semantics safe by
+  deleting app-root symlinks themselves rather than following external targets.
+- Updated Shell preflight/help/docs, root distribution staging, and local root
+  deploy/publish output syncing so setup tooling is script-owned and shipped as
+  inspectable `resources/vapor/tools` app resources.
+- Updated script app-root discovery so deployed production setup scripts infer
+  `<app-root>` from `resources/vapor/tools`, source checkouts can use env/anchor
+  Steam library manifests, or common Steam library paths, and the source repo's
+  `App-Source.vapor.toml` prevents accidentally treating Vapor-Root source as an
+  installed app root. Executable script entrypoints force-refresh their
+  `rust-script` cache because the shared implementation lives outside the thin
+  entrypoint files.
+- Updated the RustRover patcher to register real Cargo import units
+  (workspace roots plus standalone crates), update `.idea/cargoProjects.xml`,
+  `.idea/workspace.xml`, `.idea/Loo-Cast-Repos.iml`, and point per-workspace
+  Rust settings at the app-local Rust 1.97 toolchain. This fixes the stale
+  workspace CargoProjects state that left nested crates showing "file does not
+  belong to a known Cargo project."
+- Corrected the RustRover import model again after dependency resolution
+  symptoms: generated CargoProjects now register only manifest import units and
+  no longer hand-write member package entries or generic Rust source roots.
+  Cargo metadata/RustRover remain responsible for package, dependency, feature,
+  proc-macro, and external-crate discovery.
+- Identified the remaining RustRover dependency-resolution symptom as stale
+  open-IDE project state: RustRover's own background Cargo checks resolve
+  `clap`, `dialoguer`, and `owo-colors`, but the open editor model can keep
+  old `.idea/workspace.xml` package entries and `.iml` source roots in memory
+  and write them back after patching. The repair path is to close RustRover,
+  run the app-root
+  `resources/vapor/tools/development/ide_setup/patch_rustrover.rs` tool from a
+  normal terminal before reopening RustRover.
+- Added a generated `.idea/vapor-toolchain/bin` RustRover toolchain shim after
+  further dependency-resolution symptoms also affected local crates such as
+  `vapor_core`. Cargo metadata resolves both registry and path dependencies
+  correctly, but RustRover import/check calls previously used the app-local
+  cargo/rustc without app-local `CARGO_HOME`/`RUSTUP_HOME`. The shim makes
+  RustRover's project-level cargo, rustc, rustfmt, clippy, rustdoc, and rustup
+  calls inherit the same app-local homes as generated run configurations without
+  requiring global shell environment changes.
+- Hardened `patch_rustrover.rs` with a post-write verification pass so it does
+  not declare success after recreating the exact class of broken IDE state. The
+  verifier checks shim executables and env exports, RustRover's toolchain
+  pointer, absence of generated `.iml` Rust source roots, registered manifest
+  existence, pinned shim `rustc`, and representative shim `cargo metadata`
+  visibility for registry and path dependencies including `clap`, `dialoguer`,
+  `owo-colors`, `vapor_launcher_core`, `vapor_core`, and Shell's `clap-repl`.
+- Fixed RustRover stdlib sync/build output where RustRover invoked the generated
+  cargo shim as `cargo +1.97.0-<host> vendor ...`. Real Cargo does not handle
+  `+toolchain`; rustup proxy binaries do. The generated shim now detects a
+  leading `+<toolchain>` argument and routes through app-local
+  `rustup run <toolchain> <tool> ...`, and the patcher's verification checks
+  this behavior before reporting success.
+- Recentered generated RustRover operational workflows around the installed app
+  root. Open Shell, source-init, content status/deploy, root build, and publish
+  preview wrappers now start in the Steam app directory and call
+  `bin/<host-target>/vapor` instead of running `cargo run --package
+  vapor_shell` from `Vapor-Root/Vapor-Shell`. The old generated launcher Cargo
+  check was replaced by an app-local binary presence/status check because the
+  shipped app-root surface currently contains `vapor`, `vapor-installer`, and
+  `vapor-entrypoint`, not a separate launcher workflow binary. The patcher now
+  verifies generated app-root workflows do not regress to source-Cargo execution
+  and start from the app root.
+- Corrected generated RustRover Shell Script working-directory XML to use plain
+  paths (`/path/to/app` or `$PROJECT_DIR$`) instead of `file://` URI values,
+  because RustRover treats `SCRIPT_WORKING_DIRECTORY` as a filesystem path field.
+- Replaced the broad generated RustRover toolbox with a small categorized
+  workflow set: initial setup, source workspaces, development workflows, and
+  publishing workflows. The visible configuration names are short action labels
+  inside those folders. Stale generated local server/fake identity operator
+  configs are removed by the patcher. Publishing configs store no credentials;
+  they collect manual input inside their temporary terminals.
+- Corrected `launch loo-cast` reporting and runtime handoff semantics so the
+  Loo-Cast command is only the default product shortcut/seed. The selected
+  packagepack is reported by content ID, dependency roles are read from the
+  packagepack manifest, the required engine is resolved by `relationship =
+  "engine"`, the optional game is resolved by `relationship = "game"`, and
+  the handoff passes `VAPOR_ENGINE_*`/`VAPOR_GAME_*` IDs and roots instead of
+  implying hardcoded Spacetime/Loo-Cast runtime knowledge in the Shell.
+- Split the app/root local workflow semantics in Shell and RustRover: `root
+  build` now builds app outputs, new `root deploy` promotes already-built app
+  outputs/resources into the local app root, and generated RustRover workflows
+  are named Build/Deploy/Publish for app and content instead of “build locally”
+  or “publish preview.” Publish configs open an interactive terminal, collect
+  account/details there, and require a typed confirmation before invoking the
+  real `root publish` or `content publish` command with `--yes`.
+- Promoted SuperWorkspace to an app-root-created shape rather than a local repo
+  convention: sources are cloned under `sources/`, the SuperWorkspace owns
+  no tools, app-root `resources/vapor/tools` is the runtime tool authority, and
+  the root source owns only the payload source under `resources/vapor/tools`.
+  RustRover configs now launch the app-root IDE runner directly instead of
+  generated `.idea/vapor-run` scripts, and IDE patching is an app-root tool that
+  must run before opening RustRover.
 - Manifest-driven split-depot root staging, SteamPipe VDF generation, manifest
   schema docs, root `App-Source.vapor.toml` configured with DepotIDs 2122621,
   2122622, and 2122623, runtime `App.vapor.toml`, and source resources under
@@ -646,11 +748,12 @@
 - Continue the game/modding demo slice: packagepack-declared mod legality,
   installed optional mod content, and runtime discovery through Vapor-managed
   installed composition state.
-- Keep final create, publish, and delete authority-changing operations manual
-  and interactive; scripts may automate only dry-run/preflight.
+- Keep final Steam create, publish, and delete authority-changing operations
+  manual and interactive unless the owner explicitly scopes a scriptable
+  authority path. Setup/teardown/toolchain DevOps is now script-owned.
 
 ## Smallest resume action
 
-Keep implementation paused for the diagnostics slice. First review the
-persisted planning intake capture, then scope only the local diagnostics capture
-MVP before shrinking or replacing the current unapproved draft.
+Continue the script-first tooling migration: fold remaining source/app-root
+setup affordances into `../tools`, then do one focused compile/syntax pass before
+any local deploy or publish attempt.

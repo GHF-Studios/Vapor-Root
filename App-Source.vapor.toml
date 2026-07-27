@@ -31,6 +31,11 @@ from = "resources/vapor/vapor-scripts"
 to = "resources/vapor/vapor-scripts"
 
 [[root.steam.depots.common.include]]
+root = "installation"
+from = "resources/vapor/tools"
+to = "resources/vapor/tools"
+
+[[root.steam.depots.common.include]]
 root = "source"
 from = "Vapor-Examples"
 to = "examples/vapor-examples"

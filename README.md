@@ -89,17 +89,18 @@ for layout, receipts, fingerprints, and repair behavior.
 
 ## Setup And Recovery
 
-Vapor Installer owns installed setup:
+App-root tools own installed setup:
 
 ```text
-vapor-installer install
-vapor-installer uninstall
-vapor-installer dev-env install
-vapor-installer dev-env uninstall
+rust-script --force <app-root>/resources/vapor/tools/production/app_setup/setup_player.rs
+rust-script --force <app-root>/resources/vapor/tools/production/app_setup/teardown_player.rs
+rust-script --force <app-root>/resources/vapor/tools/production/app_setup/setup_development.rs
+rust-script --force <app-root>/resources/vapor/tools/production/app_setup/teardown_development.rs
 ```
 
-The default install prepares player-mode SteamCMD and generated `.vapor/`
-state. Developer mode is an explicit upgrade.
+The default player setup prepares SteamCMD and generated `.vapor/` state.
+Developer setup is an explicit upgrade. `vapor-installer` is the compiled
+Steam/app-root launcher for the same setup implementation.
 
 ## Planning
 
