@@ -4,7 +4,7 @@
 //!
 //! ```cargo
 //! [package]
-//! edition = "2021"
+//! edition = "2024"
 //! ```
 
 #[path = "../../_shared/vapor_tools.rs"]
