@@ -112,8 +112,8 @@ else
 fi
 
 case "$launch_target" in
-    play|loo-cast)
-        run_command "$vapor" --startup-script loo-cast "$@"
+    play)
+        run_command "$vapor" --startup-script default "$@"
         ;;
     shell|vapor-shell)
         run_command "$vapor" "$@"

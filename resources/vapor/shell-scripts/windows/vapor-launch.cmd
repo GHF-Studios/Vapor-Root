@@ -86,7 +86,6 @@ goto installer_bootstrap_done
 :installer_bootstrap_done
 
 if /I "%LAUNCH_TARGET%"=="play" goto play
-if /I "%LAUNCH_TARGET%"=="loo-cast" goto play
 if /I "%LAUNCH_TARGET%"=="shell" goto shell
 if /I "%LAUNCH_TARGET%"=="vapor-shell" goto shell
 goto command
@@ -98,7 +97,7 @@ set "STATUS=%ERRORLEVEL%"
 goto done
 
 :play
-"%VAPOR%" --startup-script loo-cast %FORWARD_ARGS%
+"%VAPOR%" --startup-script default %FORWARD_ARGS%
 set "STATUS=%ERRORLEVEL%"
 goto done
 
