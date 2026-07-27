@@ -2192,12 +2192,12 @@ fn install_rustrover_toolchain_shim(
 ) -> Result<RustRoverToolchainShim, String> {
     #[cfg(not(unix))]
     {
-        return Ok(RustRoverToolchainShim {
+        Ok(RustRoverToolchainShim {
             bin: rust_bin.to_path_buf(),
             cargo: rust_bin.join(executable("cargo")),
             rustc: rust_bin.join(executable("rustc")),
             rustup: rustup.to_path_buf(),
-        });
+        })
     }
 
     #[cfg(unix)]
