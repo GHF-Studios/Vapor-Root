@@ -597,6 +597,20 @@
   teardown, development toolchain install/removal, RustRover patching, source
   status, and SuperWorkspace creation/source-clone workflows. Vapor-Root owns the source
   payload for these tools so root builds can ship them into the installed app.
+- Updated the RustRover patcher source and regenerated local `.idea`
+  runConfigurations into setup/source/run/build/stage/publish folders.
+- Added the Shell design checkpoint
+  `docs/design/workflow-control-surface.md` and linked it from the design index.
+- Added `vapor-installer ide run` as the precompiled RustRover workflow runner,
+  updated installer help/README wording away from script-first compatibility
+  framing, rebuilt/redeployed host app binaries locally, and regenerated local
+  `.idea/runConfigurations` to point at the installed binary instead of
+  `rust-script`.
+- Added `vapor-installer ide patch-rustrover` as the normal external IDE patch
+  entrypoint, changed app-tool status and SuperWorkspace creation next-actions
+  to print precompiled `vapor-installer` commands instead of `rust-script`,
+  removed Rust-script equivalents from installed `vapor-installer --help`, and
+  re-ran the compiled patcher locally.
 - Replaced `Vapor-Installer`'s compiled setup implementation with a small
   launcher that dispatches into the shared app-root tool implementation.
 - Added script-owned player teardown and kept symlink cleanup semantics safe by
@@ -670,6 +684,25 @@
   inside those folders. Stale generated local server/fake identity operator
   configs are removed by the patcher. Publishing configs store no credentials;
   they collect manual input inside their temporary terminals.
+- Corrected RustRover run-configuration folder generation after live project
+  metadata appeared as a flat global list: generated shared configurations now
+  use JetBrains `folderName` attributes and one-level folders `00 Setup`,
+  `10 Sources`, `20 Run`, `30 Build`, `40 Stage`, and `50 Publish`. The
+  patcher removes the earlier pseudo-hierarchical generated config files on
+  the next run and verifies the attribute form.
+- Captured the owner-discussed workflow/control-surface doctrine: app-root-owned
+  precompiled control plane, Steam Play/Shell as minimal app entry styles,
+  Shell/RustRover/terminal as initiation surfaces, SuperWorkspace source
+  membership as the durable developer object, providers as readiness states,
+  Vapor scripts parked, publish dry-run as a modifier, operation-scoped logs,
+  and no compatibility shims for retired UX seams.
+- Moved generated RustRover workflow execution off the Rust-script runner and
+  onto the precompiled app-root control path. Generated configurations now run
+  `vapor-installer ide run --workflow ...`, and the shared IDE runner opens
+  Konsole by relaunching the compiled runner instead of `rust-script`.
+  App status, developer setup, source status, and source cloning execute
+  in-process through the shared tool implementation when entered through the
+  compiled runner.
 - Corrected `launch loo-cast` reporting and runtime handoff semantics so the
   Loo-Cast command is only the default product shortcut/seed. The selected
   packagepack is reported by content ID, dependency roles are read from the
