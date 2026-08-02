@@ -1,4 +1,3 @@
-
 - App: *There is only one App. The "Loo Cast" Steam App. The App provides access not only to the default/first-party "Spacetime Engine" "Loo Cast Game", but also allows usage of and access to the Vapor Ecosystem/Toolchain.*
 - App Composition: *The selected content composition of an App Instance. The main app binary is just a slim entrypoint. The actual content resides in exactly one selected Packagepack.*
 - App Instance: *One concrete local instance/copy of the App. It has a root location, a selected App Composition, and the local installation/runtime state needed to discover, download, install/mount, and launch that composition. An App Instance may also be upgraded into (and downgraded from) a developer-mode setup, in which it additionally includes a set of third-party development dependencies/tools like Git, SteamCMD, and the Rust/Cargo Toolchain.*
