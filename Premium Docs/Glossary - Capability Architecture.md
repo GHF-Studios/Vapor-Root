@@ -1,18 +1,16 @@
 - Unified Capability Engine: *An engine architecture in which behavior is modeled as capability nodes connected through explicit boundaries rather than ad-hoc hooks or loose scripting.*
 - Unified Capability Supergraph: *The full graph of capability nodes and their relationships within the Unified Capability Engine.*
 
-- Immutable Core: *The runtime-immutable inner architecture of the engine, packaged as two libraries: the Native Core and the Compiled Capability Layer.*
-- Native Core: *The Layer 1 library of the Immutable Core, containing hardcoded Rust-native kernels, primitive types, schedulers, and other foundational machinery.*
-- Compiled Capability Layer: *The Layer 2 library of the Immutable Core, produced by compiling Layer 2 capability nodes, authored as Rhai/Rhai-DSL modules, and statically linking them into one dynamically linkable unit.*
-- Core Boundary: *The constrained interface between the Native Core and the Compiled Capability Layer, where interaction must obey FFI-like or similarly strict linkage rules.*
+- Immutable Core: *The runtime-immutable inner architecture of the engine. It consists of Layer 1 and Layer 2.*
+- Layer 1: *The pure Rust-native foundational layer of the Immutable Core, packaged as its own library and containing hardcoded kernels, primitive types, schedulers, and other foundational machinery.*
+- Layer 2: *The capability-authored layer of the Immutable Core, packaged as its own dynamically linkable library. It is built from Layer 2 Capability Nodes.*
+- Core Boundary: *The constrained interface between Layer 1 and Layer 2, where interaction must obey FFI-like or similarly strict linkage rules.*
 
-- Dynamic Layer: *The mutable runtime layer that extends the Immutable Core during execution.*
-- Runtime Script Layer: *The interpreted dynamic scripting surface through which capability structures are defined and executed at runtime. It forms Layer 3 of the architecture.*
-- Attachment Point: *An explicit extension point exposed by the Immutable Core through which the Dynamic Layer may add runtime behavior.*
+- Layer 3: *The pure Rhai dynamic scripting layer of the architecture, through which capability structures are defined and executed at runtime. Unlike Layer 1 and Layer 2, it remains runtime-mutable.*
 
 - Capability Node: *One capability object within the Unified Capability Supergraph.*
-- Layer 2 Capability Node: *A Capability Node authored as one primary Rhai script module that produces one capability object.*
+- Layer 2 Capability Node: *A Capability Node authored as one primary Rhai/Rhai-DSL module that produces one capability object. When composition changes, Layer 2 Capability Nodes are translated into Rust and statically linked into the Layer 2 library.*
 
-- Cross-Time Capability Model: *A capability model in which authored, compiled, and runtime capability relationships are treated as one continuous architecture.*
-- Capability Hierarchy: *The rule that capabilities are implemented by consuming other capabilities positioned closer to the root of the Unified Capability Supergraph.*
+- Cross-Time Capability Model: *A capability model in which Layer 1, Layer 2, and Layer 3 participate in one continuous graph, with statically declared dynamic attachment patterns that allow runtime-provided capabilities to participate in that graph, including dependency inversion where appropriate.*
+- Capability Hierarchy: *The graph-structured dependency ordering of capability nodes within the Unified Capability Supergraph. Each capability node is one capability and may consume zero or more other capabilities, including capabilities from other layers and from higher layers through dependency inversion.*
 - Capability Scope: *The operational scope of a capability instance. In Layer 1 and Layer 2, maximum scope is statically allocated; in Layer 3, scope may be dynamically allocated, deallocated, and reshaped at runtime.*
