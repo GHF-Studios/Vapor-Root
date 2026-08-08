@@ -3,18 +3,27 @@
 
 - **Immutable Core**: *The runtime-immutable inner architecture of the engine. It consists of Layer 1 and Layer 2.*
 - **Layer 1**: *The pure Rust-native foundational layer of the Immutable Core, packaged as its own library and containing hardcoded kernels, primitive types, schedulers, and other foundational machinery.*
-- **Layer 2**: *The capability-authored layer of the Immutable Core, packaged as its own dynamically linkable library. It is built from Layer 2 Capability Nodes.*
+- **Layer 2**: *The capability-authored layer of the Immutable Core, presented as one effective dynamically linkable library after the Layer 2 Staged Build. It is built from Layer 2 Capability Nodes.*
+- **Layer 2 Compilation Slice**: *One ordered build unit within Layer 2. Each slice contains capability nodes that can be compiled with the capabilities already exposed by earlier slices.*
+- **Layer 2 Staged Build**: *The build process that compiles Layer 2 through one or more Layer 2 Compilation Slices, registering each slice's generated capability APIs before compiling the next slice.*
+- **Layer 2 Reconstitution**: *The final packaging step that presents the staged Layer 2 build as one effective Layer 2 library, even if it was produced through multiple intermediate libraries or crates.*
 - **Core Boundary**: *The constrained interface between Layer 1 and Layer 2, where interaction must obey FFI-like or similarly strict linkage rules.*
 
 - **Layer 3**: *The pure Rhai dynamic scripting layer of the architecture, through which capability structures are defined and executed at runtime. Unlike Layer 1 and Layer 2, it remains runtime-mutable.*
+- **Runtime Capability Layer**: *A capability layer whose nodes remain editable, attachable, or replaceable while the application is running, subject to the same supergraph and scope rules as the static layers.*
+
+- **Build-Stage Rhai Declaration**: *A Rhai or Rhai-DSL declaration consumed during the Layer 2 build process to generate a static Layer 2 artifact.*
+- **Runtime Rhai Declaration**: *A Rhai declaration evaluated as part of Layer 3, remaining mutable at runtime within the constraints of the Unified Capability Supergraph.*
+- **Staged Capability Bootstrapping**: *A capability construction model in which generated capabilities from one build pass are added to the compile-time environment for later passes, allowing higher-level capability declarations to depend on lower-level generated APIs without hardcoding a fixed compilation depth.*
 
 - **Capability Node**: *One capability object within the Unified Capability Supergraph. A capability node is the capability itself: a first-class API object that may consume zero or more other capabilities and may declare or satisfy zero or more Capability Marker Traits.*
 - **Layer 1 Capability Node**: *A Capability Node implemented directly in Rust as part of Layer 1. It is native to the Immutable Core.*
 - **Layer 2 Capability Node**: *A Capability Node authored as one primary Rhai/Rhai-DSL module that produces one capability object. When composition changes, Layer 2 Capability Nodes are translated into Rust and statically linked into the Layer 2 library.*
 - **Layer 3 Capability Node**: *A Capability Node authored and executed in pure Rhai as part of Layer 3. Unlike Layer 1 and Layer 2 Capability Nodes, it remains runtime-mutable.*
+- **Stateless Capability Handle**: *A clonable reference to an exposed capability function or binding that carries no borrowed runtime state. It may be used as a lightweight invocation handle, but its authority depends on how the host provisions, validates, and routes it through the capability graph.*
 - **Capability Marker Trait**: *A declarative marker trait that carries no behavior and is used to classify capability nodes and constrain capability edges. A Capability Marker Trait may be declared locally or upstream and then reused or composed downstream.*
 - **Capability Edge**: *One declared, typed, directed edge within the Unified Capability Supergraph's directed acyclic graph. Edge constraints such as Capability Marker Trait requirements and edge cardinality belong to the edge, not to the marker traits themselves.*
 
-- **Cross-Time Capability Model**: *A capability model in which Layer 1, Layer 2, and Layer 3 participate in one continuous graph, with statically declared dynamic attachment patterns that allow runtime-provided capabilities to participate in that graph, including dependency inversion where appropriate.*
+- **Cross-Time Capability Model**: *The architectural model in which Layer 1, Layer 2, and Layer 3 participate in one Unified Capability Supergraph across both immutable and runtime-mutable phases. Static layers may declare Capability Edges and dynamic attachment patterns that runtime-provided Capability Nodes can satisfy, including dependency inversion where appropriate. Layer 3 mutation changes graph contents, not the graph model, and must preserve the supergraph's directed acyclic invariant.*
 - **Capability Hierarchy**: *The graph-structured dependency ordering of capability nodes within the Unified Capability Supergraph. Each capability node explicitly declares its capability edges and their Capability Marker Trait constraints via metadata, schemas, macros, DSL declarations, or equivalent mechanisms, allowing the engine to construct a strict capability graph across layers, including dependency inversion where appropriate.*
 - **Capability Scope**: *The operational scope of a capability instance, enforced via a strict structural provision model. In Layer 1 and Layer 2, the permitted capability set declared by a node's capability edges and Capability Marker Trait constraints is statically determined; in Layer 3, it may be dynamically allocated and reshaped. In all cases, only the subset structurally demanded by the node's metadata, schemas, or method signatures is actually provisioned as API composite objects.*

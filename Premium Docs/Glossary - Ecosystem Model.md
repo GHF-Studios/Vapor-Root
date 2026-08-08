@@ -18,11 +18,13 @@
 - **Vapor Content Registry**: *Maps each Workshop Item ID to a human-readable string-based ID/namespace.*
 
 - **Vapor Superworkspace**: *A disposable local checkout container that holds checked-out Vapor repositories. It is not itself a Git repository or primary source-bearing unit, so losing it mainly means losing local, unpushed state.*
-- **Container Repo**: *A Vapor-managed organizational top-level Git repository whose main role is to group related Source Repos, often as Git submodules.*
-- **Source Repo**: *A Vapor-managed source-bearing Git repository whose main role is to hold actual source code, tests, docs, and related project assets.*
-- **Vapor Workspace**: *A type of Container Repo that groups one or more Vapor Projects.*
-- **Vapor Project**: *One concrete Vapor-managed project inside a Vapor Workspace, structured as a Rust/Cargo workspace.*
+- **Container Repo**: *A Vapor-managed top-level Git repository that groups related Source Repos / Vapor Workspaces as Git submodules. A Container Repo is not itself used as a submodule of another repo.*
+- **Source Repo / Vapor Workspace**: *A Vapor-managed source-bearing Git repository contained by a Container Repo as a Git submodule. It contains one or more Vapor Projects. It does not itself contain submodules.*
+- **Vapor Project**: *A Rust/Cargo workspace inside a Source Repo / Vapor Workspace. It is not itself a Git repository.*
 
-- **Vapor-Root Workspace**: *The unique Vapor Workspace for the Vapor-Root codebase.*
-- **Vapor-Server-Root Workspace**: *The unique Vapor Workspace for the Vapor-Server-Root codebase.*
+- **Vapor Root Workspace**: *The unique Vapor Workspace for the Vapor Root codebase and the bootstrapping root model of the Vapor ecosystem itself.*
+- **Vapor Root Project**: *A Vapor Project inside a Vapor Root Workspace. Models part of the client-side/root Vapor ecosystem.*
+- **Vapor Server Root Workspace**: *The unique Vapor Workspace for the Vapor Server Root codebase, modeling the server-side root of the Vapor ecosystem.*
+- **Vapor Server Root Project**: *A Vapor Project inside a Vapor Server Root Workspace. Models part of the server-side/root Vapor ecosystem.*
 - **Vapor Content Workspace**: *A non-unique Vapor Workspace for content projects, with "Loo-Cast" as the first-party example.*
+- **Vapor Content Project**: *A Vapor Project inside a Vapor Content Workspace. Models a Packagepack, Enginepack, Gamepack, Modpack, Engine, Game, Engine Mod, Game Mod, or Extension Mod.*
