@@ -1,35 +1,155 @@
-- **Unified Capability Engine**: *An engine architecture in which Rust-native and Rhai-authored behavior is registered as explicit capability API objects rather than exposed through ad-hoc hooks, loose globals, or unmodeled scripting seams.*
-- **Unified Capability Supergraph**: *The full directed acyclic graph of registered Capability Nodes and declared Capability Edges across the Unified Capability Engine. It is the provisioning and composition graph, not the complete runtime simulation graph.*
+## Core Capability Model
 
-- **Immutable Core**: *The runtime-immutable inner architecture of the engine. It consists of Layer 1 and Layer 2.*
-- **Layer 1**: *The pure Rust-native foundational layer of the Immutable Core. It contains hardcoded kernels, primitive types, schedulers, ECS foundations, registration machinery, and other root capabilities.*
-- **Layer 2**: *The staged, capability-authored layer of the Immutable Core. Layer 2 is built through ordered compilation slices whose registered capability surfaces become available to later slices, then reconstituted as one effective dynamically linkable library.*
-- **Layer 2 Compilation Slice**: *One ordered build unit within Layer 2. Each slice may use capabilities already exposed by Layer 1 and earlier slices, then registers additional capabilities for later slices and for the final Layer 2 runtime surface.*
-- **Layer 2 Staged Build**: *The alternating build process that evaluates a Layer 2 slice, registers its resulting capability API objects, exposes those objects to the next slice, and repeats until the Layer 2 graph is complete.*
-- **Layer 2 Reconstitution**: *The final packaging step that presents the staged Layer 2 build as one effective Layer 2 library, even if it was produced through multiple intermediate libraries or crates.*
-- **Core Boundary**: *The constrained interface between Layer 1 and Layer 2, where interaction must obey FFI-like or similarly strict linkage rules.*
+* **Capability**: *An exported, permissioned, composable operation surface. A Capability represents something another Capability, context, script, system, or layer may be allowed to invoke.*
 
-- **Layer 3**: *The pure Rhai runtime scripting layer of the architecture. Layer 3 may register, attach, replace, and execute runtime capabilities while preserving the Unified Capability Supergraph's rules.*
-- **Runtime Capability Layer**: *A capability layer whose nodes remain editable, attachable, or replaceable while the application is running, subject to the same supergraph, scope, and permission rules as the static layers.*
+* **Atomic Capability**: *A single operation-level Capability, usually corresponding to one exported callable surface such as a function, method-like wrapper, constructor-like operation, command, query, or action.*
 
-- **Capability Registration**: *The act of adding a capability API object to the engine's registered capability surface, including its marker traits, declared edges, exposed bindings, phase availability, and provisioning constraints.*
-- **Native Capability Registration**: *A Rust macro- and metadata-driven registration path for primary Rust-backed capabilities. It exposes selected Rust functions, types, services, ECS concepts, or library wrappers as capability API objects without making them globally available.*
-- **Rhai Capability Registration**: *A Rhai or Rhai-DSL registration path that constructs and returns capability API objects during a Layer 2 staged build or Layer 3 runtime mutation.*
-- **Build-Stage Rhai Declaration**: *A Rhai or Rhai-DSL declaration evaluated during the Layer 2 build process to construct and register static capability API objects.*
-- **Runtime Rhai Declaration**: *A Rhai declaration evaluated as part of Layer 3, remaining mutable at runtime within the constraints of the Unified Capability Supergraph.*
-- **Staged Capability Bootstrapping**: *A construction model in which each Layer 2 build slice registers capabilities that become available to later slices, allowing capabilities to help define, register, and expose later capabilities.*
+* **Composite Capability**: *A named grouping of multiple Atomic Capabilities for permissioning, provisioning, dependency declaration, or authoring convenience. A Composite Capability is not itself necessarily one callable operation.*
 
-- **Capability Node**: *One registered capability API object within the Unified Capability Supergraph. A Capability Node may declare Capability Marker Traits, carry marker traits declared by itself or related nodes, declare Capability Edges, expose callable/type/resource surfaces, and be provided to an edge's attachment end when it satisfies that edge's constraints.*
-- **Layer 1 Capability Node**: *A Capability Node implemented and registered directly in Rust as part of Layer 1.*
-- **Layer 2 Capability Node**: *A Capability Node registered during the Layer 2 staged build. It may be authored through Rhai/Rhai-DSL, backed by Rust-native registration metadata, or composed from both, and becomes immutable after Layer 2 reconstitution.*
-- **Layer 3 Capability Node**: *A Capability Node registered and executed in pure Rhai as part of Layer 3. Unlike Layer 1 and Layer 2 Capability Nodes, it remains runtime-mutable.*
-- **Stateless Capability Handle**: *A clonable reference to an exposed capability function or binding that carries no borrowed runtime state. Its authority depends on how the host provisions, validates, and routes it through the capability graph.*
+* **Capability Surface**: *The public/API-like boundary through which a Capability is exposed. Vapor tracks the Surface, while ordinary internal Rust implementation details usually remain untracked.*
 
-- **Capability Marker Trait**: *A declarative, behaviorless marker used to classify Capability Nodes and constrain Capability Edges. Marker traits may be declared, carried, required, and composed, but edge cardinality belongs to the edge.*
-- **Capability Edge**: *One declared directed attachment edge within the Unified Capability Supergraph. A Capability Edge is declared by the node requiring an attachment and points toward acceptable provided Capability Nodes. Its constraints may include marker traits, composite marker traits, phase availability, permissions, and cardinality.*
+* **Capability Backing**: *The concrete logic behind a Capability Surface. A Backing may be handwritten Rust, generated Rust, a normal Rust function, a method-like wrapper, a command system, a registry operation, or a Layer 3 dynamic/scripted callable.*
 
-- **Cross-Time Capability Model**: *The architectural model in which Layer 1, Layer 2, and Layer 3 participate in one Unified Capability Supergraph across build-time and runtime phases. Static layers may declare edges and attachment patterns that later slices or runtime-provided Capability Nodes can satisfy. Layer 3 mutation changes graph contents, not the graph model, and must preserve the supergraph's directed acyclic invariant.*
-- **Capability Hierarchy**: *The graph-structured availability and provisioning order of Capability Nodes within the Unified Capability Supergraph. It describes which capabilities may be used to construct, register, attach, or execute other capabilities; it does not describe every runtime ECS or simulation relationship.*
-- **Capability Scope**: *The concrete provisioned view of capabilities available to a capability instance during build-time registration or runtime execution. A scope provides only the handles/API objects allowed by permissions and demanded by declared edges, signatures, or registration context.*
-- **Capability Permission**: *The allowed superset of capability relationships or accesses that a node, declaration, or scope may select from. Permission does not itself create a dependency.*
-- **Capability Dependency**: *The selected subset of permitted capability relationships that is actually required, attached, or provisioned for a specific node, scope, or execution context.*
+* **Capability Contract**: *The public expectations of a Capability Surface, including its ID, input types, output types, permissions, markers, dependency requirements, and call constraints.*
+
+## Rust / Ecosystem Boundaries
+
+* **Capability-Exposing Type**: *A Rust type that has associated Capabilities, such as constructors, methods, queries, conversions, or operations. The type itself is not a Capability.*
+
+* **Capability-Exposing Module**: *A Rust module that organizes or exposes Capabilities under a namespace. The module itself is not a Capability.*
+
+* **Capability-Exposing Crate**: *A Rust crate that declares, contains, exports, or depends on Capabilities. The crate itself is not a Capability.*
+
+* **Vapor-Tracked Surface**: *A public/exported item that participates in Vapor’s metadata system. Internal implementation details do not need to be Vapor-tracked.*
+
+* **Internal Implementation Detail**: *Any Rust item, module, helper, private type, private function, or internal subsystem that is not exposed as a Capability Surface and therefore does not need Capability metadata.*
+
+## Capability Graph
+
+* **Capability Supergraph**: *The logical directed acyclic graph of Vapor Capabilities across all active layers. The Supergraph tracks Capability IDs, call edges, permissions, markers, provisioning rules, and cross-layer callability.*
+
+* **Capability Node**: *A graph node representing one exported Capability Surface. In Layer 1 and Layer 2, this usually corresponds to a concrete Rust function, closure, method-like wrapper, command, or generated callable item. In Layer 3, it may correspond to a runtime/scripted callable.*
+
+* **Capability Edge**: *A directed call relationship between two Capability Nodes. If Capability A calls Capability B as part of its implementation, the Supergraph contains an edge from A to B.*
+
+* **Caller Capability**: *The Capability Node whose implementation calls another Capability.*
+
+* **Callee Capability**: *The Capability Node being called.*
+
+* **Outbound Capability Edge**: *A Capability Edge as viewed from the Caller Capability.*
+
+* **Inbound Capability Edge**: *A Capability Edge as viewed from the Callee Capability.*
+
+* **Capability Marker Trait**: *A declarative, behaviorless marker used to classify Capability Surfaces and constrain which Capabilities may be called or provisioned in a given context.*
+
+## Handles, Calls, and Dispatch
+
+* **Capability Handle**: *A permissioned access reference to a Capability Node. In Layer 3, this may exist as an actual runtime handle object. In Layer 1 and Layer 2, it may compile away into ordinary static Rust calls, imports, generated bindings, or direct function references.*
+
+* **Static Capability Reference**: *A Layer 1 or Layer 2 reference to another Capability that resolves to a normal Rust call, import, function pointer, closure, generated wrapper, or statically known callable item.*
+
+* **Static Capability Call**: *A Capability call resolved through normal Rust compilation and static linking. This is the preferred model for Layer 1 and Layer 2.*
+
+* **Dynamic Capability Call**: *A Capability call resolved through runtime lookup, registry access, scripting, or dynamic dispatch. This is the preferred model for Layer 3.*
+
+* **Capability Call Surface**: *The concrete way a Capability can be invoked from a given layer or context. The same logical Capability may expose different call surfaces to compiled Rust and Layer 3 scripting.*
+
+* **Capability Invocation Permission**: *The rule determining whether one Capability, context, script, system, or provisioned scope may invoke another Capability.*
+
+## Capability Metadata
+
+* **Capability Metadata**: *The framework-readable information describing a Capability Surface. This may include its ID, namespace, input/output types, marker traits, dependency declarations, permissions, layer, crate/module location, documentation, and exposure rules.*
+
+* **Capability Manifest**: *A metadata file or manifest section declaring the Capabilities exposed by a package, crate, module, content unit, or Vapor project.*
+
+* **Native Capability Registration**: *A Rust macro- and metadata-driven registration path for Rust-implemented Capability Surfaces.*
+
+* **Capability Registration**: *The act of making a Capability Surface known to Vapor through metadata, macros, manifests, generated catalogs, or runtime registration.*
+
+* **Capability Catalog**: *The collected view of known Capability metadata for a workspace, package, app composition, build, or runtime session.*
+
+* **Capability ID**: *A stable string-like identifier for a Capability, used to connect metadata, dependency declarations, provisioning, permissions, and cross-layer calls.*
+
+## Layer Model
+
+* **Immutable Core**: *The statically linked runtime-immutable core of the selected engine/game composition. It consists of Layer 1 and Layer 2.*
+
+* **Layer 1**: *The low-level Rust-native foundation provided by the engine/root runtime. It exposes root Capability Surfaces for third-party bindings, ECS foundations, schedulers, primitive operations, platform APIs, and other functionality whose internal capability dependencies Vapor does not attempt to track.*
+
+* **Layer 2**: *The statically compiled, Vapor-tracked content layer. It contains compiled Rust content, game logic, engine/game extensions, first-party or third-party content crates, and other statically linked Capability Surfaces selected for the composition.*
+
+* **Layer 3**: *The runtime/dynamic capability layer. It uses Rhai, Rhai-DSL, runtime registration, scripting, or dynamic dispatch to invoke existing Capabilities and optionally define additional runtime Capabilities.*
+
+* **Layer Boundary**: *The conceptual boundary between Capability layers. The boundary does not imply a dynamic linkage boundary; Layer 1 and Layer 2 are fused into one statically linked Immutable Core.*
+
+## Vapor Framework / Toolchain
+
+* **Vapor Framework**: *The project, metadata, and build orchestration framework around Cargo/Rust. Vapor does not replace rustc; it manages Vapor source structure, scaffolding, Capability metadata, validation, package composition, and then invokes the normal Rust toolchain.*
+
+* **Vapor Toolchain**: *The set of tools used to manage Vapor projects, metadata, workspaces, packages, Capabilities, builds, validation, and runtime composition.*
+
+* **Vapor Build Orchestration**: *The process by which Vapor prepares, validates, and invokes the normal Cargo/Rust build pipeline for a selected App Composition.*
+
+* **Vapor Scaffold**: *A generated template for a crate, module, type, function, manifest, or Capability Surface. Scaffolding helps create metadata-bearing public surfaces but is not required for every internal implementation detail.*
+
+* **Vapor Validation Pass**: *A framework-level check over metadata, dependency declarations, capability visibility, layer boundaries, permissions, package composition, or graph invariants.*
+
+* **Capability Catalog Generation**: *The process of collecting declared Capability metadata into a usable catalog for build-time validation, tooling, editor support, documentation, and runtime provisioning.*
+
+## Layer 2 Static Composition
+
+* **Layer 2 Content Unit**: *A statically compiled content crate, module, package component, or source unit that exposes Capability Surfaces into the Immutable Core.*
+
+* **Static Capability Dependency**: *A dependency between Capabilities that must be resolvable before the final static build.*
+
+* **Capability Dependency Depth**: *The inferred depth of a Capability within the static dependency graph, based on what other Capabilities it calls.*
+
+* **Capability Stratum**: *A validation and build-ordering view over Layer 2 Capabilities. A Stratum contains Layer 2 Capabilities whose tracked static calls only target Layer 1 roots or earlier Layer 2 strata.*
+
+* **Capability Strata Inference**: *The process of analyzing Layer 2 Capability call metadata to infer static dependency depth. Strata prevent Layer 2 from becoming an unbounded number of explicit architectural layers.*
+
+* **Layer 2 Reconstitution**: *The final static composition step in which selected Layer 2 content is built together with Layer 1 into the Immutable Core.*
+
+## Layer 3 Runtime Authoring
+
+* **Rhai Capability Authoring**: *A Rhai or Rhai-DSL authoring path for invoking available Capabilities and defining additional runtime/dynamic Capabilities within Layer 3.*
+
+* **Capability Registry Context**: *A provisioned runtime context that exposes selected Capability Handles, language features, and registration operations without exposing the full global engine/runtime state.*
+
+* **Runtime Capability Registration**: *The act of making a Layer 3 Capability known during runtime through a provisioned registry context.*
+
+* **Runtime Capability Node**: *A Capability Node introduced by Layer 3 at runtime. It participates in the logical Capability Supergraph but may use dynamic dispatch, scripting, or runtime-managed backing logic.*
+
+* **Capability Language Feature**: *A function, operation, type adapter, helper, or DSL construct exposed to Layer 3 authoring so scripts can use or define Capabilities safely.*
+
+## Provisioning and Permissions
+
+* **Capability Provision**: *A scoped view of available Capabilities. A Provision determines which Capability Handles, call surfaces, language features, permissions, and registration operations are available to a context.*
+
+* **Provisioned Context**: *A runtime, script, tool, build step, system, or authoring environment that receives a limited set of Capabilities through a Provision.*
+
+* **Capability Permission**: *A rule controlling whether a Capability may be viewed, invoked, registered, extended, replaced, or used as a dependency.*
+
+* **Dependency-Inverted Capability Slot**: *An attachment point where a lower or earlier layer declares a need or extension point that may be satisfied by a higher or later layer, while preserving the graph’s validity rules.*
+
+## Bundles, Packages, and Ecosystem Integration
+
+* **Capability Bundle**: *A package, crate, content unit, or runtime artifact that contains or exposes one or more Capability Surfaces. A Bundle is not itself a Capability.*
+
+* **Capability Package Surface**: *The set of Capabilities publicly exposed by a package, mod, engine, game, or content unit.*
+
+* **Capability Exposure Boundary**: *The public boundary at which internal Rust/content implementation becomes visible to Vapor as declared Capability metadata.*
+
+* **App Composition Capability Set**: *The effective set of Capabilities available in a selected App Composition after resolving the selected Packagepack, Engine, Game, Mods, and Extensions.*
+
+* **Ecosystem Capability Mapping**: *The relationship between ecosystem-level units and Capability-level surfaces. Projects, repos, packages, engines, games, and mods provide organizational and distribution structure; Capabilities provide invocable operation surfaces inside that structure.*
+
+## Cross-Layer Capability Model
+
+* **Cross-Layer Capability Model**: *The model in which Layer 1, Layer 2, and Layer 3 participate in one logical Capability Supergraph while remaining free to use different internal implementation and dispatch models.*
+
+* **Static-to-Dynamic Capability Bridge**: *The metadata, registry, handle, or scripting surface that allows Layer 3 to invoke Capabilities exposed by the statically linked Immutable Core.*
+
+* **Dynamic-to-Static Capability Reference**: *A Layer 3 reference to a Layer 1 or Layer 2 Capability through its stable Capability ID and provisioned call surface.*
+
+* **Static Capability Surface Export**: *The process of exposing a Layer 1 or Layer 2 static Rust Capability to the metadata/catalog/provisioning system so it can be referenced by other layers.*
