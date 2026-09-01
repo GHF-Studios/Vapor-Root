@@ -47,7 +47,7 @@ Known possibilities:
 - Other?
     
 
-**Answer:**
+**Answer:** Player, Pack/Mod User, Content/Game/Engine/Mod/Pack developer, vapor ecosystem and toolchain and server developer, and Root Authority, with each role being a superset of the other... if that makes any sense. Like, all a Player can do a Pack/Mod User can also do, and more, yk? And so on.
 
 ---
 
@@ -55,19 +55,19 @@ Known possibilities:
 
 ### What is a Player primarily trying to accomplish?
 
-**Answer:**
+**Answer:** Play the default app composition, or play other official and/or third-party content in the form of finished compositions. The creation of another full app composition (aka a packagepack) is not meant for players. "Content Developers" are the ones who should be developing any kind of content, be it just Packagepacks from pre-existing content, or content of your own, even up to a full on entirely (or majorly so) in-house made packagepack full with custom content. And then there is the "Root Developers" who have actual access to the code and infrastructure of the ecosystem itself. There currently is no hard distinction planned (yet?) to differentiate Content Developers, and similarly no distinction is made between Server Devs and Toolchain Devs and whatever... they're all Root Devs.
 
 ### What knowledge can Vapor assume from a Player?
 
-**Answer:**
+**Answer:** How to use a Computer 101. How to use Steam 101. A bit of common sense.
 
 ### What parts of Vapor should a Player normally encounter?
 
-**Answer:**
+**Answer:** Only the Launcher, and the portion of the launcher that allows searching for and installing and selecting finished compositions, essentially full on games, with the base engine + base game and associated mandatory and/or optional mods being what encompasses the default composition. And ofc the engine-executable/game itself. And the Steam Ecosystem, specifically mostly the launching of an app, and the use of the steam workshop (but only if you want to; vapor launcher can manage all of this, kinda like curseforge is for minecraft).
 
 ### What parts should normally remain invisible to them?
 
-**Answer:**
+**Answer:** Programming. Configs. Out-of-Steam Setup or Experience of any kind. Everything legal here is what you get via steam, without changing the mode of the launcher away from the default, which is plain old "Player" I guess.
 
 ---
 
@@ -75,15 +75,17 @@ Known possibilities:
 
 ### What distinguishes a Mod User from a normal Player?
 
-**Answer:**
+**Answer:** N/A because we only have Player, Content Developer, and Ecosystem/Root Developer(Ecosystem Developer can commit code to everything and anything, and Root Developer is just one step further in terms of being the github repo owner and root authority for all of this, which is me, which must ofc be a modelled edge case). Buuut, additionally we maaaaay say that a "Content User" is also like a middleground, this time of Player and Content Developer: Someone who uses Content; to use it simply, or to compose it into any kind of pack, who knows. But true content development of non-pack things like an Engine, a Game, a Mod of any kind, yk, those need a full on Content Developer.
 
 ### What should a Mod User be able to accomplish?
 
-**Answer:**
+**Answer:** N/A (I feel like the questions really needed to quickly take into account new answers and rearrange and change themselves accordingly, which is ofc not possible with this rigid set-in-stone document which I simply cannot send back and forth to you dozens of times.... hmmmmm.)
+
+Lemme try actually: A Mod user should be able to understand and apply the architecture of the content ecosystem to effectively compose existing (and/or self-made) content into a new composition or substituent of a full composition (any pack or individual piece of content, apart from packagepack, which ofc represents the whole full composition).
 
 ### What technical knowledge can Vapor assume from them?
 
-**Answer:**
+**Answer:** Yeah no, we should really completely rework this format, ofc not throwing the answers away I am going to give, but yeah, this (necessarily so) rigid format is really annoying, so please excuse my sub-par answers...
 
 ---
 
@@ -91,19 +93,19 @@ Known possibilities:
 
 ### What should a Content Developer be able to accomplish?
 
-**Answer:**
+**Answer:** Develop actual pieces of content, not just packs of content like packagepack, enginepack, etc., yk? They need to actually do some configuring and programming and stuff, yk? But the nicer friendly "script-y" kind of programming I guess, with guardrails and like.... ikd.
 
 ### What technical knowledge can Vapor assume from them?
 
-**Answer:**
+**Answer:** I think I answered that implicitly via my answers so far.
 
 ### What should Vapor automate for them?
 
-**Answer:**
+**Answer:** Dealing with Rust or Cargo (or other Tools, for example Bevy and it's ECS count as well) complexity, yk? They should be able to just do stuff, and have that feeling of zero boilerplate/unnecessary-setup, yk?
 
 ### What should remain directly controllable by them?
 
-**Answer:**
+**Answer:** Everything but the ecosystem itself, as stated previously; more or less.
 
 ---
 
@@ -111,11 +113,11 @@ Known possibilities:
 
 ### Is an Engine/Game Developer meaningfully different from a normal Content Developer?
 
-**Answer:**
+**Answer:** No.
 
 ### If yes, how?
 
-**Answer:**
+**Answer:** N/A.
 
 ---
 
@@ -123,11 +125,11 @@ Known possibilities:
 
 ### What distinguishes someone developing Vapor itself from someone developing Vapor Content?
 
-**Answer:**
+**Answer:** Well, one thing is developing an application and an app framework and the server (and whatever else) infrastructure around it, and the other is using that stuff as a user of it, yk?
 
 ### What additional capabilities or workflows do they need?
 
-**Answer:**
+**Answer:** Just access to push commits to the official repos.
 
 ---
 
@@ -135,11 +137,11 @@ Known possibilities:
 
 ### Is operating Vapor servers/registries a meaningful user role?
 
-**Answer:**
+**Answer:** No. One central registry exists, nothing is user-hosted in that sense or planned right now.
 
 ### If yes, what should that role be able to accomplish?
 
-**Answer:**
+**Answer:** N/A.
 
 ---
 
@@ -153,15 +155,15 @@ Assume:
 
 ### What does Steam install initially?
 
-**Answer:**
+**Answer:** The Vapor Launcher without SDK/Development capabilities, and the default composition and it's constituents ofc.
 
 ### What is bundled directly with the Steam App?
 
-**Answer:**
+**Answer:** The vapor launcher.
 
 ### What is intentionally downloaded or installed later?
 
-**Answer:**
+**Answer:** The default composition, from the steam workshop, automatically.
 
 ---
 
@@ -169,23 +171,29 @@ Assume:
 
 ### What executable/process starts first?
 
-**Answer:**
+**Answer:** The launcher, which allows us to start both the sdk mode which happens inside the launcher I guess, but also normal play "mode" where we just start the actual whatever_engine.exe and tell it to launch whatever game, and yeah, yk?
 
 ### What does the user see first?
 
-**Answer:**
+**Answer:** The three launch options in Steam, one taking them directly to play the default composition (called "Loo Cast" btw, same as the Loo cast Game; weird, I know), the second one proposing the launcher, and the third one proposing jumping straight into the sdk, assuming it is installed. If not, we ofc just expect the user to be guided-into/asked-permission-for changing the mode, which ofc bears real-world consequences, installing the SteamCmd, searching for git or installing it locally in the steam-app/vapor root directory, installing the Rust/Cargo toolchain and configuring it, and so on, yk? Actually, we may just say "go to the installer and go into different mode" cause that seems like an installer responsibility, and then the installer is there instead of the weird sdk option (weird, cause the SDK IS inside the Launcher, yk? It's the same application, just in different mode!) we have an "Installer" option there, making that in total: "Play Loo Cast", "Start Vapor", "Start Installer".
 
 ### Is there any first-time setup?
 
-**Answer:**
+**Answer:** Only if you want to become a content user or even developer, but not as a normal player, no.
 
 ### What does Vapor automatically detect on the machine?
 
-**Answer:**
+**Answer:** As Player: Detect it's own presence directly inside the root directory of a steam app with the correct steam id, and the ownership of the game (crude steamworks api drm basically).
+As Content User: Everything before, and: Git capabilities (cause vendoring this is not viable everywhere due to linux shenanigans).
+As Content Developer: Everything before, and: A working logged-in-and-to-the-steam-account-linked github account! (for issues and in-app/in-sdk content *deployment*).
+As Ecosystem/Root Developer: Everything before, and: Github authorization for the official/first-party github repos.
 
 ### What does Vapor automatically configure?
 
-**Answer:**
+**Answer:** As Player: Itself, as in it should be automatically configured by the time the launcher opens up, poteeeeeentially requiring some first-launch setup, but that should then be fully automatic and opaque, simply being enforced and yeah.
+As Content User: Everything before, and: A rust/cargo toolchain, and steamcmd.
+As Content Developer: Everything before, and: Well, semi-automatically (cause you as the user need to explicitly decide): Try and load/clone/whatever some existing superworkspace/workspace/repo/whatever-idk, or create a default/from-scratch one.
+As Ecosystem/Root Developer: Everything before, and the means to actually push/deploy actual changes as a sort of pre-release-dev-tool yk? Just a mechanism or wrapped/internally-used cargo xtask or whatever so we can immediately commit+push+live-deploy-on-a-dev-branch-ofc some changes and immediately test them, live, real, kiiiiinda dangerous ofc, but hence a pre-release tool for when there is no audience to witness my mistakes yet. 
 
 ---
 
@@ -193,19 +201,19 @@ Assume:
 
 ### What is the default App Composition?
 
-**Answer:**
+**Answer:** The "Loo Cast Packagepack", comprised of the "Spacetime Engine" and the "Loo Cast Game" and anything I may add in the future.
 
 ### How is that default composition selected/resolved?
 
-**Answer:**
+**Answer:** Well, every "*pack" is basically primarily just a manifest for content and/or certain other types of packs. This way we can just select a composition by stating a packagepack ID, then having the registry check which workshop items that is, but yeah we just ask the registry what each content ID resolves into a steam workshop item id, yk? But ofc the actual existence and validity of a packagepack is guaranteed once it is published, cause it cannot be with invalid declared dependencies or stuff like that, yk? But yeah, primarily the "vapor registry" server-side-app is what holds the database of content ids and associated steam workshop ids (and same with the  steam account id and linked github account id) and can translate the two between each other on demand.
 
 ### Is the default content already installed?
 
-**Answer:**
+**Answer:** No.
 
 ### If not, what happens?
 
-**Answer:**
+**Answer:** It get's automatically installed on first launch, ideally on install but that is not guaranteed (yet?
 
 ---
 
@@ -213,15 +221,15 @@ Assume:
 
 ### What does the Player actually do to start playing?
 
-**Answer:**
+**Answer:** Either select the default packagepack/"app compositon" (or another one ofc), and hit "Play", or just go directly to the default via the steam launch option "Play Loo Cast".
 
 ### What happens between pressing "Play" and the Engine/Game starting?
 
-**Answer:**
+**Answer:**Nothing. Literally by definition nothing, or virtually/basically nothing, but yeah: Basically nothing afaik.
 
 ### Which parts of this process should remain invisible during normal operation?
 
-**Answer:**
+**Answer:** N/A.
 
 ---
 
@@ -229,15 +237,15 @@ Assume:
 
 ### What changes after the first successful launch?
 
-**Answer:**
+**Answer:** First-launch stuff is done, duh.  
 
 ### What state should Vapor remember?
 
-**Answer:**
+**Answer:** Rust/Cargo toolchain stuff for dependency caching and incremental builds for when you do content composition and/or development (cause changing a pack or content of any kind mandates a rebuild, ALWAYS! As else it won't work as one big static units yk?). Also savegame state ofc, like savegames, quicksaves, yk what I mean. Also, authorization to the degree that the third-party providers like github or steam, and also within reason of course assuming someone allows unreasonable things. Ofc also like the composition installations, and also (if u are a developer or content user/"composer") the raw source code of all the packs and content so it can all be rebuilt from source. Like, we have a content/pack cache, and we have deployed finished bundles, one bundle just being like an engine exe and a statically-linked monolithic hyper-optimized native goooood ol' static lib, yk? Also ofc user/config state for launcher and engine/game, like I mean stuff like audio video whatever settings, or like UI settings, keybinds, remembered window layouts, whatever, that kinda stuff.
 
 ### Should subsequent launches normally go directly into the Game, through the Launcher, or somewhere else?
 
-**Answer:**
+**Answer:** The three paths are always the same: Install, Start Launcher, Play Default Composition (Play Loo Cast).
 
 ---
 
@@ -247,19 +255,19 @@ Assume:
 
 ### Conceptually, what is the "Loo Cast" App?
 
-**Answer:**
+**Answer:** The Spacetime Engine executable with the Loo Cast Game library *and/or* any other first-party content.
 
 ### Is the Launcher a separate application, a mode, a window, or merely a conceptual role?
 
-**Answer:**
+**Answer:** A separate application, the pendant to the Installer and the freely-selectable engine executable, and also which game that executable shall launch.
 
 ### Is the SDK a separate application, a mode, a collection of tools, or merely a conceptual role?
 
-**Answer:**
+**Answer:** Aaaalmost a separate application: It's a mode that is basically just a collection of tools like an IDE more or less.
 
 ### How do Launcher, SDK, Game, and ecosystem tooling relate from the user's perspective?
 
-**Answer:**
+**Answer:** What the fuck kinda generic ass question is that man.... sorry, no offense!
 
 ---
 
@@ -294,19 +302,21 @@ Possible examples:
 - Accounts
     
 
-**Answer:**
+**Answer:** Compositions(Play as a button per composition or for the selected composition one button, something like that), Content/Library, Development (Projects, Toolchain/SDK/"IDE", Diagnostics, Logs), Settings, Accounts.
 
 ### What is the normal "home" surface?
 
-**Answer:**
+**Answer:** A list of tabs/buttons in one big menu: Compositions, Content/Library, Development, Settings, Accounts.
 
 ### Which surfaces should ordinary Players never need?
 
-**Answer:**
+**Answer:** "Non-modding"? Compositions, Content/Library, Development, Settings.
 
 ### Which surfaces appear only in Developer Mode?
 
-**Answer:**
+**Answer:** For "modders" only, so content user/"composer" (which are weirdly indeed one and the same role really): Compositions and Content/Library.
+For real content or otherwise developers: Compositions, Content/Library, and Development.
+But really, this is all a bit simplistic and not super crazy thought-through; just saying: Head up!
 
 ---
 
@@ -314,11 +324,11 @@ Possible examples:
 
 ### How should users move between the major parts of Vapor?
 
-**Answer:**
+**Answer:** Installation-wise(includes user-mode switch)? Using the installer. Content-wise? Using the launcher. And the engine/game, idk I think you get it by now, right?
 
 ### Should the distinction between Player and Developer workflows be visually strong or mostly seamless?
 
-**Answer:**
+**Answer:** Visually strong, indeed. A real like visual upgrade really, for lack of a better less vibe-based answer.
 
 ---
 
@@ -326,19 +336,19 @@ Possible examples:
 
 ### Should Vapor expose a CLI?
 
-**Answer:**
+**Answer:** Yes. This is actually soooomewhat in development, but also an unplanned undocumented spontaneous clusterfuck.
 
 ### If yes, who is it intended for?
 
-**Answer:**
+**Answer:** Developers, but not mere Content Users or "Composers", only Content and Ecosystem/Root Developers.
 
 ### Should GUI and CLI expose roughly equivalent capabilities?
 
-**Answer:**
+**Answer:** Yes, just presented and interacted with very differently ofc.
 
 ### Which workflows should deliberately remain CLI-first or GUI-first?
 
-**Answer:**
+**Answer:** Uuuuuggggggggggggggh- next question! (I have no idea man)
 
 ---
 
@@ -348,19 +358,19 @@ Possible examples:
 
 ### How is an App Instance created?
 
-**Answer:**
+**Answer:** it is downloaded and installed and configured and used via steam.
 
 ### Is the Steam installation automatically one App Instance?
 
-**Answer:**
+**Answer:** Yes.
 
 ### Can users manually create additional App Instances?
 
-**Answer:**
+**Answer:** No.
 
 ### Why would someone want multiple App Instances?
 
-**Answer:**
+**Answer:** Don't know, don't care. Makes no sense. it's like asking why someone would want to install steam twice, or edge, or firefox, or anything for that matter really, lol.
 
 ---
 
@@ -368,19 +378,19 @@ Possible examples:
 
 ### How is an App Instance identified?
 
-**Answer:**
+**Answer:** Steam ID, and contents and structure of contents, it's a bit complex-
 
 ### Does it have a human-readable name?
 
-**Answer:**
+**Answer:** Yes ofc, all IDs here are supposed to be human-readable plaintext-strings-IDs.
 
 ### Does it have a stable internal ID?
 
-**Answer:**
+**Answer:** Uuuggggggggh- next question!
 
 ### Is its filesystem path part of its identity?
 
-**Answer:**
+**Answer:** I- next question! (Sorry man....)
 
 ---
 
@@ -388,15 +398,15 @@ Possible examples:
 
 ### Where may an App Instance live?
 
-**Answer:**
+**Answer:** Only inside the direct folder assigned by steam to contain the one main-steamapp's files and folders.
 
 ### Can it be moved?
 
-**Answer:**
+**Answer:** Yes, it will just detect that, live, and ask for permission for an automatic port/migration or something like that, idk really.
 
 ### What happens when the user manually moves its directory?
 
-**Answer:**
+**Answer:** Should not be done. Move it through ""steam's move feature"", which I think steam actually has. Manual edits and moves are NOT recommended in this scope/regard!
 
 ---
 
@@ -404,7 +414,7 @@ Possible examples:
 
 ### What state belongs specifically to an App Instance?
 
-**Answer:**
+**Answer:** 
 
 ### What state is shared globally between App Instances?
 
