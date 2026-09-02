@@ -1,4 +1,3 @@
-# Vapor Ecosystem Experience Model
 
 > [!info]
 > This document defines the intended **User Experience (UX)** and **Developer Experience (DX)** of the Vapor Ecosystem.
