@@ -1,0 +1,102 @@
+@startuml
+title Vapor Operational State Model
+
+hide empty description
+
+state "Steam App Instance Situation" as Situation {
+
+    state "Capability" as Capability {
+        [*] --> Player
+        Player --> Composer : upgrade
+        Composer --> Player : downgrade
+
+        Composer --> ContentDeveloper : upgrade
+        ContentDeveloper --> Composer : downgrade
+
+        ContentDeveloper --> EcosystemDeveloper : upgrade
+        EcosystemDeveloper --> ContentDeveloper : downgrade
+
+        EcosystemDeveloper --> RootAuthority : root authority
+    }
+
+    --
+
+    state "Composition Resolution" as Resolution {
+        [*] --> Unresolved
+        Unresolved --> Resolved : resolve succeeds
+        Unresolved --> Invalid : resolve fails
+
+        Resolved --> Unresolved : relevant source changes
+        Invalid --> Unresolved : source/config changes
+    }
+
+    --
+
+    state "Build Currency" as Build {
+        [*] --> Missing
+
+        Missing --> Building : build
+        Stale --> Building : rebuild
+        Failed --> Building : retry
+
+        Building --> Current : success
+        Building --> Failed : failure
+
+        Current --> Stale : relevant source/composition change
+    }
+
+    --
+
+    state "Local Vapor App" as Installation {
+        [*] --> NotInstalled
+
+        NotInstalled --> Installing : install / deploy
+        Installing --> Installed : success
+        Installing --> NotInstalled : failure
+
+        Installed --> NotInstalled : remove
+    }
+
+    --
+
+    state "Runtime" as Runtime {
+        [*] --> Stopped
+
+        Stopped --> Starting : launch
+        Starting --> Running : start succeeds
+        Starting --> Stopped : start fails
+
+        Running --> Stopping : stop / exit
+        Stopping --> Stopped : stopped
+        Running --> Stopped : crash / abnormal exit
+    }
+}
+
+note right of Situation
+This is a projection of several
+orthogonal state dimensions.
+
+A real Vapor Situation is their
+combination plus additional
+conditions such as source state,
+authentication, provider
+availability, selection,
+publication state, and tooling.
+
+The model deliberately does not
+enumerate every cross-product
+as one giant serialized state machine.
+end note
+
+note bottom of Build
+A failed rebuild does not
+automatically destroy an older
+installed working Vapor App.
+end note
+
+note bottom of Capability
+Capability and remote
+authorization are separate.
+end note
+
+@enduml

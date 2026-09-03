@@ -1,0 +1,80 @@
+@startuml
+title Vapor Composition Model
+
+skinparam componentStyle rectangle
+
+package "Steam App" {
+    component "Steam App Instance" as SteamInstance
+
+    package "Selected Vapor Context" {
+        component "Vapor App Composition" as Composition
+        component "Vapor App" as VaporApp
+    }
+}
+
+package "Vapor Source / Composition Model" {
+    component "Packagepack" as Packagepack
+
+    package "Reusable Pack Fragments" {
+        component "Enginepack" as Enginepack
+        component "Gamepack" as Gamepack
+        component "Modpack" as Modpack
+    }
+
+    package "Behavioral Content" {
+        component "Engine" as Engine
+        component "Game" as Game
+        component "Engine Mod(s)" as EngineMods
+        component "Game Mod(s)" as GameMods
+        component "Extension Mod(s)" as ExtensionMods
+    }
+}
+
+Packagepack --> Enginepack : may reference
+Packagepack --> Gamepack : may reference
+Packagepack --> Modpack : may reference
+
+Packagepack --> Engine : may reference directly
+Packagepack --> Game : may reference directly
+Packagepack --> EngineMods : may reference directly
+Packagepack --> GameMods : may reference directly
+Packagepack --> ExtensionMods : may reference directly
+
+Enginepack --> Engine : exactly one
+Enginepack --> EngineMods : zero or more
+
+Gamepack --> Game : exactly one
+Gamepack --> GameMods : zero or more
+
+Modpack --> EngineMods
+Modpack --> GameMods
+Modpack --> ExtensionMods
+
+ExtensionMods --> EngineMods : may extend
+ExtensionMods --> GameMods : may extend
+ExtensionMods --> ExtensionMods : may extend
+
+Packagepack --> Composition : resolve
+Composition --> VaporApp : build / deploy
+
+SteamInstance --> Composition : selects
+SteamInstance --> VaporApp : installs / launches
+
+note right of Engine
+The effective Engine
+declares the composition's
+main binary.
+end note
+
+note bottom of Packagepack
+A valid Packagepack represents
+one complete composition.
+end note
+
+note bottom of VaporApp
+A Vapor App is a built,
+target-specific realization
+of the resolved composition.
+end note
+
+@enduml

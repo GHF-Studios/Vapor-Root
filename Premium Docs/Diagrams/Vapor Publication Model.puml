@@ -1,0 +1,63 @@
+@startuml
+title Vapor Publication Model
+
+start
+
+partition "Local Source / Git" {
+    :Author Vapor Content / Pack source;
+    :Validate local authored source;
+    :Commit intended publication state;
+}
+
+partition "Remote Git / Source Publication" {
+    :Push / publish source;
+    :Establish retrievable source version;
+}
+
+partition "Vapor Content Registry" {
+    :Resolve / register Vapor identity;
+    :Link semantic identity to source location/version;
+}
+
+partition "Composition Build" {
+    :Resolve Packagepack;
+    :Resolve exact required source;
+    :Validate complete composition;
+    :Build target-specific Vapor App artifact(s);
+    :Validate distribution artifact(s);
+}
+
+partition "Steam Workshop" {
+    :Publish built complete composition;
+}
+
+partition "Vapor Content Registry" {
+    :Link Vapor publication identity
+    to built Workshop distribution;
+    :Expose publication for discovery;
+}
+
+partition "Player" {
+    :Discover Vapor App;
+    :Acquire compatible built artifact;
+    :Install / register locally;
+    :Select / launch;
+}
+
+stop
+
+note right
+This diagram shows the broad
+successful publication direction.
+
+It is not an atomicity or failure
+state machine.
+
+Source publication, Registry linkage,
+build, Workshop publication, and
+final Registry publication state can
+succeed or fail independently and
+must eventually support recovery.
+end note
+
+@enduml
