@@ -9,7 +9,7 @@
 >
 > This document defines **how those things fit together from the perspective of people using and developing Vapor**.
 >
-> It intentionally stays above detailed implementation mechanics. It describes the product model, major workflows, capability boundaries, ownership boundaries, and intended experience strongly enough to constrain later technical design without attempting to encode the entire ecosystem as prose.
+> It intentionally stays above detailed implementation mechanics. It describes the product model, major workflows, capability boundaries, ownership boundaries, lifecycle relationships, and intended experience strongly enough to constrain later technical design without attempting to encode the entire ecosystem as prose.
 >
 > Unresolved areas are left explicit rather than being filled with speculative decisions.
 
@@ -55,9 +55,121 @@ The guiding principle is:
 
 > **Expose the work the user actually intends to perform; automate the infrastructure required to make that work possible.**
 
+Vapor is therefore neither:
+
+* A thin GUI over Cargo.
+* A replacement for every underlying development tool.
+* A hidden black box that prevents advanced users from understanding what happened.
+
+It is the coherent experience and orchestration layer over the ecosystem.
+
 ---
 
-# 2. Capability Model
+# 2. Experience Principles
+
+## 2.1 Steam-First Player Experience
+
+A normal Player should be able to remain within the Steam/Vapor product experience.
+
+Playing Loo Cast should not require:
+
+* Visiting GitHub.
+* Installing Git.
+* Installing Rust.
+* Installing Cargo.
+* Installing SteamCMD.
+* Editing configuration files.
+* Understanding Vapor's repository model.
+
+The default installation should behave like a conventional Steam product.
+
+---
+
+## 2.2 Progressive Capability
+
+Complexity should appear only when the user acquires capabilities that require it.
+
+The progression is not merely about permissions.
+
+It progressively introduces new mental models:
+
+> Player
+> → Vapor Apps
+
+> Composer
+> → Vapor Content and composition
+
+> Content Developer
+> → source projects and behavioral development
+
+> Ecosystem Developer
+> → Vapor itself
+
+Higher capability should expose greater power without making lower-capability experiences unnecessarily complicated.
+
+---
+
+## 2.3 Golden Paths over Incidental Infrastructure
+
+Vapor should provide a strongly supported normal path for common operations.
+
+The user should usually be able to say:
+
+> "Build this."
+
+rather than:
+
+> "Locate the correct Cargo workspace, resolve the source repositories, ensure the correct toolchain is active, invoke the right commands, locate the resulting artifact, deploy it into the correct local state, then tell Vapor where I put it."
+
+The underlying operations still exist.
+
+Vapor should orchestrate them.
+
+---
+
+## 2.4 Advanced Transparency
+
+Abstraction must not require opacity.
+
+As capability increases, users should gain increasing access to:
+
+* Raw tool output.
+* Repository state.
+* Build logs.
+* Dependency information.
+* Diagnostics.
+* Filesystem locations.
+* Underlying commands where useful.
+
+A Vapor-friendly interpretation may be the default presentation.
+
+The underlying reality should remain reachable.
+
+---
+
+## 2.5 Static Composition
+
+A Vapor App represents one statically resolved complete composition.
+
+Composition changes occur before launch and require rebuilding.
+
+The normal runtime is not responsible for dynamically assembling an arbitrary collection of independently built Mods.
+
+This is a foundational experience and architecture constraint.
+
+---
+
+## 2.6 Human-Readable Identity
+
+Users should work with Vapor identities and names rather than provider-specific opaque IDs wherever practical.
+
+Steam Workshop IDs, repository URLs, commit hashes, and similar provider-native identities may remain visible where useful.
+
+They should not be the primary semantic identity model presented by Vapor.
+
+---
+
+# 3. Capability Model
 
 Vapor uses a strict progressive capability hierarchy:
 
@@ -79,13 +191,13 @@ Moving from Player to Composer or from Composer to Content Developer should feel
 
 ---
 
-# 3. Core Product and Composition Model
+# 4. Core Product and Composition Model
 
 Several nearby concepts must remain clearly separated.
 
 ---
 
-## 3.1 Steam App
+## 4.1 Steam App
 
 There is one Steam-distributed product:
 
@@ -93,21 +205,21 @@ There is one Steam-distributed product:
 
 This is the **Steam App**.
 
-The Steam App provides the product/installation boundary through which the local Vapor ecosystem is accessed.
+The Steam App provides the product and installation boundary through which the local Vapor ecosystem is accessed.
 
 It includes or provides access to:
 
 * Vapor Installer.
 * Vapor Launcher.
 * The default first-party composition.
-* The selected/runnable Vapor Apps.
+* Installed third-party Vapor Apps.
 * The wider Vapor tooling made available through capability upgrades.
 
 The Steam App is not synonymous with one particular runtime composition.
 
 ---
 
-## 3.2 Steam App Instance
+## 4.2 Steam App Instance
 
 A **Steam App Instance** is one concrete local installation of the Steam App.
 
@@ -132,13 +244,13 @@ The ecosystem should not be designed around arbitrary manual copying or relocati
 
 ---
 
-## 3.3 Packagepack
+## 4.3 Packagepack
 
 A **Packagepack** represents one complete Vapor composition.
 
-It is not merely a fragment waiting to become some separately authored "finished composition."
+It is not merely a fragment waiting to become some separately authored finished-composition object.
 
-A valid Packagepack already defines the complete content composition.
+A valid Packagepack already defines the complete composition.
 
 It must resolve to:
 
@@ -154,7 +266,7 @@ The Packagepack is therefore the composition-level artifact and identity from wh
 
 ---
 
-## 3.4 Vapor App Composition
+## 4.4 Vapor App Composition
 
 A **Vapor App Composition** is the effective resolved composition represented by a Packagepack in the context in which it is selected and used by a Steam App Instance.
 
@@ -168,7 +280,7 @@ Many built Vapor Apps may coexist.
 
 ---
 
-## 3.5 Vapor App
+## 4.5 Vapor App
 
 A **Vapor App** is the built, deployable, runnable realization of a Vapor App Composition for a supported target.
 
@@ -189,13 +301,206 @@ Conceptually:
 
 These are not unrelated products.
 
-They are different views/stages of the same complete composition.
+They are different views or stages of the same complete composition.
 
 ---
 
-# 4. Player
+# 5. Operational Responsibility Model
 
-## 4.1 Purpose
+Vapor contains several user-facing applications and several external systems.
+
+Their responsibilities must remain distinguishable even when Vapor presents them as one coherent experience.
+
+---
+
+## 5.1 Steam
+
+Steam owns the outer product installation boundary.
+
+It is responsible for:
+
+* Installing the Loo Cast Steam App.
+* Updating the Steam-depot-owned portion of that installation.
+* Managing Steam library locations.
+* Providing Steam ownership/entitlement context.
+* Providing Steam launch options.
+* Hosting Steam Workshop as an external distribution facility.
+
+Vapor should work with Steam rather than attempting to replace Steam's installation-management responsibilities.
+
+---
+
+## 5.2 Steam App Instance
+
+The Steam App Instance is the local operating context within which Vapor works.
+
+It provides the local boundary around:
+
+* Vapor applications.
+* Capability state.
+* Selected composition.
+* Installed Vapor Apps.
+* Local metadata.
+* Relevant caches.
+* Links to source and development state where higher capabilities are installed.
+
+The Steam App Instance is not itself an authoring tool.
+
+It is the local product instance within which those tools operate.
+
+---
+
+## 5.3 Vapor Installer
+
+The Vapor Installer owns **capability establishment and environment mutation**.
+
+If an operation fundamentally changes what the local Vapor environment is capable of doing, it belongs conceptually to the Installer.
+
+Examples include:
+
+* Detecting required external tooling.
+* Installing Rust/Cargo.
+* Detecting or configuring Git.
+* Installing SteamCMD.
+* Establishing Composer capability.
+* Establishing Content Developer capability.
+* Repairing broken toolchain capability.
+* Removing higher-level capability tooling.
+* Establishing Ecosystem Developer-specific prerequisites.
+
+The Installer should not become the ordinary day-to-day interface for using those capabilities.
+
+---
+
+## 5.4 Vapor Launcher
+
+The Vapor Launcher owns **ordinary use of installed Vapor capabilities**.
+
+It is the primary operating surface for:
+
+* Playing.
+* Selecting Vapor Apps.
+* Discovering finished compositions.
+* Accessing source-side content as capability permits.
+* Composing.
+* Building.
+* Managing relevant local Vapor state.
+* Entering the SDK.
+* Accessing development projects.
+* Publishing.
+* Viewing diagnostics.
+* Managing accounts/settings.
+
+The Launcher is the main cohesive frontend over the Vapor ecosystem.
+
+---
+
+## 5.5 Vapor SDK
+
+The Vapor SDK owns the **behavioral-content development experience**.
+
+It is responsible for presenting and coordinating workflows around:
+
+* Engine development.
+* Game development.
+* Engine Mod development.
+* Game Mod development.
+* Extension Mod development.
+* Content project creation/opening.
+* Build/run/test operations relevant to behavioral development.
+* Developer-oriented configuration.
+* Diagnostics and inspection.
+
+The SDK does not need to replace every external editor or IDE.
+
+It must provide the Vapor-specific development model and orchestration around those tools.
+
+---
+
+## 5.6 Vapor CLI
+
+The Vapor CLI exposes developer-oriented Vapor capabilities through command-line workflows.
+
+It is conceptually another interface to Vapor capabilities rather than an unrelated implementation path.
+
+Where reasonable, GUI and CLI operations should map to the same underlying Vapor concepts.
+
+---
+
+## 5.7 Git
+
+Git owns repository mechanics.
+
+Vapor uses Git for:
+
+* Container Repos.
+* Vapor Workspaces.
+* Source acquisition.
+* Source history.
+* Branching.
+* Commits.
+* Source collaboration.
+* Remote synchronization.
+
+Vapor may automate Git.
+
+It should not invent a parallel version-control model unless a future requirement explicitly demands one.
+
+---
+
+## 5.8 Git Hosting Providers
+
+Git hosting providers own remote hosting and provider-specific collaboration.
+
+GitHub is currently a major provider within the Vapor ecosystem.
+
+Provider-specific functionality may include:
+
+* Repository creation.
+* Authentication.
+* Remote repository access.
+* Issues.
+* Pull requests.
+* Access control.
+* Organization/repository authorization.
+
+These are not fundamental local capability requirements unless a specific operation needs them.
+
+---
+
+## 5.9 Steam Workshop
+
+Steam Workshop owns Player-facing distribution containers for built complete compositions.
+
+Steam Workshop does not own the canonical source model.
+
+It is a distribution backend for built Vapor Apps.
+
+---
+
+## 5.10 Vapor Content Registry
+
+The Vapor Content Registry owns Vapor's semantic identity/linkage layer across the external ecosystem.
+
+It is responsible conceptually for allowing Vapor to reason in terms of Vapor identities instead of requiring every operation to use provider-native identifiers.
+
+The exact registry schema remains open.
+
+---
+
+## 5.11 Engine Runtime
+
+The effective Engine owns execution of the built Vapor App.
+
+The Engine declares the composition's main binary.
+
+At launch time, the runtime should receive an already built and resolved composition rather than being responsible for normal composition construction.
+
+---
+
+# 6. Player Experience
+
+## 6.1 Purpose
 
 A Player consumes finished Vapor Apps.
 
@@ -213,7 +518,7 @@ A Player does not create or modify Vapor compositions.
 
 ---
 
-## 4.2 Assumed Knowledge
+## 6.2 Assumed Knowledge
 
 Vapor may assume approximately:
 
@@ -232,7 +537,62 @@ Vapor should not assume:
 
 ---
 
-## 4.3 Player Tooling Boundary
+## 6.3 What the Player Normally Sees
+
+The Player-facing Vapor Launcher should primarily expose concepts such as:
+
+* Current/default Vapor App.
+* Play.
+* Installed Vapor Apps.
+* Discoverable Vapor Apps.
+* Installation status.
+* Basic composition information.
+* Settings.
+* Accounts.
+
+Raw source-content management should not dominate the Player experience.
+
+Development-oriented surfaces may be absent, visually deemphasized, or represented only as an explicit upgrade path.
+
+---
+
+## 6.4 What the Player Normally Does
+
+Typical Player actions include:
+
+* Play the default Loo Cast Vapor App.
+* Open Vapor.
+* Browse finished compositions.
+* Install a third-party Vapor App.
+* Remove a previously installed Vapor App.
+* Select another Vapor App.
+* Launch it.
+* Adjust settings.
+* Manage relevant account state.
+
+---
+
+## 6.5 What Vapor Hides from the Player
+
+During normal Player operation, Vapor should hide or fully automate:
+
+* Source repository lookup.
+* Git operations.
+* Cargo.
+* Rust toolchains.
+* Compilation.
+* Composition builds.
+* Workshop implementation details.
+* Registry provider IDs.
+* Build caches.
+* Repository topology.
+* Workspace/project topology.
+
+A Player may inspect deeper information when useful, but the successful path should not require it.
+
+---
+
+## 6.6 Player Tooling Boundary
 
 A Player does not require:
 
@@ -250,7 +610,7 @@ The Player does not rebuild compositions locally.
 
 ---
 
-## 4.4 Player Discovery
+## 6.7 Player Discovery
 
 The normal Player-facing discovery unit inside Vapor is a **complete Vapor App**.
 
@@ -262,9 +622,9 @@ Vapor should present discovery according to what the current capability level ca
 
 ---
 
-# 5. Composer / Content User
+# 7. Composer Experience
 
-## 5.1 Purpose
+## 7.1 Purpose
 
 A Composer is a Player with composition-authoring capability.
 
@@ -293,36 +653,68 @@ The fundamental boundary is:
 
 ---
 
-## 5.2 Composer Experience
+## 7.2 What Changes When Composer Capability Is Installed
 
-The Composer experience should feel like working with the Vapor content/composition model rather than manually operating a Rust build system.
+Composer capability introduces several new conceptual layers.
 
-The Composer should work in terms of:
+The user now needs to reason about:
 
-* Content.
+* Individual Vapor Content.
 * Packs.
-* Dependencies.
+* Dependency relationships.
 * Compatibility.
-* Composition.
-* Packagepack validity.
-* Build.
-* Play.
+* Source acquisition.
+* Composition validity.
+* Builds.
+* Git-backed authored pack state.
 * Publication.
 
-The normal conceptual work is roughly:
+The Launcher therefore becomes meaningfully more capable.
 
-> Acquire existing content source
-> → create/modify packs
-> → resolve a Packagepack
-> → build the complete composition
-> → run/test it
-> → optionally publish it
-
-This is a conceptual flow, not a complete workflow specification.
+This is not simply Player Mode with another button.
 
 ---
 
-## 5.3 Composer Tooling
+## 7.3 What the Composer Normally Sees
+
+A Composer may additionally encounter:
+
+* Source-backed content discovery.
+* Individual Engines.
+* Games.
+* Mods.
+* Packs.
+* Packagepack composition views.
+* Dependency information.
+* Compatibility information.
+* Build state.
+* Local source state.
+* Publication state.
+* Git-related status where useful.
+
+The exact surface organization remains open.
+
+---
+
+## 7.4 What the Composer Normally Does
+
+Typical Composer activities include:
+
+* Find an existing Engine.
+* Find an existing Game.
+* Find compatible Mods.
+* Acquire their source.
+* Create an Enginepack, Gamepack, Modpack, or Packagepack.
+* Modify an existing pack.
+* Resolve a complete Packagepack.
+* Build the resulting Vapor App.
+* Run/test it.
+* Publish their authored packs/composition.
+* Update their authored source and publication.
+
+---
+
+## 7.5 Composer Tooling
 
 Composer capability requires more local infrastructure than Player capability because Packagepacks are statically built.
 
@@ -338,7 +730,26 @@ Vapor should hide unnecessary command-level complexity during the normal Compose
 
 ---
 
-## 5.4 Composer Publication
+## 7.6 Composer Source Boundary
+
+The Composer consumes behavioral source but does not author it.
+
+A Composer may:
+
+* Check out an Engine repository.
+* Build that Engine as part of a Packagepack.
+* Reference it.
+* Inspect it where useful.
+
+A Composer may not conceptually edit that Engine as part of Composer capability.
+
+Doing so is Content Development.
+
+The same rule applies to Games and Mods.
+
+---
+
+## 7.7 Composer Publication
 
 A Composer may publish the pack types they are allowed to author.
 
@@ -350,15 +761,15 @@ There is no separate authored category called:
 
 The Packagepack is the complete composition artifact.
 
-Publication then makes the source-side composition available through the Git-backed Vapor source model and makes the appropriate built Vapor App output available through the player-facing distribution model.
+Publication then makes the source-side composition available through the Git-backed Vapor source model and makes the appropriate built Vapor App output available through the Player-facing distribution model.
 
 The exact publication transaction is intentionally not yet fixed.
 
 ---
 
-# 6. Content Developer
+# 8. Content Developer Experience
 
-## 6.1 Purpose
+## 8.1 Purpose
 
 A Content Developer creates or modifies actual behavioral Vapor Content.
 
@@ -378,7 +789,53 @@ A Content Developer also inherits all Composer capabilities.
 
 ---
 
-## 6.2 Intended Development Experience
+## 8.2 What Changes When Content Developer Capability Is Installed
+
+Content Developer capability introduces active behavioral source authoring.
+
+The user now needs access to:
+
+* Vapor Projects.
+* Source editing.
+* Programming/configuration.
+* SDK functionality.
+* Build/run/test iteration.
+* Diagnostics.
+* More direct underlying tool visibility.
+
+The core mental-model expansion is:
+
+> Composer works with existing behavior.
+
+> Content Developer can change what behavior exists.
+
+---
+
+## 8.3 What the Content Developer Normally Sees
+
+The Launcher/SDK may expose:
+
+* Content projects.
+* Workspaces.
+* Source structure.
+* Content metadata.
+* Dependency declarations.
+* Build targets.
+* Build output.
+* Diagnostics.
+* Logs.
+* Test/run compositions.
+* Git state.
+* Toolchain state.
+* External editor/IDE integration.
+
+Not all of this must live in one screen or even one application window.
+
+The Vapor-specific conceptual relationships should remain coherent.
+
+---
+
+## 8.4 Intended Development Experience
 
 Content development may involve:
 
@@ -410,9 +867,34 @@ The intended feeling is:
 
 ---
 
-# 7. Ecosystem Developer and Root Authority
+## 8.5 External IDE Boundary
 
-## 7.1 Ecosystem Developer
+Vapor does not currently need to become a complete general-purpose Rust IDE.
+
+The SDK may provide:
+
+* Vapor-specific project/configuration editing.
+* Structured content editing.
+* Run/build controls.
+* Diagnostics.
+* Generated-code visibility.
+* Integration hooks.
+
+An external IDE may still own:
+
+* General Rust editing.
+* Refactoring.
+* Code navigation.
+* Debugger UX.
+* Other advanced editor capabilities.
+
+The exact boundary remains open.
+
+---
+
+# 9. Ecosystem Developer Experience
+
+## 9.1 Purpose
 
 An Ecosystem Developer develops Vapor itself.
 
@@ -429,13 +911,33 @@ This includes areas such as:
 * Diagnostics infrastructure.
 * Other official Vapor applications and services.
 
+---
+
+## 9.2 Additional Capability
+
 The primary capability distinction is authorization to contribute to official Vapor repositories and internal ecosystem infrastructure.
 
 Launcher Developer, Server Developer, Toolchain Developer, Registry Developer, and similar labels do not currently represent separate capability levels.
 
 ---
 
-## 7.2 Root Authority
+## 9.3 Expected Experience
+
+Ecosystem development should eventually support a rapid loop such as:
+
+> Modify Vapor
+> → build/test
+> → commit/push
+> → deploy into an appropriate development environment
+> → validate the real integrated result
+
+This may wrap or orchestrate tools such as Cargo commands, `xtask`-style tooling, Git, service deployment mechanisms, and development branches.
+
+The exact workflow remains open.
+
+---
+
+# 10. Root Authority
 
 Root Authority contains every Ecosystem Developer capability plus ultimate administrative and ownership authority over the official Vapor ecosystem.
 
@@ -446,13 +948,16 @@ This may include authority over:
 * Registry administration.
 * Deployment infrastructure.
 * Authorization systems.
-* Other ecosystem-root state.
+* Ecosystem ownership state.
+* Root-level destructive/administrative operations.
+
+Root Authority is deliberately modeled even if only one real-world person normally occupies that role.
 
 The exact Root-only operational model remains intentionally open.
 
 ---
 
-# 8. Capability vs Authorization
+# 11. Capability vs Authorization
 
 Installed capability and external authorization are separate concepts.
 
@@ -493,9 +998,9 @@ The two should not be conflated.
 
 ---
 
-# 9. Vapor Installer, Launcher, SDK, and CLI
+# 12. Vapor Installer, Launcher, SDK, and CLI
 
-## 9.1 Vapor Installer
+## 12.1 Vapor Installer
 
 The Vapor Installer changes what fundamental Vapor capabilities exist in the Steam App Instance.
 
@@ -517,7 +1022,7 @@ Examples include:
 
 ---
 
-## 9.2 Vapor Launcher
+## 12.2 Vapor Launcher
 
 The Vapor Launcher uses the capabilities already installed.
 
@@ -545,7 +1050,7 @@ The Launcher may wrap or coordinate external systems such as Steam, Git services
 
 ---
 
-## 9.3 Vapor SDK
+## 12.3 Vapor SDK
 
 The Vapor SDK is not fundamentally a separate application.
 
@@ -576,7 +1081,7 @@ The exact boundary between Vapor's own editing surfaces and external IDEs/editor
 
 ---
 
-## 9.4 Vapor CLI
+## 12.4 Vapor CLI
 
 Vapor should provide a CLI for developer-oriented operations.
 
@@ -592,7 +1097,7 @@ GUI and CLI should generally expose the same underlying capabilities where that 
 
 ---
 
-# 10. Steam Installation and Entry Points
+# 13. Steam Installation and Entry Points
 
 The Steam App should expose three conceptual launch options:
 
@@ -602,7 +1107,7 @@ The Steam App should expose three conceptual launch options:
 
 ---
 
-## 10.1 Base Steam Payload
+## 13.1 Base Steam Payload
 
 The Steam depot should directly ship:
 
@@ -617,7 +1122,7 @@ This gives the normal Player path a conventional Steam installation model.
 
 ---
 
-## 10.2 Play Loo Cast
+## 13.2 Play Loo Cast
 
 This launches the default first-party Vapor App directly.
 
@@ -627,7 +1132,7 @@ The expensive work should already have happened.
 
 ---
 
-## 10.3 Start Vapor
+## 13.3 Start Vapor
 
 This launches the Vapor Launcher.
 
@@ -635,7 +1140,7 @@ The Launcher exposes functionality according to the currently installed capabili
 
 ---
 
-## 10.4 Start Installer
+## 13.4 Start Installer
 
 This launches the Vapor Installer.
 
@@ -643,13 +1148,13 @@ This is the explicit location for capability upgrades, downgrades, tooling confi
 
 ---
 
-# 11. Default Composition
+# 14. Default Composition
 
 The default first-party Packagepack is:
 
 > **Loo Cast Packagepack**
 
-It currently contains/resolves to at least:
+It currently contains or resolves to at least:
 
 * Spacetime Engine.
 * Loo Cast Game.
@@ -664,7 +1169,7 @@ It should not require development-environment setup.
 
 ---
 
-# 12. Vapor Content Model
+# 15. Vapor Content Model
 
 Vapor Content currently contains nine major artifact types.
 
@@ -689,9 +1194,9 @@ Packs require Composer capability to author.
 
 ---
 
-# 13. Pack Semantics
+# 16. Pack Semantics
 
-## 13.1 Packagepack
+## 16.1 Packagepack
 
 A Packagepack represents one complete composition.
 
@@ -703,7 +1208,7 @@ It is the only pack type representing a complete composition and therefore the o
 
 ---
 
-## 13.2 Enginepack
+## 16.2 Enginepack
 
 An Enginepack contains:
 
@@ -716,7 +1221,7 @@ It cannot independently produce a complete runnable Vapor App.
 
 ---
 
-## 13.3 Gamepack
+## 16.3 Gamepack
 
 A Gamepack contains:
 
@@ -729,7 +1234,7 @@ It cannot independently produce a complete runnable Vapor App.
 
 ---
 
-## 13.4 Modpack
+## 16.4 Modpack
 
 A Modpack contains:
 
@@ -745,7 +1250,7 @@ It cannot independently produce a complete runnable Vapor App.
 
 ---
 
-# 14. Engine and Game Boundary
+# 17. Engine and Game Boundary
 
 The effective Engine defines the foundational runtime model of the composition.
 
@@ -759,7 +1264,7 @@ Launching a Vapor App therefore ultimately means launching the effective Engine 
 
 ---
 
-# 15. Source Model
+# 18. Source Model
 
 Vapor source lives in Git.
 
@@ -782,7 +1287,7 @@ Source acquisition, modification, collaboration, and source publication therefor
 
 ---
 
-# 16. Steam Workshop Distribution Model
+# 19. Steam Workshop Distribution Model
 
 Steam Workshop is used for **built final compositions**.
 
@@ -804,7 +1309,7 @@ The exact packaging of multiple platform/architecture variants inside that distr
 
 ---
 
-# 17. Vapor Content Registry
+# 20. Vapor Content Registry
 
 The Vapor Content Registry provides the semantic identity/linkage layer over the external systems Vapor uses.
 
@@ -827,9 +1332,9 @@ The important experience-level requirement is:
 
 ---
 
-# 18. Library and Discovery
+# 21. Library and Discovery
 
-## 18.1 Library
+## 21.1 Library
 
 The Vapor Library is the user-facing/local view over artifacts currently available to the Steam App Instance.
 
@@ -858,7 +1363,7 @@ Future implementation or UX work may introduce additional state distinctions if 
 
 ---
 
-## 18.2 Discovery
+## 21.2 Discovery
 
 Player discovery is primarily discovery of finished Vapor Apps.
 
@@ -875,7 +1380,7 @@ The exact discovery/search UX remains open.
 
 ---
 
-# 19. Static Composition Build Model
+# 22. Static Composition Build Model
 
 Vapor Apps are built as complete static compositions.
 
@@ -900,7 +1405,7 @@ Dynamic runtime Mod injection is not the current core composition model.
 
 ---
 
-# 20. Player Build Boundary
+# 23. Player Build Boundary
 
 Players do not build compositions.
 
@@ -920,7 +1425,7 @@ For additional published third-party compositions, Steam Workshop is the intende
 
 ---
 
-# 21. Composer Build Model
+# 24. Composer Build Model
 
 A Composer works from Git-backed source.
 
@@ -944,7 +1449,7 @@ Incremental/cached compilation should make repeated builds practical.
 
 ---
 
-# 22. Content Development Model
+# 25. Content Development Model
 
 Content Development adds behavioral-content authoring underneath the broader composition/build model.
 
@@ -973,7 +1478,7 @@ Those questions should be designed together when the development loop becomes th
 
 ---
 
-# 23. Development Storage Model
+# 26. Development Storage Model
 
 The current development-storage hierarchy is:
 
@@ -984,7 +1489,7 @@ The current development-storage hierarchy is:
 
 ---
 
-## 23.1 Vapor Superworkspace
+## 26.1 Vapor Superworkspace
 
 A Vapor Superworkspace is a disposable local checkout container.
 
@@ -996,7 +1501,7 @@ Uncommitted or unpushed local work may still exist inside the checked-out reposi
 
 ---
 
-## 23.2 Container Repo
+## 26.2 Container Repo
 
 A Container Repo is a Vapor-managed top-level Git repository.
 
@@ -1008,7 +1513,7 @@ A Container Repo is not itself used as a submodule of another Container Repo.
 
 ---
 
-## 23.3 Vapor Workspace
+## 26.3 Vapor Workspace
 
 A Source Repo / Vapor Workspace is a source-bearing Git repository contained by a Container Repo as a Git submodule.
 
@@ -1018,7 +1523,7 @@ It does not itself contain nested Git submodules.
 
 ---
 
-## 23.4 Vapor Project
+## 26.4 Vapor Project
 
 A Vapor Project is a Rust/Cargo workspace contained within a Vapor Workspace.
 
@@ -1028,139 +1533,379 @@ The precise UX around creating, cloning, adopting, opening, and managing these s
 
 ---
 
-# 24. Git and Git Hosting
+# 27. Local State and Ownership Model
 
-Git is fundamental infrastructure beginning at Composer capability.
+The Vapor ecosystem involves several kinds of local state with different owners and recovery expectations.
 
-It is used for:
-
-* Container Repos.
-* Vapor Workspaces.
-* Source acquisition.
-* Source modification.
-* Source publication.
-* Collaboration.
-* History/version control.
-
-Vapor may orchestrate Git operations.
-
-It should not pretend Git does not exist.
-
-GitHub is one Git hosting/collaboration provider currently important to the Vapor ecosystem.
-
-Local Composer or Developer capability does not inherently require GitHub authentication.
-
-Operations against a remote Git host require whatever authentication that host demands.
-
-Official ecosystem development additionally requires authorization to official first-party repositories.
+These distinctions matter because operations such as repair, cleanup, upgrade, uninstall, and rebuild must not treat all local files equivalently.
 
 ---
 
-# 25. Publishing Model
+## 27.1 Steam-Depot-Owned State
 
-Publishing has two fundamentally different sides:
+This includes files delivered and maintained as part of the Steam App installation.
 
-## Source Publication
+Examples include:
 
-Source-authored Vapor artifacts live in the Git-backed ecosystem.
+* Vapor Launcher binaries.
+* Vapor Installer binaries.
+* Required bootstrap/runtime files.
+* The depot-shipped default Loo Cast Vapor App and its required constituents.
 
-This includes:
+Steam is the primary installation authority for this state.
 
-* Behavioral Vapor Content.
-* Packs.
-* Packagepacks.
-
-Their canonical source is maintained through Vapor-compatible Git repository structures.
-
-## Player-Facing Built Publication
-
-Complete compositions are built from Packagepacks.
-
-Their runnable output is distributed to Players through Steam Workshop.
-
-Therefore publication of a Packagepack is not publication of:
-
-1. a Packagepack, and
-2. some unrelated "finished composition."
-
-The Packagepack **is** the complete composition artifact.
-
-Its publication has both:
-
-* A source-side existence in the Git-backed ecosystem.
-* A built player-facing realization distributed through Steam Workshop.
-
-The exact orchestration between those sides remains open.
-
-This includes unresolved details such as:
-
-* Build ownership.
-* Platform matrices.
-* Versioning.
-* Signing.
-* Release immutability.
-* Registry transactions.
-* Steam Workshop item structure.
-* Updating existing publications.
-* Ownership transfer.
-* Collaboration.
-* Deprecation.
-
-Those details should be designed together rather than guessed independently.
+Vapor should avoid treating these files as ordinary user-authored mutable state.
 
 ---
 
-# 26. Persistent Local State
+## 27.2 Vapor-Managed Product State
 
-Vapor must maintain several broad categories of local state.
+This includes local state Vapor maintains in order to operate the Steam App Instance.
 
-## Player State
+Examples may include:
 
-Examples:
+* Selected Vapor App Composition.
+* Installed third-party Vapor App metadata.
+* Registry resolution metadata.
+* Launcher configuration.
+* Capability state.
+* Tool-detection state.
+* Account linkage state.
+* Local installation records.
+
+This state should generally be reconstructible or repairable without destroying user-authored source.
+
+---
+
+## 27.3 User Gameplay State
+
+Examples include:
 
 * Savegames.
 * Quicksaves.
 * Engine/Game settings.
-* Audio/video settings.
 * Keybinds.
-* UI preferences.
+* User-created runtime configuration.
 
-## Vapor State
+This state is user-valued and must not be treated as disposable build/cache state.
 
-Examples:
-
-* Selected Vapor App Composition.
-* Installed Vapor Apps.
-* Launcher settings.
-* Account state.
-* Capability state.
-* Registry/cache metadata.
-
-## Source / Composition State
-
-For Composer and Developer capability:
-
-* Checked-out repositories.
-* Pack source.
-* Content source.
-* Git state.
-* Relevant locally available dependencies.
-
-## Build State
-
-Examples:
-
-* Cargo caches.
-* Dependency caches.
-* Incremental compilation state.
-* Build intermediates.
-* Built Vapor Apps.
-
-The exact filesystem/ownership boundaries among these categories remain open.
+Its exact location and migration policy remain open.
 
 ---
 
-# 27. Progressive Disclosure
+## 27.4 Git-Managed Source State
+
+This includes:
+
+* Container Repos.
+* Vapor Workspaces.
+* Pack source.
+* Behavioral-content source.
+* Commits.
+* Branches.
+* Uncommitted modifications.
+
+Remote commits may be recoverable from Git hosting.
+
+Uncommitted or unpushed state may exist only locally.
+
+Vapor must therefore treat source operations conservatively.
+
+---
+
+## 27.5 Build State
+
+Build state may include:
+
+* Cargo target state.
+* Downloaded dependencies.
+* Incremental compilation data.
+* Generated intermediates.
+* Vapor build metadata.
+* Temporary packaging artifacts.
+
+Much of this state should be considered regenerable.
+
+It may be aggressively cached for performance without becoming the canonical source of authored content.
+
+---
+
+## 27.6 Installed Vapor Apps
+
+Built Vapor Apps occupy a special position.
+
+They are not canonical source, but they are first-class runnable local products.
+
+A locally built Vapor App may be regenerated from source.
+
+A Workshop-acquired Vapor App may be reacquired from its publication.
+
+That does not mean every installed Vapor App should be treated as disposable at every moment.
+
+Vapor should explicitly manage their install/remove state.
+
+---
+
+## 27.7 Authentication and Credentials
+
+Credential storage should remain distinct from ordinary Vapor content and configuration.
+
+Examples may include:
+
+* Git-host authentication.
+* GitHub authentication.
+* Vapor account/session state.
+* Steam-linked account state.
+
+The exact secure-storage strategy is a lower-level concern.
+
+The Experience Model requires that capability removal, repair, and content cleanup not casually destroy unrelated credentials or account identity.
+
+---
+
+## 27.8 Disposable vs Authoritative State
+
+The broad intended distinction is:
+
+**Potentially authoritative or user-valued:**
+
+* Git source.
+* Uncommitted changes.
+* Unpushed commits.
+* Gameplay saves.
+* User configuration.
+* Authored packs/projects.
+
+**Generally reconstructible:**
+
+* Build intermediates.
+* Download caches.
+* Registry metadata caches.
+* Tool-detection caches.
+* Installed copies of externally published Vapor Apps.
+
+This is not yet an exhaustive ownership specification.
+
+It establishes the direction later cleanup/recovery systems must respect.
+
+---
+
+# 28. Lifecycle Hierarchy
+
+Vapor does not have one universal linear lifecycle.
+
+It contains several related lifecycles operating at different levels.
+
+The Experience Model should describe their relationships without pretending to encode every possible transition.
+
+---
+
+## 28.1 Steam App Instance Lifecycle
+
+At the broadest local level:
+
+> Steam installation
+> → initial usable Player environment
+> → optional capability upgrades
+> → ordinary operation
+> → updates/repairs/moves
+> → optional capability downgrades
+> → eventual uninstall
+
+This lifecycle concerns the local product instance rather than any one composition.
+
+---
+
+## 28.2 Capability Lifecycle
+
+Capability evolves independently of ordinary content selection.
+
+Conceptually:
+
+> Player
+> → Composer
+> → Content Developer
+> → Ecosystem Developer
+> → Root Authority
+
+Higher capability may require:
+
+* Additional tooling.
+* Additional configuration.
+* Additional authorization.
+
+Capability may also be downgraded.
+
+Downgrading capability should not automatically imply destruction of user-authored source.
+
+---
+
+## 28.3 Packagepack / Vapor App Lifecycle
+
+At the composition level:
+
+> Packagepack source exists
+> → composition resolves
+> → Vapor App is built
+> → Vapor App is installed/registered
+> → Vapor App may be selected
+> → Vapor App may be launched
+> → composition source may change
+> → rebuilt Vapor App supersedes or accompanies older build state
+
+Publication adds additional remote states but does not redefine what the Packagepack is.
+
+---
+
+## 28.4 Source Content Lifecycle
+
+For source-side Vapor Content:
+
+> Source created/acquired
+> → source modified
+> → source committed
+> → source synchronized/published
+> → source consumed by compositions
+> → source updated over time
+
+The exact relationship between Vapor content identity and repository history/versioning remains open.
+
+---
+
+## 28.5 Development Lifecycle
+
+For behavioral-content development:
+
+> Create/Open
+> → Edit/Configure
+> → Build
+> → Run/Test
+> → Inspect
+> → Modify
+> → Repeat
+> → optionally publish
+
+This lifecycle nests inside composition/build workflows because behavioral content must ultimately be exercised as part of some complete composition.
+
+---
+
+## 28.6 Publication Lifecycle
+
+At a coarse level:
+
+> Validate authored source
+> → publish/synchronize source through Git-backed infrastructure
+> → build complete Packagepack composition
+> → publish built Vapor App through Steam Workshop
+> → register/link publication through Vapor infrastructure
+
+This is intentionally incomplete.
+
+Exact ordering, atomicity, build ownership, versioning, signing, and update semantics remain open.
+
+---
+
+## 28.7 Runtime Lifecycle
+
+Runtime operation begins after composition/build work is already complete.
+
+Conceptually:
+
+> Select installed Vapor App
+> → launch effective Engine main binary
+> → run complete static composition
+> → exit
+> → preserve appropriate user/runtime state
+
+Normal launch should not become an implicit composition-authoring workflow.
+
+---
+
+# 29. Experience Invariants and Guarantees
+
+The following statements are intended to constrain later design and implementation.
+
+They are stronger than illustrative workflows.
+
+---
+
+## 29.1 Player Invariants
+
+* A Player must not require Git.
+* A Player must not require Rust/Cargo.
+* A Player must not require SteamCMD.
+* A Player must not be required to compile a Vapor App.
+* The depot-shipped default composition must be playable without acquiring source.
+* Player-facing third-party distribution concerns built complete compositions.
+
+---
+
+## 29.2 Composition Invariants
+
+* A valid Packagepack represents one complete Vapor composition.
+* Every complete composition resolves to exactly one effective Engine.
+* Every complete composition resolves to exactly one effective Game.
+* The effective Engine declares the composition's main binary.
+* Only a Packagepack represents a complete composition capable of producing a Vapor App.
+* Enginepacks, Gamepacks, and Modpacks remain reusable composition fragments.
+* A Vapor App represents one statically resolved complete composition.
+* Changing the effective composition requires a logical rebuild.
+
+---
+
+## 29.3 Source and Distribution Invariants
+
+* Canonical Vapor source lives in Git-backed repository structures.
+* Steam Workshop is not the canonical source-code distribution mechanism.
+* Steam Workshop distributes built complete compositions for Player consumption.
+* Container Repos are Git-managed.
+* Vapor Workspaces are Git-managed and source-bearing.
+* Git and GitHub are not synonymous concepts.
+
+---
+
+## 29.4 Capability Invariants
+
+* Capability levels are cumulative.
+* Composer capability includes Player capability.
+* Content Developer capability includes Composer capability.
+* Ecosystem Developer capability includes Content Developer capability.
+* Root Authority includes Ecosystem Developer capability.
+* Installed local capability and remote authorization are distinct.
+* Capability establishment/removal belongs conceptually to the Vapor Installer.
+* Ordinary use of installed capabilities belongs conceptually to the Vapor Launcher and its contained surfaces.
+
+---
+
+## 29.5 Authorship Invariants
+
+* Composers may author packs.
+* Composers may not author or modify Engines, Games, or Mods as part of Composer capability.
+* Content Developers may author behavioral Vapor Content.
+* Content Developers retain all Composer capabilities.
+* Ecosystem Developers may develop Vapor itself.
+
+---
+
+## 29.6 Source-Safety Invariants
+
+* Vapor must not silently destroy uncommitted user source.
+* Capability downgrade must not inherently imply deleting authored source.
+* Rebuild/cleanup operations must distinguish regenerable build state from user-authored state.
+* Repository automation must respect the possibility of local-only Git state.
+
+---
+
+## 29.7 Launch Invariants
+
+* Normal Player launch should operate on an already built Vapor App.
+* Launch should not require source resolution or compilation in Player capability.
+* The effective Engine main binary is the runtime entrypoint for the composition.
+* Runtime launch should not normally perform heavy composition construction.
+
+---
+
+# 30. Progressive Disclosure
 
 Vapor should expose complexity progressively.
 
@@ -1176,9 +1921,15 @@ The distinction should be visually and conceptually substantial.
 
 Higher-level capabilities should appear because the user has acquired a reason to interact with them.
 
+Progressive disclosure does not mean hiding the existence of higher capability.
+
+The Launcher may advertise or provide entry points toward additional capabilities.
+
+The Installer remains responsible for establishing those capabilities.
+
 ---
 
-# 28. Automation and Transparency
+# 31. Automation and Transparency
 
 Vapor should aggressively automate incidental infrastructure when the intended outcome is unambiguous.
 
@@ -1213,7 +1964,7 @@ Raw Git/Cargo/tool output should remain accessible for advanced diagnosis even w
 
 ---
 
-# 29. External Ownership Boundaries
+# 32. External Ownership Boundaries
 
 Vapor coordinates several external systems.
 
@@ -1233,18 +1984,20 @@ The guiding principle is:
 
 ---
 
-# 30. Representative Experience Flows
+# 33. Representative Experience Flows
 
 > [!important]
-> The following flows are **illustrative sanity checks**, not an exhaustive workflow specification, state machine, or complete enumeration of every valid Vapor interaction.
+> The following flows are **illustrative sanity checks**, not an exhaustive workflow specification, state machine, test suite, or complete enumeration of every valid Vapor interaction.
 >
-> They exist to show whether the major concepts compose into a sensible user experience.
+> They are intentionally incomplete.
 >
-> Detailed workflow behavior belongs in later system/design work when the relevant area becomes an implementation focus.
+> Their purpose is to pressure-test whether the major concepts can compose into plausible experiences.
+>
+> Exact tasks, intermediate states, alternate paths, failure paths, and implementation-level transitions belong in later focused designs.
 
 ---
 
-## 30.1 Player — Default Composition
+## 33.1 Player — Default Composition
 
 > Install Loo Cast through Steam
 > → launch Play Loo Cast
@@ -1252,7 +2005,7 @@ The guiding principle is:
 
 ---
 
-## 30.2 Player — Additional Composition
+## 33.2 Player — Additional Composition
 
 > Start Vapor
 > → discover a finished published Vapor App
@@ -1262,7 +2015,7 @@ The guiding principle is:
 
 ---
 
-## 30.3 First-Time Composer
+## 33.3 First-Time Composer
 
 > Start Installer
 > → establish Composer tooling
@@ -1274,7 +2027,7 @@ The guiding principle is:
 
 ---
 
-## 30.4 Returning Composer
+## 33.4 Returning Composer
 
 > Open existing composition source
 > → change Packagepack/packs
@@ -1284,7 +2037,7 @@ The guiding principle is:
 
 ---
 
-## 30.5 Content Developer
+## 33.5 Content Developer
 
 > Open/create behavioral Vapor Content
 > → edit/configure
@@ -1295,7 +2048,7 @@ The guiding principle is:
 
 ---
 
-## 30.6 Ecosystem Developer
+## 33.6 Ecosystem Developer
 
 > Obtain authorized official Vapor source
 > → modify ecosystem code
@@ -1306,7 +2059,7 @@ These examples deliberately omit many valid intermediate and alternative operati
 
 ---
 
-# 31. Current Non-Goals
+# 34. Current Non-Goals
 
 The current model does not require:
 
@@ -1326,28 +2079,37 @@ Such distinctions should be introduced only when a concrete workflow requires th
 
 ---
 
-# 32. Open Design Areas
+# 35. Open Design Areas
 
 The following areas remain intentionally unresolved.
 
 They are significant, but do not need to be solved merely to make the current model coherent.
 
-## Steam App Instance / Vapor App Composition Details
+---
+
+## 35.1 Steam App Instance / Vapor App Composition Details
 
 * Exact persistence of the selected composition.
 * Exact relationship between installed Vapor Apps and selected Vapor App Composition.
+* Whether the selected concept is always Packagepack-based identity, built-App identity, or both.
 * Repair/reconciliation when local state changes externally.
 * Precise location/ownership of composition-local state.
 
-## Launcher UX
+---
+
+## 35.2 Launcher UX
 
 * Final navigation.
 * Exact tab/surface structure.
 * Search/filtering.
 * Library presentation.
 * Player vs Composer presentation.
+* How unavailable higher-capability features are represented.
+* How external services appear within Vapor.
 
-## SDK UX
+---
+
+## 35.3 SDK UX
 
 * Built-in editing versus external IDE integration.
 * Project creation.
@@ -1357,8 +2119,11 @@ They are significant, but do not need to be solved merely to make the current mo
 * Diagnostics.
 * Code generation.
 * Configuration tooling.
+* Test-composition management.
 
-## Development Storage UX
+---
+
+## 35.4 Development Storage UX
 
 * Superworkspace creation.
 * Repository adoption.
@@ -1366,16 +2131,24 @@ They are significant, but do not need to be solved merely to make the current mo
 * Project discovery.
 * Local source ownership.
 * Recovery from missing/broken checkouts.
+* Multiple Container Repo relationships.
+* How users select/open the correct source context.
 
-## Source Discovery and Registry
+---
+
+## 35.5 Source Discovery and Registry
 
 * How source repositories are discovered.
 * How Vapor IDs resolve to Git-backed source.
 * Provider independence.
 * Repository ownership metadata.
 * Exact Registry schema.
+* How Pack dependencies refer to source identities.
+* How historical/versioned source is resolved.
 
-## Publishing
+---
+
+## 35.6 Publishing
 
 * Remote Git workflow.
 * Steam Workshop publication structure.
@@ -1386,8 +2159,12 @@ They are significant, but do not need to be solved merely to make the current mo
 * Ownership/collaboration.
 * Updates.
 * Deprecation/removal.
+* Publication atomicity across Git/Registry/Workshop.
+* Who is authorized to update an existing publication.
 
-## Updates and Migration
+---
+
+## 35.7 Updates and Migration
 
 * Vapor App updates.
 * Source-content updates.
@@ -1396,8 +2173,11 @@ They are significant, but do not need to be solved merely to make the current mo
 * Version pinning.
 * Rollback.
 * Migration.
+* Whether older locally built Vapor Apps remain runnable after source changes.
 
-## Failure and Recovery
+---
+
+## 35.8 Failure and Recovery
 
 * Interrupted operations.
 * Download failures.
@@ -1408,17 +2188,25 @@ They are significant, but do not need to be solved merely to make the current mo
 * Steam outages.
 * Invalid compositions.
 * Protection of local changes.
+* Partial capability installation.
+* Toolchain corruption.
+* Failed publication across multiple backing services.
 
-## Ecosystem / Root Development
+---
+
+## 35.9 Ecosystem / Root Development
 
 * Dev deployment.
 * Development branches/environments.
 * Root-only operations.
 * Production safeguards.
+* Server deployment.
+* Official repository synchronization.
+* Emergency/recovery administration.
 
 ---
 
-# 33. Current Design Baseline
+# 36. Current Design Baseline
 
 The current design baseline can be summarized as follows:
 
@@ -1453,8 +2241,14 @@ The current design baseline can be summarized as follows:
 29. The Vapor Content Registry provides semantic identity/linkage across the external systems Vapor uses.
 30. Vapor Apps are complete statically resolved compositions.
 31. Composition changes require a logical complete rebuild, optimized through caching/incremental compilation.
-32. The Packagepack is the complete composition artifact; no additional authored "finished composition" entity is required.
+32. The Packagepack is the complete composition artifact; no additional authored finished-composition entity is required.
 33. The current model does not require a separate fundamental Development Content artifact category, but does not prohibit future development-state distinctions.
-34. Representative experience flows are illustrative rather than exhaustive specifications.
-35. Remaining detailed workflows should be designed coherently when they become implementation constraints rather than prematurely encoded as pseudo-state-machines.
-36. This document is the UX/DX bridge between the Ecosystem Glossary and future system specifications, architecture documents, and TDDs.
+34. Steam, Git, Git hosting, Steam Workshop, Vapor applications, and the Engine runtime have distinct operational responsibilities.
+35. Player, Composer, Content Developer, Ecosystem Developer, and Root Authority experiences expose progressively larger mental models rather than merely progressively more permissions.
+36. Steam-depot state, Vapor-managed state, user gameplay state, Git source, build state, installed Vapor Apps, and authentication state require different ownership/recovery treatment.
+37. Vapor contains several nested/related lifecycles rather than one universal workflow.
+38. User-authored Git state must be protected from destructive automation.
+39. Player launch operates on already-built compositions.
+40. Representative experience flows are illustrative rather than exhaustive specifications.
+41. Remaining detailed workflows should be designed coherently when they become implementation constraints rather than prematurely encoded as pseudo-state-machines.
+42. This document is the UX/DX bridge between the Ecosystem Glossary and future system specifications, architecture documents, and TDDs.

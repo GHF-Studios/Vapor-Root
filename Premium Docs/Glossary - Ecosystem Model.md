@@ -1,5 +1,3 @@
-# Glossary - Ecosystem Model
-
 ## App Model
 - **Steam App**: *The singular Steam-distributed "Loo Cast" product. It provides the installation and product boundary through which the Vapor Installer, Vapor Launcher, default first-party composition, and wider Vapor Ecosystem/Toolchain are accessed.*
 - **Steam App Instance**: *One concrete local installation of the Steam App. It has a Steam-managed root location, one selected Vapor App Composition, local Vapor state, installed/built Vapor Apps, and an installed capability level. The normal model assumes one Steam App Instance per Steam installation; users do not manually create additional instances.*
