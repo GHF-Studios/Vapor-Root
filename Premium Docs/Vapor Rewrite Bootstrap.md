@@ -1,11 +1,15 @@
 # Vapor Rewrite Bootstrap
 
 > [!info]
-> This document defines the immediate implementation direction for the Vapor rewrite.
+> This document defines the original implementation direction and architecture-proving bootstrap for the Vapor rewrite.
 >
-> It is intentionally small.
+> It is intentionally focused on the boundary between the conceptual model and the first implementation slice.
 >
-> Its purpose is not to fully specify Vapor before implementation, but to establish the boundary between the current conceptual model and the first architecture-proving implementation slice.
+> The rewrite has since progressed beyond this initial bootstrap. Current implementation status and forward phases are tracked in:
+>
+> **`Vapor Rewrite Progress And Roadmap.md`**
+>
+> This document remains useful as the historical rationale and specification for Vertical Slice 0.
 
 ---
 
@@ -45,6 +49,8 @@ Implementation should primarily proceed downward from:
 * `Vapor Ecosystem Operational Model.md`
 * `Vapor Development Experience Model.md`
 * `Vapor Publishing And Distribution Model.md`
+* `Vapor CLI Model.md`
+* `Vapor Rewrite Progress And Roadmap.md`
 
 These documents are not expected to answer every implementation question in advance.
 
@@ -312,13 +318,15 @@ The implementation should eventually support an operation conceptually equivalen
 vapor run <packagepack>
 ```
 
-The exact CLI syntax is not yet normative.
+The exact CLI syntax was deliberately left non-normative by the initial bootstrap.
 
 The important property is:
 
 > A user identifies a Packagepack, and Vapor itself determines enough of the composition/build/run process to produce and launch the resulting Vapor App.
 
 The user should not need to manually reconstruct the underlying Cargo composition.
+
+The concrete CLI grammar is now defined separately in `Vapor CLI Model.md`.
 
 ---
 
@@ -402,7 +410,7 @@ Existing `*.vapor.toml` files may be mined for ideas but are not automatically a
 
 The first implementation will probably need only concepts equivalent to:
 
-## Common identity
+## Common Identity
 
 ```toml
 id = "ghf-studios/example/foo"
@@ -441,7 +449,7 @@ kind = "packagepack"
 
 plus dependencies selecting the intended Engine, Game, and Mod.
 
-The exact syntax is deliberately undecided.
+The exact syntax is deliberately undecided by this bootstrap document.
 
 ---
 
@@ -488,7 +496,13 @@ and:
 
 ---
 
-# Immediate Implementation Sequence
+# Original Immediate Implementation Sequence
+
+The following phases describe the original bootstrap sequence for Vertical Slice 0.
+
+They are retained here as historical implementation context.
+
+Current and future phases are tracked in `Vapor Rewrite Progress And Roadmap.md`.
 
 ## Phase 0 — Bootstrap
 
@@ -577,11 +591,15 @@ At that point, the rewrite has crossed the most important early boundary:
 
 > **Vapor is no longer merely describing compositions. It can operationally realize one.**
 
+Vertical Slice 0 has now reached this boundary.
+
+Further architectural development is tracked in `Vapor Rewrite Progress And Roadmap.md`.
+
 ---
 
-# Explicitly Deferred
+# Explicitly Deferred by Vertical Slice 0
 
-Do not expand Vertical Slice 0 to solve these unless absolutely required:
+The original slice deliberately did not attempt to solve these unless absolutely required:
 
 * Steam Workshop.
 * SteamCMD publication.
@@ -610,23 +628,25 @@ Do not expand Vertical Slice 0 to solve these unless absolutely required:
 * Update policy.
 * USF integration.
 
-These remain valid future concerns.
+These remain valid broader ecosystem concerns, although some have since moved closer to the active implementation roadmap.
 
-They are not allowed to prevent Vapor from first proving that one local composition can exist end to end.
+They were not allowed to prevent Vapor from first proving that one local composition could exist end to end.
 
 ---
 
-# Next Action
+# Current Continuation
 
-The next implementation-focused task is:
+The original bootstrap sequence has been completed far enough that this document no longer defines the immediate next implementation task.
 
-> **Inspect the current repository structure only far enough to choose the clean physical home and crate boundaries for Vertical Slice 0.**
+Current progress, architectural refinements, and forward implementation phases are maintained in:
 
-After that:
+> **`Vapor Rewrite Progress And Roadmap.md`**
 
-> **Begin writing the new core.**
+In particular, the rewrite has moved beyond the original hardcoded Packagepack proof into generic Content resolution, managed toolchains, self-hosting workflows, the CLI model, and the next Rust/Cargo integration boundary.
 
-No additional broad conceptual model is required before implementation starts.
+Use the Progress And Roadmap document as the living implementation map.
+
+Use this document as the rationale and historical specification for the rewrite bootstrap and Vertical Slice 0.
 
 ---
 
@@ -638,11 +658,30 @@ Vapor's product/user-level access model and USF's runtime Capability model are s
 
 The following terminology should be preferred:
 
-- **Vapor Role** — a user's ecosystem role, such as Player, Composer, Content Developer, Ecosystem Developer, or Root Authority.
-- **Vapor Installation Profile** — the locally installed Vapor tooling/features appropriate to a role or workflow, managed by the Vapor Installer.
-- **Capability** / **USF Capability** — the runtime Capability concept used by USF, Rhai/runtime authoring, and related simulation/runtime graphs.
+* **Vapor Role** — a user's locally installed ecosystem role: Player, Composer, Content Developer, or Ecosystem Developer.
+* **Vapor Installation Profile** — the locally installed Vapor tooling/features appropriate to a role or workflow, managed by the Vapor Installer.
+* **Authority** — permission to perform a particular protected operation against a particular external target.
+* **Root Authority** — a special authority relationship, not a locally promotable Vapor Role.
+* **Capability** / **USF Capability** — the runtime Capability concept used by USF, runtime authoring, and related simulation/runtime graphs.
 
 Bare `Capability` should not be used for Launcher/Installer access levels.
+
+The important boundary is:
+
+```text
+Role
+= what kinds of work Vapor equips this installation to perform.
+
+Authorization
+= whether an authenticated identity may perform a particular operation
+  against a particular protected target.
+```
+
+Therefore:
+
+```text
+Role ≠ Authority
+```
 
 ---
 
@@ -652,3 +691,32 @@ The rewritten generic Vapor implementation lives in:
 
 ```text
 GHF-Studios/Vapor
+```
+
+`Vapor-Root` remains the ecosystem/container root and normative documentation/source-organization context rather than the physical home of the generic rewritten Vapor implementation.
+
+The rewrite may continue mining legacy Vapor repositories for useful mechanisms and integration knowledge, but the implementation structure is free to evolve according to the current model.
+
+The separate server-side ecosystem remains a distinct concern; `Vapor-Root` and server/root source structures must not be conflated merely because both participate in the broader Vapor ecosystem.
+
+---
+
+# Bootstrap Status
+
+The bootstrap is no longer the active planning frontier.
+
+Its core purpose has been achieved:
+
+```text
+Vapor-level declaration
+→ semantic resolution
+→ Cargo/Rust realization
+→ build
+→ runnable Vapor App
+```
+
+The next implementation frontier is documented in:
+
+**`Vapor Rewrite Progress And Roadmap.md`**
+
+and currently begins with the transition from a proven semantic Content graph toward supervised, editable Rust/Cargo dependency realization and richer explicitly authored extension ecosystems.
