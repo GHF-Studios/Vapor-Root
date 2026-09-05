@@ -7,21 +7,24 @@
 
 ---
 
-## User and Capability Model
-- **Player**: *The base Vapor capability level. A Player consumes finished Vapor Apps: discovering, acquiring, selecting, and launching complete compositions. A Player does not compose or develop Vapor Content and does not require Git, Rust/Cargo, SteamCMD, or development tooling.*
-- **Composer / Content User**: *A Vapor capability level above Player. A Composer may discover and use existing Vapor Content and may create, modify, build, and publish Packagepacks, Enginepacks, Gamepacks, and Modpacks. A Composer may not create or modify Engines, Games, Engine Mods, Game Mods, or Extension Mods. Composer capability requires source/build tooling such as Git and Rust/Cargo because Packagepacks are statically built into Vapor Apps.*
-- **Content Developer**: *A Vapor capability level above Composer. A Content Developer may additionally create and modify Engines, Games, Engine Mods, Game Mods, and Extension Mods using the Vapor SDK and associated development workflows.*
-- **Ecosystem Developer**: *A Vapor capability level above Content Developer. An Ecosystem Developer develops Vapor itself, including its applications, SDK/toolchain, CLI, root framework, server infrastructure, and official repositories. Ecosystem development additionally requires the relevant authorization to contribute to official Vapor repositories and infrastructure.*
-- **Root Authority**: *The highest Vapor capability and authority level. It includes all Ecosystem Developer capabilities plus ultimate administrative and ownership authority over the official Vapor ecosystem, namespaces, repositories, and infrastructure.*
-- **Capability Level**: *The locally installed set of Vapor capabilities available through a Steam App Instance. Capability levels form a strict progression: Player ⊂ Composer ⊂ Content Developer ⊂ Ecosystem Developer ⊂ Root Authority. External authentication and authorization may gate individual operations without determining which local capability level is installed.*
+## User, Role, and Authority Model
+
+* **Player**: *The base installed Vapor Role. A Player consumes finished Vapor Apps: discovering, acquiring, selecting, and launching complete compositions. A Player does not compose or develop Vapor Content and does not require Git, Rust/Cargo, SteamCMD, or development tooling.*
+* **Composer / Content User**: *An installed Vapor Role above Player. A Composer may discover and use existing Vapor Content and may create, modify, build, test, and publish Packagepacks, Enginepacks, Gamepacks, and Modpacks. A Composer may not author Engines, Games, Engine Mods, Game Mods, or Extension Mods. Composer capability requires the source/build tooling needed by static Vapor composition workflows.*
+* **Content Developer**: *An installed Vapor Role above Composer. A Content Developer may additionally create and modify Engines, Games, Engine Mods, Game Mods, and Extension Mods using the Vapor SDK and associated development workflows.*
+* **Ecosystem Developer**: *The highest ordinary installed Vapor Role. An Ecosystem Developer may develop Vapor itself, including its applications, SDK/toolchain, CLI, root framework, server infrastructure, distribution machinery, and related ecosystem source. This Role is locally attainable and does not itself grant permission to modify protected official Vapor resources.*
+* **Vapor Role**: *The locally installed set of Vapor capabilities available through a Steam App Instance. Roles form the progression Player ⊂ Composer ⊂ Content Developer ⊂ Ecosystem Developer. Role determines which workflows, tooling, and surfaces Vapor equips the local installation to use; it does not itself grant external authority.*
+* **Authorization / Authority**: *Permission for a particular identity to perform a particular protected operation against a particular target. Examples include pushing to official repositories, creating repositories in protected organizations, publishing into official namespaces, deploying official Steam branches or depots, and administering production infrastructure. Authorization is separate from installed Role.*
+* **Root Authority**: *The ultimate administrative and ownership authority over the protected official Vapor ecosystem, namespaces, repositories, distribution targets, and infrastructure. Root Authority is an authority state rather than an installed Role above Ecosystem Developer.*
 
 ---
 
 ## Vapor Applications and Tooling
-- **Vapor Installer**: *The application responsible for changing the fundamental Vapor capabilities installed in a Steam App Instance. It installs, detects, configures, upgrades, downgrades, repairs, and removes capability-specific dependencies and tooling such as Git, SteamCMD, and the Rust/Cargo toolchain.*
-- **Vapor Launcher**: *The primary Vapor application used after the required capabilities are installed. It provides access to Vapor Apps, local/source Vapor Content, composition workflows, accounts, settings, development capabilities, and external ecosystem services, and launches selected Vapor Apps.*
-- **Vapor SDK**: *The Content Developer-oriented portion of the Vapor Launcher concerned with creating, programming, configuring, building, testing, and inspecting Engines, Games, Engine Mods, Game Mods, and Extension Mods. It is a capability surface of the Vapor Launcher rather than a separate application.*
-- **Vapor CLI**: *The command-line interface to developer-oriented Vapor capabilities. It is intended primarily for Content Developers, Ecosystem Developers, and Root Authority and should expose approximately the same underlying operations as corresponding graphical tooling where reasonable.*
+
+* **Vapor Installer**: *The application responsible for changing the fundamental Vapor Role/capabilities installed in a Steam App Instance. It installs, detects, configures, upgrades, downgrades, repairs, and removes role-specific dependencies and tooling such as Git, SteamCMD, and the Rust/Cargo toolchain.*
+* **Vapor Launcher**: *The primary Vapor application used after the required capabilities are installed. It provides access to Vapor Apps, local/source Vapor Content, composition workflows, accounts, settings, development capabilities, and external ecosystem services, and launches selected Vapor Apps.*
+* **Vapor SDK**: *A separate Vapor executable providing the developer-oriented Vapor surface for creating, programming, configuring, building, testing, and inspecting Vapor Content and, where the installed Role permits it, Vapor ecosystem source. It works closely with the Vapor Launcher and shares the same underlying Vapor Core rather than constituting a separate source repository or independent semantic implementation.*
+* **Vapor CLI**: *The command-line projection of Vapor Core operations. The universal `vapor` executable exposes the broad command surface, while application-specific executables such as `vapor-installer`, `vapor-launcher`, and `vapor-sdk` expose appropriate subsets of the same underlying operations.*
 
 ---
 

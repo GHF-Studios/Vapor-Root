@@ -16,7 +16,18 @@ Development capability grows cumulatively.
 > → Composer
 > → Content Developer
 > → Ecosystem Developer
-> → Root Authority
+
+These are locally installed Vapor Roles.
+
+A Role describes the kinds of work for which the local Vapor environment is equipped.
+
+External authority is separate.
+
+A user may therefore become an Ecosystem Developer, acquire or fork Vapor ecosystem source, modify it, and build/test it locally without permission from the official Vapor ecosystem.
+
+Specific operations against protected official resources may additionally require authentication and authorization.
+
+Root Authority is an authority state rather than another installed development Role.
 
 The development model begins meaningfully at Composer capability because composition authoring requires source and local builds.
 
@@ -103,18 +114,38 @@ This may include:
 * Build orchestration.
 * Internal development tooling.
 
-Ecosystem development requires authorization to appropriate official repositories and infrastructure.
+Ecosystem Developer capability is locally attainable and does not inherently imply official Vapor authority.
 
-The intended eventual loop is:
+An Ecosystem Developer may:
 
-> Open official source context
+* Acquire official ecosystem source where publicly available.
+* Fork ecosystem source.
+* Create independent ecosystem source.
+* Modify Vapor locally.
+* Build and test Vapor locally.
+* Develop and test publication, deployment, authentication, and authorization machinery locally.
+
+Operations against protected official targets may separately require authorization.
+
+Examples include:
+
+* Pushing to official repositories.
+* Creating repositories in protected organizations.
+* Publishing into official namespaces.
+* Deploying official Steam branches or depots.
+* Modifying production server or Registry infrastructure.
+
+The intended eventual official-development loop is:
+
+> Open ecosystem source context
 > → modify
-> → build/test
+> → build/test locally
+> → authenticate/authorize protected operation
 > → commit/push
-> → deploy to appropriate development environment
+> → deploy to the appropriate development environment
 > → validate integrated behavior
 
-The exact development deployment mechanism remains open.
+Vapor should progressively automate this loop without making local ecosystem development depend on official authorization.
 
 ---
 
