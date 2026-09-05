@@ -92,21 +92,45 @@ Vapor is primarily a semantic and orchestration layer over:
 * GitHub.
 * Steam.
 * Steam Workshop.
-* Vapor-specific runtime/content semantics.
+* Vapor-specific composition, identity, distribution, and realization semantics.
 
 Vapor should own concepts such as:
 
 * Vapor Content identity.
 * Vapor Content kinds.
-* Composition.
-* Packagepack resolution.
 * Vapor dependency semantics.
+* Generic Vapor Content graph resolution.
+* Composition semantics.
+* Packagepack validation and Vapor App Composition derivation.
 * Vapor App identity.
 * Vapor Role- and Installation Profile-aware workflows.
+* Physical build/realization orchestration.
 * Publication coordination.
-* Runtime integration semantics.
 
-It should not unnecessarily replace the lower-level systems implementing compilation, source control, hosting, distribution, or language safety.
+Vapor should **not** automatically own the programmatic/runtime meaning of Content dependency relationships.
+
+Engines, Games, Mods, Libraries, and their authored APIs define what their relationships mean programmatically.
+
+For example, an Engine or Game may explicitly expose extension semantics through:
+
+* Rust APIs.
+* Traits.
+* Registries.
+* Builders.
+* ECS Components.
+* ECS Resources.
+* ECS Events.
+* ECS Systems.
+* ECS SystemSets.
+* Plugins.
+* Data schemas.
+* Other domain-specific mechanisms.
+
+A Vapor dependency edge ensures that the required artifact participates in the semantic graph.
+
+It does not itself invent an extension mechanism.
+
+Vapor should not unnecessarily replace the lower-level systems implementing compilation, source control, hosting, distribution, language safety, or runtime architecture.
 
 ---
 
@@ -134,27 +158,65 @@ The implementation should preserve the following current conclusions.
 
 * Vapor Content declares dependencies using SemVer constraints.
 
-* Dependency semantics should behave broadly like Cargo.
+* Vapor dependency semantics should behave broadly like Cargo where Cargo already provides a useful proven model.
 
 * Compatible version requirements should preferably unify.
 
 * Multiple SemVer-incompatible versions of the same Vapor ID may coexist when required.
 
-* A resolved composition node is effectively identified by:
+* A resolved Content node is effectively identified by:
 
   `(Vapor ID, Version)`
 
 * Dependency bindings may use local aliases to disambiguate multiple versions.
 
+* Binding names are local names rather than semantic slots.
+
 * Versions do not become part of the permanent Vapor namespace.
+
+* The Vapor semantic graph and the physical Cargo package graph are distinct.
+
+* Cargo-native metadata and resolution may be used to inspect and validate physical Rust realization without replacing Vapor identity or dependency semantics.
+
+## Generic Resolution
+
+Vapor dependency resolution is a generic Content-graph operation.
+
+Any supported Content root may conceptually resolve its dependency graph independently of whether that root is a complete composition.
+
+Generic resolution determines:
+
+* exact resolved Vapor identities and versions;
+* dependency bindings;
+* graph structure;
+* missing dependencies;
+* cycles;
+* applicable initial kind-specific structural constraints.
+
+Kind-specific semantic validation may then impose additional requirements on the resolved graph.
 
 ## Packagepack Resolution
 
-* A Packagepack is the complete composition root.
-* It resolves to exactly one effective Engine and one effective Game plus applicable Mods.
-* Final dependency resolution happens in Packagepack context.
-* The resolved Packagepack records the exact dependency graph used for that realized release/build.
-* This resolved state functions conceptually like a lockfile.
+A Packagepack is the complete Vapor App composition root.
+
+Generic Content resolution may occur outside Packagepack context.
+
+However:
+
+> **Final resolution and validation of a complete runnable Vapor App Composition occurs in Packagepack context.**
+
+A valid Packagepack must ultimately derive:
+
+* exactly one effective Engine;
+* exactly one effective Game;
+* all applicable Mods;
+* all Libraries and other dependencies required by the composition.
+
+The resolved Packagepack records the exact Vapor Content graph used for that realized release/build.
+
+This resolved state functions conceptually like a composition-level lock.
+
+Packagepack-specific constraints are layered above the generic dependency resolver rather than defining how generic dependency resolution works.
 
 ## Definition vs Runtime Instance
 

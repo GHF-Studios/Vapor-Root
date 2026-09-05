@@ -32,9 +32,9 @@ The intended command-line binaries are:
 
 `vapor` is the broad universal CLI projection.
 
-The dedicated binaries expose subsets appropriate to their application and installed role.
+The dedicated binaries expose subsets appropriate to their application and installed Role.
 
-For example, an Installer role operation exposed as:
+For example, an Installer Role operation exposed as:
 
 ```text
 vapor role status
@@ -47,6 +47,10 @@ vapor-installer role status
 ```
 
 Application binaries must not independently reimplement Vapor semantics.
+
+The logical Vapor SDK may be integrated into the Launcher while also having a dedicated `vapor-sdk` executable/CLI projection.
+
+Those are different surfaces over the same Vapor Core rather than independent SDK implementations.
 
 ---
 
@@ -77,6 +81,7 @@ game
 engine-mod
 game-mod
 extension-mod
+library
 ```
 
 There is intentionally no generic `content` namespace merely to mirror the Vapor Content taxonomy.
@@ -85,13 +90,17 @@ Likewise, ordinary workflows should not require the user to jump between separat
 
 Packagepack, Vapor App Composition, and Vapor App remain distinct model terms where that distinction matters.
 
+`library` here means the first-class Vapor Content kind.
+
+It is distinct from the Launcher/local **Content Library** surface.
+
 ---
 
 # Content Command Model
 
 Each Vapor Content kind exposes the operations semantically applicable to that kind.
 
-The initial command shape is:
+The current command shape is:
 
 ```text
 packagepack
@@ -174,13 +183,26 @@ extension-mod
     verify
     test
     publish
+
+library
+    create
+    list
+    inspect
+    resolve
+    verify
+    test
+    publish
 ```
 
 This tree is semantic rather than mechanically uniform.
 
 An operation should be present wherever it makes sense rather than being artificially segregated by Content kind.
 
-For packs, `test` runs the applicable tests contributed by the resolved content graph together.
+For packs, `test` runs the applicable tests contributed by the resolved Content graph together.
+
+For a Library, `resolve` exposes its semantic dependency graph and the Rust/Cargo realization information relevant to that graph.
+
+This does not mean Cargo defines Vapor dependency semantics.
 
 ---
 
@@ -206,32 +228,118 @@ A resolved Vapor App Composition and built Vapor App are precise derived states 
 
 Resolution is implemented as a generic Vapor Content graph operation.
 
-CLI exposure remains explicit per resolvable Content kind.
+Vapor semantic resolution is authoritative for:
 
-For example:
+* Vapor IDs.
+* Vapor versions.
+* Dependency bindings.
+* Vapor Content kinds.
+* Vapor-level dependency relationships.
+
+CLI exposure remains explicit per Content kind where a standalone resolution operation is useful.
+
+Examples include:
 
 ```text
 vapor packagepack resolve ...
 vapor enginepack resolve ...
 vapor gamepack resolve ...
 vapor modpack resolve ...
+vapor library resolve ...
 ```
 
-These commands must use the same underlying resolver rather than separate kind-specific resolution implementations.
+These commands use the same underlying semantic resolver rather than separate kind-specific dependency solvers.
 
-Resolution recursively follows the dependencies declared by Vapor Content.
+Resolution recursively follows dependencies declared by Vapor Content.
 
 Binding names do not determine Content semantics.
 
-The resolved Content kinds and their semantic relationships do.
+Resolved identities, kinds, and authored relationships do.
 
 A Packagepack may obtain its effective Engine either directly or transitively through an Enginepack.
 
 Likewise, it may obtain its effective Game directly or through a Gamepack.
 
-Nested packs and Mods are resolved transitively.
+Nested packs, Mods, Libraries, and other dependencies are resolved transitively.
 
-A valid Packagepack ultimately yields exactly one effective Engine and exactly one effective Game together with its effective Mods.
+A valid Packagepack ultimately yields exactly one effective Engine and exactly one effective Game together with all other required Content.
+
+Packagepack-specific validation is layered on top of generic graph resolution.
+
+---
+
+# Vapor Resolution vs Cargo Resolution
+
+Rust-backed Vapor Content introduces a second, distinct graph:
+
+```text
+Vapor semantic graph
+        ↓
+Rust/Cargo realization
+        ↓
+Cargo package graph
+```
+
+Vapor is authoritative for the semantic Vapor graph.
+
+Cargo is authoritative for the physical Rust package graph it actually resolves and compiles.
+
+Vapor should use Cargo-native mechanisms, including `cargo metadata` where useful, to:
+
+* inspect Cargo workspace/package structure;
+* identify physical Rust packages and targets;
+* observe Cargo dependency declarations;
+* observe Cargo's resolved package graph;
+* verify that Vapor semantic dependencies are physically realized;
+* diagnose divergence between Vapor and Cargo state.
+
+Cargo Package IDs and similar identifiers are Cargo-domain physical identifiers.
+
+They must not become replacements for Vapor semantic identity.
+
+---
+
+# Cargo Reconciliation
+
+Vapor should supervise the Cargo entries that physically realize Vapor semantic dependencies without taking ownership of unrelated Cargo configuration.
+
+Conceptually:
+
+```text
+Vapor.toml
+    semantic dependency intent
+        ↓
+Vapor resolver
+    exact desired Vapor graph
+        ↓
+Cargo reconciliation
+        ↓
+editable Cargo.toml
+        ↓
+Cargo resolution / metadata
+        ↓
+actual physical graph
+        ↓
+Vapor verification
+```
+
+A developer may continue to edit ordinary Cargo configuration directly.
+
+Vapor should distinguish at least:
+
+```text
+valid
+stale
+conflicting
+explicitly locally overridden
+repairable
+```
+
+Verification should diagnose disagreement.
+
+Repair may reconcile Vapor-managed physical dependency entries.
+
+Explicit local/unlocked overrides may be valid development state but must not silently become publishable state.
 
 ---
 
@@ -245,6 +353,7 @@ Examples include:
 vapor packagepack create ...
 vapor engine create ...
 vapor game-mod create ...
+vapor library create ...
 ```
 
 Creation should establish canonical structural boilerplate for the selected Vapor entity.
@@ -274,7 +383,7 @@ Role and authorization are separate concepts.
 
 A Vapor Role describes the kinds of work for which the local Steam App Instance is equipped.
 
-The installed role progression is:
+The installed Role progression is:
 
 ```text
 Player
@@ -305,11 +414,11 @@ Protected operations should be visibly distinguishable rather than conceptually 
 
 # Root Authority
 
-Root Authority is not an installed development role above Ecosystem Developer.
+Root Authority is not an installed development Role above Ecosystem Developer.
 
 It is an authority state granting ultimate administrative and ownership authority over protected official Vapor ecosystem resources.
 
-A Root Authority normally operates with Ecosystem Developer role plus Root Authority authorization.
+A Root Authority normally operates with Ecosystem Developer Role plus Root Authority authorization.
 
 ---
 
@@ -317,13 +426,13 @@ A Root Authority normally operates with Ecosystem Developer role plus Root Autho
 
 Underlying Vapor Core operations may exist even when a particular user-facing surface does not expose them.
 
-Installed role influences which operations and tooling are presented.
+Installed Role influences which operations and tooling are presented.
 
 For example:
 
 * Player surfaces focus on consuming and running finished Vapor Apps.
 * Composer surfaces expose pack composition workflows.
-* Content Developer surfaces expose behavioral Content creation and development.
+* Content Developer surfaces expose Engine/Game/Mod/Library creation and development.
 * Ecosystem Developer surfaces expose Vapor ecosystem source development.
 
 Role-based visibility is distinct from authorization.
@@ -387,6 +496,8 @@ Users should not normally need to repeatedly provide implementation-level source
 
 Explicit selectors and path overrides should remain available when context is ambiguous or the user intentionally targets another source context.
 
+For Rust-backed Content, context discovery may use Cargo-native project inspection rather than inventing parallel project-layout detection unnecessarily.
+
 ---
 
 # CLI Invariants
@@ -396,15 +507,18 @@ Explicit selectors and path overrides should remain available when context is am
 * CLI structure does not automatically mirror the Vapor type hierarchy.
 * Vapor Content kinds are explicit first-class CLI namespaces.
 * A generic `content` namespace is not used merely as a taxonomy bucket.
+* `library` means the Vapor Content kind; Content Library is a separate local/Launcher concept.
 * Packagepack workflows do not require ordinary users to manually switch between Packagepack, Composition, and Vapor App namespaces.
 * Shared semantic operations are implemented once in Vapor Core.
 * Dedicated Vapor binaries expose projections of those shared operations.
 * Packs may aggregate testing across their resolved Content.
-* Resolution is recursive and transitive.
+* Vapor dependency resolution is generic, recursive, and transitive.
+* Packagepack validation is layered above generic resolution.
 * Packagepacks may obtain Engine/Game through Enginepack/Gamepack.
-* Role controls installed capability and surface exposure.
+* Cargo metadata may describe physical realization but does not define Vapor semantic identity.
+* Role controls installed tooling/workflow exposure.
 * Authorization controls protected operations against protected targets.
-* Root Authority is an authority rather than an installed role.
+* Root Authority is an authority rather than an installed Role.
 * User-authored source remains outside the disposable Steam App Instance by default.
 
 ---
@@ -418,3 +532,5 @@ Explicit selectors and path overrides should remain available when context is am
 * Exact Packagepack install/select/remove lifecycle terminology.
 * Exact template-selection syntax.
 * Exact selectors and context-override syntax.
+* Whether standalone `resolve` should eventually be exposed for every dependency-bearing Content kind.
+* Exact CLI presentation of Cargo-reconciliation and local-override state.
