@@ -443,13 +443,13 @@ An operation visible to an Ecosystem Developer may still reject a protected targ
 
 # System-Oriented Namespaces
 
+System-oriented namespaces represent stable Vapor domains or first-class system concepts.
+
 The current system namespaces are approximately:
 
 ```text
 installation
     status
-    diagnose
-    repair
 
 role
     status
@@ -462,12 +462,11 @@ authority
 toolchain
     status
     install
-    diagnose
-    repair
 
 source
     status
     list
+    open
     acquire
     fork
 
@@ -482,9 +481,76 @@ ecosystem
     deploy
 ```
 
+`source` represents authored-source registration, selection, acquisition, and source-context operations.
+
+It must not become a generic bucket for development-environment tooling merely because development happens against source.
+
+External IDE integration, development diagnostics, and similar capabilities belong conceptually to the Vapor SDK/development environment rather than to the Source domain.
+
 The exact `ecosystem` / root-source terminology remains open.
 
 `publish` / `deploy` semantics also remain subject to implementation pressure.
+
+---
+
+# Cross-Cutting Diagnose and Repair
+
+Diagnosis and repair are cross-cutting operations over Vapor-managed operational state.
+
+The universal CLI therefore exposes them directly:
+
+```text
+vapor diagnose
+vapor repair
+```
+
+They are operations rather than artificial namespaces.
+
+This avoids multiplying semantically overlapping command paths such as:
+
+```text
+installation repair
+toolchain repair
+source ide repair
+source repair
+```
+
+merely because the underlying implementation spans several subsystems.
+
+`vapor diagnose` should inspect the currently resolvable Vapor environment and summarize relevant health across areas such as:
+
+* Installation state.
+* Managed tooling.
+* Source/development context.
+* Superworkspace recognition.
+* Existing SDK/external-IDE integration.
+* Other regeneratable managed state.
+
+`vapor repair` may reconcile safe Vapor-managed or derived state when a canonical answer exists.
+
+Repair must not treat authored source as disposable.
+
+In particular, broad repair must not silently rewrite, delete, reset, or modernize authored Git repositories merely because an old or incompatible Vapor checkout exists locally.
+
+Legacy or incompatible checkouts may remain visible to diagnosis while remaining inactive in the current development model.
+
+Dedicated Vapor applications may expose projections of the same underlying diagnosis and repair operations where appropriate.
+
+For example, a future dedicated SDK CLI may expose:
+
+```text
+vapor-sdk diagnose
+vapor-sdk repair
+```
+
+Those commands would project the same shared Vapor Core semantics toward the SDK/development environment rather than independently reimplementing them.
+
+Likewise, dedicated application surfaces may perform narrower automatic reconciliation as part of ordinary successful workflows.
+
+Diagnosis and repair are escape hatches and observability tools rather than mandatory happy-path workflow steps.
+
+Where Vapor can safely determine the canonical managed state, ordinary operations should keep that state synchronized proactively.
+
 
 ---
 

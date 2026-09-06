@@ -392,15 +392,19 @@ Vapor should make mechanical choices where there is a canonical answer.
 
 # Vapor SDK
 
-The Vapor SDK is the Content Developer-oriented development surface within the Launcher.
+The Vapor SDK is the Content Developer-oriented development environment and Vapor-specific development surface.
 
-Its job is not necessarily to replace IntelliJ IDEA, RustRover, VS Code, or other full IDEs.
+It may be integrated into the Launcher while also being exposed through a dedicated `vapor-sdk` executable or CLI projection.
 
-Its job is to provide the Vapor-specific development environment.
+Those are surfaces over shared Vapor Core development operations rather than independent implementations.
+
+The SDK's job is not necessarily to replace IntelliJ IDEA, RustRover, VS Code, or other full IDEs.
+
+Its job is to understand and coordinate Vapor-specific development semantics.
 
 This may include:
 
-* Project/content browser.
+* Superworkspace, Workspace, Project, and Content structure.
 * Vapor artifact metadata.
 * Structured configuration.
 * Dependency/composition views.
@@ -414,21 +418,41 @@ This may include:
 * External IDE integration.
 * Publication entry points.
 
+Development-environment state managed by the SDK should be divided clearly between authored state and derived state.
+
+Authored source and explicit developer intent are not disposable.
+
+Derived development-environment state should, where practical, be:
+
+> discoverable
+> → regeneratable
+> → idempotently repairable
+
+Vapor should avoid introducing persistent generated files when the same state can be derived cheaply and reliably from canonical source structure.
+
+If Superworkspace-local generated state eventually becomes useful, it should live beneath an explicit Vapor-managed boundary such as `.vapor/` rather than proliferating unrelated top-level magic files.
+
 ---
 
 # External IDE Integration
+
+External IDE integration is a Vapor SDK/development-environment responsibility.
+
+It is not fundamentally a Source-domain operation.
 
 The likely division of responsibility is:
 
 **Vapor SDK:**
 
 * Understands Vapor semantic structure.
-* Owns Vapor-specific configuration.
+* Owns Vapor-specific development configuration.
+* Determines which current Vapor Projects participate in the local development environment.
 * Coordinates build/run/test.
 * Knows which Project models which Vapor Content.
 * Knows composition/test context.
 * Provides Vapor diagnostics.
-* Can open/reveal source in external tools.
+* Reconciles existing external-IDE integration where a canonical mapping exists.
+* Can open or reveal source in external tools.
 
 **External IDE:**
 
@@ -439,9 +463,36 @@ The likely division of responsibility is:
 * General debugger/editor capabilities.
 * General Git UI if the developer prefers it.
 
-This is not yet a final boundary.
+External IDE integration should normally be proactive rather than a mandatory manual workflow.
+
+For example:
+
+> Open/select Vapor source
+> → recognize its Superworkspace
+> → recognize current Vapor Workspaces and Projects
+> → reconcile an already-configured external IDE
+
+Likewise:
+
+> Update/deploy the managed Vapor toolchain
+> → reconcile an already-configured external IDE with the new managed toolchain
+
+Vapor should not assume that every developer uses a particular IDE.
+
+Therefore IDE-specific state should generally be created or reconciled only when that integration exists or has been explicitly selected.
+
+Once an integration exists, Vapor should keep it synchronized automatically when safe rather than requiring routine manual repair commands.
+
+Explicit diagnosis and repair remain available when automatic reconciliation fails or when the developer wants to inspect managed state.
+
+Legacy or incompatible Vapor repositories may coexist physically within a Superworkspace without participating in the current IDE project model.
+
+Their presence is diagnostic information rather than, by itself, a repair failure.
+
+This is not yet a final SDK/editor boundary.
 
 Vapor may grow stronger editing capabilities where they materially improve the Vapor-specific workflow.
+
 
 ---
 
