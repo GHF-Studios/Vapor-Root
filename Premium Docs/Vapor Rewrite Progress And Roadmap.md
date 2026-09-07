@@ -706,44 +706,174 @@ Reuse Vapor identity/version/dependency machinery.
 
 ## Phase B — Vapor-Managed Cargo Reconciliation
 
-Prove:
+Initial Cargo inspection, verification, and repair machinery is implemented.
+
+Vapor can already:
+
+* resolve the semantic Vapor dependency graph independently of Cargo;
+* inspect the consuming Rust/Cargo Project;
+* compare required Vapor dependencies with their physical Cargo realization;
+* distinguish at least valid, missing, conflicting, and unresolved relationships;
+* repair a safely missing Cargo dependency through the Installation-owned managed Cargo toolchain;
+* preserve unrelated editable Cargo configuration;
+* execute that managed Cargo independently of arbitrary shell working directory.
+
+The architecture being proven is:
 
 ```text
-Vapor dependency
-→ exact resolved Content
-→ physical Cargo dependency
-→ ordinary Rust import succeeds
+Vapor semantic dependency
+        ↓
+exact resolved Vapor Content
+        ↓
+Rust-backed source / Project inspection
+        ↓
+Cargo reconciliation
+        ↓
+physical Cargo dependency
+        ↓
+Cargo resolution / compilation
 ```
 
-Use one tiny Library and one consuming Content artifact.
+The immediate example is:
 
-Requirements:
+```text
+wheel-rules
+    semantic Vapor dependency
+        ↓
+wheel-core
+```
 
-* `Vapor.toml` expresses the Vapor dependency.
-* `Cargo.toml` remains editable.
-* Vapor can establish the required Cargo dependency.
-* unrelated Cargo configuration survives unchanged.
-* Vapor can detect manual conflicting edits.
-* verification does not blindly overwrite.
-* an explicit repair/reconciliation path can restore expected state.
-* local overrides remain distinguishable from publishable state.
+The remaining proof is deliberately adversarial:
 
-This phase should answer how much Cargo metadata Vapor must persist to supervise the relationship reliably.
+```text
+valid semantic dependency
+→ physical Cargo binding missing
+→ verify reports Missing
+→ repair through managed Cargo
+→ verify reports Valid
+
+then:
+
+manually introduce conflicting physical Cargo declaration
+→ verify reports Conflict
+→ repair refuses unsafe overwrite
+```
+
+This final conflict test matters because the critical property is not merely:
+
+> Vapor can edit `Cargo.toml`.
+
+It is:
+
+> **Vapor can reconcile physical Cargo state when the canonical answer is safe and refuse to overwrite developer intent when it is not.**
+
+Requirements for considering Phase B proven:
+
+* `Vapor.toml` remains authoritative for the semantic Vapor dependency.
+* `Cargo.toml` remains an ordinary editable Cargo manifest.
+* Cargo remains authoritative for the physical Rust package graph it actually resolves and compiles.
+* Vapor can establish a safely missing required physical dependency.
+* Unrelated Cargo configuration survives unchanged.
+* Vapor detects an existing physical declaration which conflicts with the resolved Vapor requirement.
+* Verification reports that conflict clearly.
+* Repair refuses to blindly replace the conflicting declaration.
+* Local/unlocked overrides remain distinguishable from normal publishable state, even if the complete override lifecycle is implemented later.
+* The consuming Rust code can successfully import and use the dependency after valid reconciliation.
+
+Once the adversarial conflict test succeeds, Phase B is sufficiently proven.
+
+Do not expand Cargo reconciliation speculatively after that point.
+
+New Cargo-reconciliation semantics should be introduced later only when real authored-project pressure requires them.
 
 ---
 
 ## Architecture Checkpoint — Context, Identity, Session, and SDK
 
-This checkpoint was introduced by real self-hosting/Cargo workflow pressure.
+This checkpoint was introduced by real self-hosting and Cargo-workflow pressure.
 
-The implementation had reached a state where commands could:
+The implementation had reached a state where Vapor could perform a chain conceptually equivalent to:
 
 ```text
-global installed Vapor
+globally installed Vapor
+→ canonical Steam App Instance
 → Installation-owned managed Cargo
+→ Vapor Project resolution
 → source-built Vapor
+→ inherited Installation identity
 → remembered development source
-→ semantic Content resolution
+→ semantic Vapor Content resolution
+```
+
+That proved the managed toolchain and self-hosting direction, but also exposed that development context had accumulated too many incidental assumptions around:
+
+* filesystem paths;
+* shell working directory;
+* short Project names;
+* source roots;
+* persistent context;
+* future graphical SDK behavior.
+
+Rather than continue layering local fixes onto those assumptions, Vapor now has an explicit model for:
+
+```text
+canonical structural identity
++ local realizations
++ Superworkspace development containers
++ Development Sessions
++ Open state
++ Focus
++ transient Selection
++ operation target cardinality
++ deterministic selector resolution
++ GUI / CLI / automation projections over Vapor Core
+```
+
+The graphical product direction is also explicit:
+
+```text
+Vapor Launcher
+    ↓ Enter Development
+Vapor SDK
+    ↑ Return to Launcher
+```
+
+SDK Mode is a development-oriented superset of the relevant Launcher surface.
+
+The existing Figma/Tauri SDK prototype remains the visual design ancestor while its placeholder semantic model is progressively replaced by real Vapor Core state.
+
+This architecture checkpoint is intentionally bounded.
+
+Its documentation-level model is now substantially established.
+
+Implementation should prove only enough of it to prevent the current self-hosting and development workflows from continuing to encode the wrong assumptions.
+
+Minimum implementation proof before returning fully to the runtime roadmap:
+
+* canonical structural identity can be represented distinctly from local names;
+* Project selectors are not treated as globally unique Project IDs;
+* local realization/path is distinct from semantic structural identity;
+* Superworkspace remains a local development container rather than semantic source truth;
+* CWD remains an ephemeral CLI hint rather than durable context;
+* Project execution context can be resolved without depending on arbitrary shell location;
+* existing managed-toolchain/self-hosting workflows continue to work;
+* the Core model leaves a clean path toward Open / Focus / Selection and the future SDK rather than requiring the complete GUI now.
+
+Do **not** implement the complete Vapor SDK as part of this checkpoint.
+
+The immediate continuation remains:
+
+```text
+finish Phase B adversarial Cargo conflict proof
+        ↓
+Phase C — Minimal Bevy ECS Engine
+        ↓
+coherent Wheel Game
+        ↓
+real Engine/Game/Mod extension capabilities
+        ↓
+observe static integration pressure
+```
 
 ---
 
