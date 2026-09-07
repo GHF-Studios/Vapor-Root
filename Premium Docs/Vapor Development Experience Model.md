@@ -149,67 +149,229 @@ Vapor should progressively automate this loop without making local ecosystem dev
 
 ---
 
-# Repository Hierarchy
+# Repository and Development-Context Hierarchy
 
-The current source hierarchy is:
+The structural development hierarchy is:
 
 > **Vapor Superworkspace**
 > → **Container Repo**
 > → **Source Repo / Vapor Workspace**
 > → **Vapor Project**
 
+Vapor Content may then be authored inside Projects.
+
+This hierarchy combines two different concerns:
+
+```text
+local development containment
+    Superworkspace
+
+canonical source/development structure
+    Container Repo
+    → Workspace
+    → Project
+```
+
+The detailed identity, realization, Open/Focus, session, selector, and ambiguity rules are defined in the **Vapor Context, Identity, Session And Selection Model**.
+
 ---
 
 ## Vapor Superworkspace
 
-A Vapor Superworkspace is a local checkout container.
+A Vapor Superworkspace is primarily a local SDK/development container.
 
-It is not itself a Git repository or primary source-bearing unit, as in:
+Its purpose is comparable to an IDE workspace containing several related repositories and Projects.
 
-> Losing the Superworkspace primarily risks local unpushed/uncommitted state inside the repositories it contains rather than destroying the canonical remote source model itself.
+It is not:
 
-A Superworkspace may contain multiple related Container Repos or other Vapor-managed development checkouts.
+* a Git repository;
+* a canonical remote source identity;
+* part of canonical Workspace or Project identity;
+* required to understand every filesystem object around it.
 
-The exact rules for multi-Container layouts remain open.
+A Superworkspace may contain:
+
+* one or more Container Repos;
+* related independently checked-out Vapor Workspaces;
+* multiple local realizations of source needed for development;
+* unrelated filesystem entries which Vapor does not own.
+
+Creating equivalent checkouts in a second local container creates a second Superworkspace.
+
+The source identities inside it may remain the same.
+
+---
+
+## Implicit and Configured Superworkspaces
+
+A Superworkspace may be recognized implicitly from the Vapor development structures it contains.
+
+A `Superworkspace.vapor.toml` may optionally provide durable local SDK configuration.
+
+Such configuration may contain information such as:
+
+* friendly display name;
+* attached local roots;
+* local aliases;
+* presentation/layout preferences;
+* recovery hints;
+* other local development preferences.
+
+It must not become canonical truth for:
+
+* Workspace identity;
+* Project identity;
+* Content identity;
+* Container Repo membership;
+* Git history;
+* Registry state;
+* publication state;
+* provider authority.
+
+Likewise, Superworkspace-local mechanisms such as `.vaporignore` affect the local SDK/development view rather than canonical source topology.
+
+A Superworkspace should therefore remain useful even when its optional local configuration is missing or regenerated.
 
 ---
 
 ## Container Repo
 
-A Container Repo is a Vapor-managed Git repository.
+A Container Repo is a Vapor-managed Git repository grouping related Source Repos / Vapor Workspaces.
 
-It groups related Vapor Workspaces using Git submodules.
+Container Repos normally coordinate these Workspaces using Git submodules.
 
-Git therefore manages both:
+A Container Repo:
 
-* Container Repos.
-* Vapor Workspaces.
+* participates in canonical structural identity;
+* is Git-managed;
+* is not itself intended to be a submodule of another Container Repo;
+* expresses meaningful source organization rather than arbitrary filesystem nesting.
 
-A Container Repo is not itself intended to be a submodule of another Container Repo.
+For example:
 
-Its purpose is organization and coordinated checkout/versioning of related source repositories.
+```text
+GHF-Studios/Vapor-Root
+```
+
+may identify the canonical `Vapor-Root` Container Repo.
 
 ---
 
 ## Source Repo / Vapor Workspace
 
-A Vapor Workspace is the primary source-bearing Git repository.
+A Source Repo and Vapor Workspace are the same primary source-bearing unit viewed from Git and Vapor respectively.
 
-It exists as a submodule of a Container Repo.
+The normative relationship is:
 
-A Vapor Workspace contains one or more Vapor Projects.
+> **One Source Repo = one Vapor Workspace.**
 
-It does not itself contain nested Git submodules.
+A Vapor Workspace:
+
+* is a Git repository;
+* belongs structurally to a Container Repo;
+* contains one or more Vapor Projects;
+* owns Workspace-level authored metadata;
+* may have multiple local physical realizations/checkouts.
+
+A provider URL identifies external source linkage.
+
+It does not replace Vapor structural identity.
 
 ---
 
 ## Vapor Project
 
-A Vapor Project is a Rust/Cargo workspace contained inside a Vapor Workspace.
+A Vapor Project is a coherent development unit inside a Vapor Workspace.
 
-It is not itself a Git repository.
+For Rust-backed development, it normally corresponds to a Cargo workspace or another coherent Cargo execution context.
 
-A project models some coherent Vapor development artifact or area.
+A Project:
+
+* is not itself a Git repository;
+* is namespaced by its Workspace;
+* should have a meaningful Project name;
+* may contain several Cargo packages;
+* may host zero, one, or multiple Vapor Content artifacts;
+* may contain supporting packages which are not independently Vapor Content.
+
+Project identity is therefore distinct from Vapor Content identity.
+
+The Project answers:
+
+> **Where and within which development structure is this work authored and built?**
+
+A Content identity answers:
+
+> **Which semantic Vapor artifact is this?**
+
+The relationship may be one-to-one for some Projects.
+
+It is not required to be one-to-one generally.
+
+---
+
+# Canonical Structural Identity
+
+Structural development identities are human-readable, case-preserving, slash-separated, and hierarchically namespaced.
+
+Conceptually:
+
+```text
+Namespace/Container-Repo/Workspace/Project
+```
+
+Examples:
+
+```text
+GHF-Studios/Vapor-Root
+GHF-Studios/Vapor-Root/Vapor
+GHF-Studios/Vapor-Root/Vapor/Client
+```
+
+The Superworkspace is intentionally absent because it is a local realization container.
+
+Each identity segment should represent real semantic distinction.
+
+Duplication such as:
+
+```text
+GHF-Studios/Vapor-Root/Vapor/Vapor
+```
+
+is legal only if the final `Vapor` is genuinely the meaningful Project name.
+
+Current rewrite-era Project names may be renamed or decomposed as architecture pressure reveals more meaningful boundaries.
+
+---
+
+# Structural Identity vs Local Realization
+
+Canonical identity does not uniquely determine one physical checkout.
+
+A Workspace may have multiple local realizations, such as:
+
+```text
+GHF-Studios/Vapor-Root/Vapor
+
+├── official checkout / main
+└── developer fork / context-redesign
+```
+
+Filesystem paths, Git branches, provider repositories, and fork relationships describe realizations.
+
+They are not substitutes for Vapor semantic identity.
+
+This distinction allows Vapor to support:
+
+* upstream and fork checkouts;
+* experimental branches;
+* isolated test realizations;
+* relocation;
+* multiple development environments.
+
+When an operation changes or builds source, Vapor must ultimately resolve an exact local realization.
+
+The GUI should normally make this a modeled choice rather than requiring raw filesystem paths.
 
 ---
 
@@ -219,7 +381,9 @@ A project models some coherent Vapor development artifact or area.
 
 The unique client/root Vapor Workspace.
 
-It contains Vapor Root Projects representing parts of the local/client Vapor ecosystem.
+It contains one or more meaningful Vapor Root Projects representing coherent parts of the local/client Vapor ecosystem.
+
+Project decomposition should reflect real architectural responsibility rather than duplicating Workspace naming without reason.
 
 ---
 
@@ -227,35 +391,38 @@ It contains Vapor Root Projects representing parts of the local/client Vapor eco
 
 The unique server-root Vapor Workspace.
 
-It contains Vapor Server Root Projects representing server-side Vapor infrastructure.
+It contains Vapor Server Root Projects representing coherent server-side Vapor infrastructure.
 
 ---
 
 ## Vapor Content Workspace
 
-A non-unique Workspace containing Vapor Content Projects.
+A non-unique Workspace used for Vapor Content development.
 
-`Loo-Cast` is the first-party example.
+A Content Workspace may contain one or more Projects.
 
 ---
 
 ## Vapor Content Project
 
-A Vapor Content Project models one Vapor Content artifact:
+A Vapor Content Project is a Project primarily concerned with authoring Vapor Content.
 
-* Packagepack.
-* Enginepack.
-* Gamepack.
-* Modpack.
-* Engine.
-* Game.
-* Engine Mod.
-* Game Mod.
-* Extension Mod.
+It may host one or more Content artifacts such as:
 
-Exactly how one Project maps onto crates/packages/generated code remains an implementation concern.
+* Packagepack;
+* Enginepack;
+* Gamepack;
+* Modpack;
+* Engine;
+* Game;
+* Engine Mod;
+* Game Mod;
+* Extension Mod;
+* Library.
 
-The semantic relationship should remain explicit regardless of Cargo layout.
+One Project is not required to equal exactly one Content artifact.
+
+The semantic relationship between Project, Cargo packages, and Content must remain explicit even when several artifacts share one Project.
 
 ---
 
@@ -294,6 +461,7 @@ Vapor must assume that:
 * Detached/local branches may exist.
 * External Git tools may modify repositories.
 * The user may intentionally diverge from the state Vapor expected.
+* Filesystem paths may change outside Vapor.
 
 Therefore Vapor must not silently:
 
@@ -301,7 +469,8 @@ Therefore Vapor must not silently:
 * Delete dirty repositories.
 * Replace local source with remote state.
 * Drop unpushed commits.
-* Recreate a Superworkspace as if every contained checkout were disposable.
+* Recreate a Superworkspace as though every checkout were disposable.
+* Attach an arbitrary similarly named checkout in place of a missing realization.
 
 Automation should become more conservative as destructive potential increases.
 
@@ -311,23 +480,23 @@ Automation should become more conservative as destructive potential increases.
 
 Git capability does not imply GitHub authentication.
 
-Local authoring/building/testing should remain possible without GitHub.
+Local authoring/building/testing should remain possible without GitHub or another hosting provider.
 
-A Git host becomes relevant when an operation requires remote hosting.
+A Git host becomes relevant when an operation requires external hosting.
 
-Current GitHub-related operations may include:
+Provider-oriented operations may include:
 
 * Clone private repository.
 * Create repository.
 * Push.
-* Pull protected content.
-* Open issue.
-* Create collaboration flow.
+* Access protected source.
+* Open collaboration workflows.
+* Resolve fork/upstream relationships.
 * Access official Vapor repositories.
 
-Other Git hosts may eventually participate.
+The domain model should avoid hardcoding GitHub where the concept is really Git hosting.
 
-The domain model should avoid unnecessarily hardcoding GitHub where the concept is really Git hosting.
+Provider ownership and Vapor semantic identity must remain distinguishable.
 
 ---
 
@@ -337,162 +506,321 @@ Composer-and-above users acquire source through Vapor-compatible Git repositorie
 
 The ideal experience is not:
 
-> Search the web manually for repository URLs.
+> Search for URLs manually, clone them to arbitrary directories, and repeatedly tell Vapor where they ended up.
 
-Instead Vapor should be capable of resolving semantic Vapor identities into appropriate source locations through Registry/source metadata.
+Instead Vapor should be capable of resolving semantic identity into appropriate source/provider information.
 
-A normal acquisition operation may therefore conceptually include:
+A source-acquisition operation may conceptually include:
 
 * Resolve Vapor identity.
-* Determine source repository.
-* Reuse existing compatible checkout if present.
-* Clone/fetch required repository.
-* Initialize required Container/Workspace relationships.
+* Determine source/provider linkage.
+* Determine appropriate Container Repo / Workspace relationship.
+* Reuse a compatible known realization where appropriate.
+* Clone/fetch required source.
+* Initialize submodules where required.
 * Validate Vapor compatibility.
-* Register local availability.
+* Register local realization/availability.
+* Expose the result in the current Superworkspace or SDK session.
 
-The exact checkout/version-resolution rules remain open.
+Exact checkout/version/fork rules remain subject to provider and publication design.
 
 ---
 
 # Opening Existing Development State
 
-Vapor should support opening development state from several realistic starting points:
+Opening development state is a session/context operation.
 
-* Existing registered Superworkspace.
-* Existing Container Repo.
-* Existing Vapor Workspace.
-* Existing Vapor Project.
-* Existing Git checkout not yet known to Vapor.
-* Freshly cloned source.
-* Newly created source.
+Vapor should support starting from:
 
-The UX should detect and explain what Vapor recognizes rather than requiring the user to reconstruct metadata manually.
+* configured Superworkspace;
+* implicit Superworkspace;
+* Container Repo;
+* Vapor Workspace;
+* Vapor Project;
+* known local realization;
+* existing Git checkout not yet known to Vapor;
+* freshly acquired source;
+* newly created source.
+
+The user should not need to reconstruct structural metadata manually.
+
+When a deep exact target is opened, Vapor may automatically establish its exact ancestors.
+
+For example, opening:
+
+```text
+GHF-Studios/Vapor-Root/Vapor/Client
+```
+
+may establish the relevant Workspace and Container context.
+
+This is safe because the parent relationship is canonical structure rather than analogy.
+
+---
+
+# Open, Focus, and Selection
+
+Development context is not represented by one global active Project.
+
+Several Workspaces, Projects, or Content targets may be Open simultaneously.
+
+Several may also be Focused.
+
+These concepts are distinct:
+
+```text
+Open
+    participates in the working set
+
+Focused
+    contributes durable targeting intent
+
+Selected
+    transient target for the immediate frontend action
+```
+
+A GUI click should therefore not automatically rewrite persisted Focus.
+
+Likewise, multiple Focus is legitimate even when a particular operation ultimately requires exactly one target.
+
+The operation's cardinality decides whether the candidate set is valid.
+
+---
+
+# Missing and Broken Development State
+
+Known/Open/Focused objects may become unavailable or unhealthy.
+
+Examples include:
+
+* moved checkout;
+* disconnected drive;
+* deleted directory;
+* incompatible Workspace metadata;
+* invalid manifest;
+* broken Git state;
+* missing dependency.
+
+Availability/health is independent of Open/Focus state.
+
+A previously focused Workspace may therefore remain:
+
+```text
+Known
+Missing
+Open
+Focused
+```
+
+so that the SDK can explain the problem and offer recovery.
+
+Useful recovery actions may include:
+
+```text
+Locate
+Repair
+Reacquire
+Close
+Forget
+```
+
+A broken object should not simply disappear from the user's mental workspace.
+
+---
+
+# Closing Development State
+
+Close is a session operation.
+
+Closing a parent context closes its Open descendants.
+
+For example, closing a Workspace may also close Projects inside it.
+
+The frontend should communicate that cascade.
+
+Close must remain distinct from stronger effects such as:
+
+```text
+Forget
+Remove checkout
+Delete authored source
+Uninstall capability
+```
+
+Closing development context must never silently destroy authored Git source.
 
 ---
 
 # Creating Development State
 
-When creating new authored content, Vapor should automate the structural boilerplate required by the chosen artifact type.
+When creating new authored work, Vapor should automate structural boilerplate while asking the developer for semantic choices.
 
-For example, creating a new Game Mod should ideally establish:
+Creating Content may involve:
 
-* Appropriate Vapor Project structure.
-* Required manifest/configuration.
-* Repository/Workspace placement.
-* Cargo structure where applicable.
-* Appropriate target/dependency declarations.
-* Initial test/composition integration hooks.
+* selecting or creating an appropriate Workspace/Project;
+* generating required Vapor manifests;
+* establishing Cargo structure where appropriate;
+* creating initial source/tests;
+* declaring dependencies/targets;
+* registering the new Content in the local development environment.
 
-The developer should make explicit semantic choices.
+Creation should operate through semantic identity and modeled placement rather than requiring users to hand-build repository layouts.
 
-Vapor should make mechanical choices where there is a canonical answer.
+---
+
+# Development Session and Resume State
+
+A live frontend uses a Development Session containing Open/Focused state and other live context.
+
+The SDK has such a session.
+
+A future Vapor Shell may have one.
+
+A one-shot CLI invocation may construct an ephemeral one.
+
+Durable Resume State exists to reconstruct a useful future session.
+
+For example, reopening the SDK may restore:
+
+* previous Superworkspace;
+* Open Workspaces;
+* Open Projects;
+* exact Focus;
+* useful SDK navigation state.
+
+Resume State is not necessarily one globally shared mutable cursor used by every simultaneous frontend.
+
+Exact multi-process synchronization remains an implementation concern.
 
 ---
 
 # Vapor SDK
 
-The Vapor SDK is the Content Developer-oriented development environment and Vapor-specific development surface.
+The Vapor SDK is the primary first-party graphical development environment for Vapor.
 
-It may be integrated into the Launcher while also being exposed through a dedicated `vapor-sdk` executable or CLI projection.
+It is not merely a configuration companion beside a separate IDE.
 
-Those are surfaces over shared Vapor Core development operations rather than independent implementations.
+The preferred product model is:
 
-The SDK's job is not necessarily to replace IntelliJ IDEA, RustRover, VS Code, or other full IDEs.
+```text
+Vapor Launcher
+    ↓ Enter Development
+Vapor SDK
+    ↑ Return to Launcher
+```
 
-Its job is to understand and coordinate Vapor-specific development semantics.
+SDK Mode is a development-oriented superset of the ordinary Launcher experience.
 
-This may include:
+It may expose:
 
-* Superworkspace, Workspace, Project, and Content structure.
-* Vapor artifact metadata.
-* Structured configuration.
-* Dependency/composition views.
-* Build controls.
-* Run/test controls.
-* Diagnostics.
-* Logs.
-* Content validation.
-* Test-composition selection.
-* Generated source/config visibility.
-* External IDE integration.
-* Publication entry points.
+* Superworkspace Explorer;
+* Workspace/Project/Content navigation;
+* source;
+* structured configuration;
+* semantic dependency/composition graphs;
+* Inspector;
+* Problems;
+* Build/Test/Run;
+* Git;
+* toolchain;
+* logs;
+* publication/deployment;
+* ecosystem development where Role permits.
 
-Development-environment state managed by the SDK should be divided clearly between authored state and derived state.
+Detailed graphical behavior is defined in the **Vapor SDK Experience Model**.
 
-Authored source and explicit developer intent are not disposable.
+The SDK may still integrate external editors and IDEs.
 
-Derived development-environment state should, where practical, be:
+That integration is complementary rather than proof that Vapor's own SDK must remain permanently shallow.
+
+---
+
+# SDK State Ownership
+
+SDK state must distinguish:
+
+## Authored state
+
+Examples:
+
+* source;
+* Vapor manifests;
+* Workspace metadata;
+* Git history;
+* explicit semantic configuration.
+
+Authored state is not disposable.
+
+## Durable local development configuration
+
+Examples:
+
+* configured Superworkspace metadata;
+* aliases;
+* SDK preferences;
+* resume information.
+
+This may be regenerated or reconfigured but should not be silently discarded without reason.
+
+## Derived state
+
+Examples:
+
+* caches;
+* indexes;
+* generated views;
+* diagnostics;
+* Cargo metadata snapshots;
+* temporary realization state.
+
+Derived state should where practical be:
 
 > discoverable
 > → regeneratable
 > → idempotently repairable
 
-Vapor should avoid introducing persistent generated files when the same state can be derived cheaply and reliably from canonical source structure.
-
-If Superworkspace-local generated state eventually becomes useful, it should live beneath an explicit Vapor-managed boundary such as `.vapor/` rather than proliferating unrelated top-level magic files.
+Derived state should normally live beneath explicit Vapor-managed storage boundaries.
 
 ---
 
 # External IDE Integration
 
-External IDE integration is a Vapor SDK/development-environment responsibility.
+External IDE integration remains a Vapor SDK responsibility.
 
 It is not fundamentally a Source-domain operation.
 
-The likely division of responsibility is:
+The division is increasingly:
 
-**Vapor SDK:**
+**Vapor SDK / Core:**
 
-* Understands Vapor semantic structure.
-* Owns Vapor-specific development configuration.
-* Determines which current Vapor Projects participate in the local development environment.
-* Coordinates build/run/test.
-* Knows which Project models which Vapor Content.
-* Knows composition/test context.
-* Provides Vapor diagnostics.
-* Reconciles existing external-IDE integration where a canonical mapping exists.
-* Can open or reveal source in external tools.
+* Understand canonical Vapor structure and identities.
+* Track local realizations.
+* Own Vapor-specific Open/Focus/session semantics.
+* Coordinate semantic build/run/test.
+* Understand which Projects host which Content.
+* Provide diagnostics and repair.
+* Manage the pinned Vapor toolchain relationship.
+* Expose source to external tools.
+* Reconcile supported IDE integration where a canonical mapping exists.
 
 **External IDE:**
 
-* General Rust editing.
-* Refactoring.
-* Code navigation.
-* Language-server features.
-* General debugger/editor capabilities.
-* General Git UI if the developer prefers it.
+* May provide mature source editing.
+* May provide refactoring/code navigation.
+* May provide debugger/language tooling.
+* May provide general Git UI.
 
-External IDE integration should normally be proactive rather than a mandatory manual workflow.
+The built-in SDK may progressively absorb more editing/IDE capability over time.
 
-For example:
+External IDE compatibility remains valuable even if the integrated SDK eventually becomes capable enough for most Vapor work.
 
-> Open/select Vapor source
-> → recognize its Superworkspace
-> → recognize current Vapor Workspaces and Projects
-> → reconcile an already-configured external IDE
+IDE-specific integration should be created/reconciled only when present or selected.
 
-Likewise:
+Once configured, safe synchronization should be proactive.
 
-> Update/deploy the managed Vapor toolchain
-> → reconcile an already-configured external IDE with the new managed toolchain
+Explicit diagnosis and repair remain available when synchronization fails.
 
-Vapor should not assume that every developer uses a particular IDE.
-
-Therefore IDE-specific state should generally be created or reconciled only when that integration exists or has been explicitly selected.
-
-Once an integration exists, Vapor should keep it synchronized automatically when safe rather than requiring routine manual repair commands.
-
-Explicit diagnosis and repair remain available when automatic reconciliation fails or when the developer wants to inspect managed state.
-
-Legacy or incompatible Vapor repositories may coexist physically within a Superworkspace without participating in the current IDE project model.
-
-Their presence is diagnostic information rather than, by itself, a repair failure.
-
-This is not yet a final SDK/editor boundary.
-
-Vapor may grow stronger editing capabilities where they materially improve the Vapor-specific workflow.
-
+Legacy, incompatible, missing, or ignored Workspaces may remain visible in the SDK's development model without automatically participating in builds or editor integration.
 
 ---
 

@@ -23,10 +23,15 @@
 
 ## Vapor Applications and Tooling
 
-* **Vapor Installer**: *The application responsible for changing the fundamental Vapor Role/tooling installed in a Steam App Instance. It installs, detects, configures, upgrades, downgrades, repairs, and removes role-specific dependencies and tooling such as Git, SteamCMD, and the Rust/Cargo toolchain.*
-* **Vapor Launcher**: *The primary Vapor application used after the required tooling is installed. It provides access to Vapor Apps, local/source Vapor Content, composition workflows, accounts, settings, development surfaces, diagnostics, and external ecosystem services, and launches selected Vapor Apps.*
-* **Vapor SDK**: *The logical Vapor developer surface for creating, programming, configuring, building, testing, and inspecting Vapor Content and, where the installed Role permits it, Vapor ecosystem source. It is integrated with the Vapor Launcher and backed by the same Vapor Core. A dedicated `vapor-sdk` executable or CLI projection may expose that same logical surface without creating an independent semantic implementation.*
-* **Vapor CLI**: *The command-line projection of Vapor Core operations. The universal `vapor` executable exposes the broad command surface, while application-specific executables such as `vapor-installer`, `vapor-launcher`, and `vapor-sdk` expose appropriate subsets/projections of the same underlying operations.*
+* **Vapor Installer**: *The application responsible for changing the fundamental Vapor Role/tooling installed in a Steam App Instance. It installs, detects, configures, upgrades, downgrades, repairs, and removes role-specific dependencies and tooling such as Git, SteamCMD, and the Rust/Cargo toolchain. The Installer changes what the Installation is equipped to do and remains a distinct application boundary from ordinary Launcher/SDK operation.*
+
+* **Vapor Launcher**: *The primary Vapor desktop application used after the required capability/tooling is installed. In ordinary Launcher Mode it provides access to Vapor Apps, Content Library, composition, discovery, accounts, settings, diagnostics, and other workflows appropriate to the installed Role. Where development capability exists, the Launcher may transition into the richer integrated Vapor SDK / Development Mode without creating a separate semantic implementation.*
+
+* **Vapor SDK**: *The Launcher-integrated development mode and logical Vapor developer surface for creating, programming, configuring, building, testing, inspecting, publishing, and otherwise developing Vapor Content and, where Role permits, Vapor ecosystem source. SDK Mode is functionally a development-oriented superset of the ordinary Launcher surface while the Installer remains a separate capability-management boundary. The SDK is backed by Vapor Core and may additionally expose a dedicated executable/CLI projection without creating independent semantics.*
+
+* **Vapor SDK Session**: *One live graphical development session containing Open/Focused development context, transient selections, active documents/views, run/test context, and other live SDK state. Live Session State is distinct from durable Resume State and need not imply one globally shared focus cursor across every simultaneous Vapor frontend.*
+
+* **Vapor CLI**: *The command-line projection of Vapor Core operations. The universal `vapor` executable exposes the broad command surface, while application-specific executables such as `vapor-installer`, `vapor-launcher`, and `vapor-sdk` expose appropriate subsets/projections of the same underlying operations. CLI/GUI equality means semantic capability equality rather than identical interaction mechanics.*
 
 ---
 
@@ -99,15 +104,56 @@ Cargo determines the concrete Rust package graph it will compile.
 
 ---
 
-## Development Storage Model
+## Development Storage, Identity, Context, and Session Model
 
-* **Vapor Superworkspace**: *A local checkout container holding checked-out Vapor repositories. It is not itself a Git repository or primary source-bearing unit. Losing it primarily risks local unpushed/uncommitted development state rather than canonical remote source.*
-* **Container Repo**: *A Vapor-managed top-level Git repository that groups related Source Repos / Vapor Workspaces as Git submodules. A Container Repo is itself Git-managed but is not used as a submodule of another Container Repo.*
-* **Source Repo / Vapor Workspace**: *A Vapor-managed source-bearing Git repository contained by a Container Repo as a Git submodule. It contains one or more Vapor Projects and does not itself contain nested Git submodules.*
-* **Vapor Project**: *A Rust/Cargo workspace contained inside a Source Repo / Vapor Workspace. It is not itself a Git repository.*
+* **Vapor Superworkspace**: *A local physical development container comparable to an IDE workspace which groups related Vapor development checkouts for SDK use. It is not itself a Git repository, canonical ecosystem identity, or primary source-bearing unit. Two separately created local containers are distinct Superworkspaces even when they contain equivalent source realizations.*
+
+* **Implicit Superworkspace**: *A local directory which Vapor can recognize as a Superworkspace from the Vapor development structures it contains even without an explicit Superworkspace manifest.*
+
+* **Configured Superworkspace**: *A Superworkspace with explicit durable local configuration, potentially including a `Superworkspace.vapor.toml`. Superworkspace configuration may describe friendly names, attached roots, local aliases, layout/preferences, and recovery hints but does not define canonical Workspace/Project/Content identity or remote ecosystem truth.*
+
+* **Container Repo**: *A Vapor-managed top-level Git repository that groups related Source Repos / Vapor Workspaces, normally through Git submodules. A Container Repo participates in canonical structural identity and is itself not used as a submodule of another Container Repo.*
+
+* **Source Repo / Vapor Workspace**: *The primary source-bearing Git repository unit. One Source Repo equals one Vapor Workspace. A Workspace belongs structurally to a Container Repo, contains one or more Vapor Projects, owns Workspace-level authored metadata, and may have multiple local physical realizations/checkouts.*
+
+* **Vapor Project**: *A structural development unit inside a Vapor Workspace, normally corresponding to a coherent Rust/Cargo workspace or execution context for Rust-backed development. A Project is not itself a Git repository. Project identity is namespaced by Workspace identity. A Project may host zero, one, or multiple Vapor Content artifacts and supporting non-Content packages.*
+
+* **Vapor Content Project**: *A Vapor Project primarily concerned with authoring Vapor Content. A Content Project may host one or more independently identified Vapor Content artifacts; Project identity and Content identity are not required to be one-to-one.*
+
 * **Vapor Root Workspace**: *The unique Vapor Workspace containing the client-side/root Vapor codebase and bootstrapping model of the Vapor ecosystem.*
-* **Vapor Root Project**: *A Vapor Project inside the Vapor Root Workspace modeling part of the client-side/root Vapor ecosystem.*
+
+* **Vapor Root Project**: *A Vapor Project inside the Vapor Root Workspace modeling a coherent part of the client-side/root Vapor ecosystem. Vapor Root Projects should use meaningful names within the Workspace namespace rather than duplicating the Workspace name without semantic reason.*
+
 * **Vapor Server Root Workspace**: *The unique Vapor Workspace containing the server-side root Vapor codebase.*
-* **Vapor Server Root Project**: *A Vapor Project inside the Vapor Server Root Workspace modeling part of the server-side/root Vapor ecosystem.*
-* **Vapor Content Workspace**: *A non-unique Vapor Workspace containing Vapor Content Projects, with first-party Content Workspaces serving as concrete examples.*
-* **Vapor Content Project**: *A Vapor Project inside a Vapor Content Workspace that models a Packagepack, Enginepack, Gamepack, Modpack, Engine, Game, Engine Mod, Game Mod, Extension Mod, or Library.*
+
+* **Vapor Server Root Project**: *A Vapor Project inside the Vapor Server Root Workspace modeling a coherent part of server-side Vapor infrastructure.*
+
+* **Vapor Content Workspace**: *A non-unique Vapor Workspace containing one or more Projects used for Vapor Content development.*
+
+* **Vapor Structural ID**: *A canonical human-readable, case-preserving, slash-separated identity for structural development objects below the namespace level. Structural identity incorporates semantic containment. Examples include `GHF-Studios/Vapor-Root` for a Container Repo, `GHF-Studios/Vapor-Root/Vapor` for a Workspace, and `GHF-Studios/Vapor-Root/Vapor/Client` for a Project. Superworkspace is deliberately absent because it is a local realization container.*
+
+* **Local Name**: *The final human-readable name of an object within its enclosing namespace. A Local Name such as `Client` is not globally unique and must not be treated as a canonical ID outside a context which makes it unambiguous.*
+
+* **Selector**: *Frontend/user input used to resolve one or more exact Vapor targets. A selector may be a full canonical identity or a shorter context-dependent form. Short selectors are conveniences rather than alternate canonical IDs. Vapor may accept the shortest selector which resolves unambiguously for the requested operation.*
+
+* **Local Realization**: *One physical local checkout/realization of a canonical source/development identity. Filesystem path, branch, provider repository, fork relationship, and local alias are realization properties rather than replacements for Vapor semantic identity. Multiple local realizations of the same Workspace identity may coexist.*
+
+* **Development Session**: *One frontend-local working context containing Open/Focused development objects and other active context required to perform development operations coherently. A GUI, future Vapor Shell, and one-shot CLI invocation need not share one globally mutable live focus cursor.*
+
+* **Resume State**: *Durable local state used to reconstruct a useful future Development Session, such as previously Open Workspaces/Projects and exact remembered Focus. Resume State may preserve missing/broken identities so that recovery remains possible.*
+
+* **Open**: *Session participation state indicating that an object belongs to the current development working set. Multiple sibling objects may be Open. Opening a deep exact target may automatically establish its required exact ancestor contexts.*
+
+* **Focused**: *Session targeting state expressing durable default intent. Multiple objects may be Focused simultaneously. Focus does not imply that every operation accepts multiplicity; operation cardinality decides whether the focused candidate set is valid.*
+
+* **Transient Selection**: *Immediate frontend selection used to target a particular operation without necessarily mutating durable Focus. Examples include selected tree items, graph nodes, or an Inspector target.*
+
+* **Availability State**: *The independent state describing whether a remembered/local realization can currently be accessed, such as Available, Missing, or Unreachable. Availability is distinct from Open/Focused session state.*
+
+* **Health State**: *The independent state describing whether a known object/realization is currently semantically usable, such as Healthy, Degraded, Invalid, or Incompatible. Health is distinct from knowledge, availability, Open state, and Focus.*
+
+* **Context Resolution**: *The process by which Vapor resolves explicit selectors, transient selection, Focus, enclosing scopes, frontend-specific ambient hints, and available candidates into the exact semantic/local targets required by an operation.*
+
+* **Operation Cardinality**: *The number of targets an operation semantically accepts, such as exactly one Project or many Content artifacts. Multiple focused/selected candidates are valid when the operation accepts multiplicity and ambiguous when the operation requires one.*
+
+* **Ambient Context Hint**: *Non-canonical frontend-specific information which may help resolve one operation. The command-line current working directory is an example. Ambient hints may narrow an ephemeral operation context but must not silently redefine persisted Vapor identity or SDK Focus.*

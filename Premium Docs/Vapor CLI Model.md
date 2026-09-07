@@ -445,11 +445,13 @@ An operation visible to an Ecosystem Developer may still reject a protected targ
 
 System-oriented namespaces represent stable Vapor domains or first-class system concepts.
 
-The current system namespaces are approximately:
+The currently intended shape is approximately:
 
 ```text
 installation
     status
+    diagnose
+    repair
 
 role
     status
@@ -462,11 +464,13 @@ authority
 toolchain
     status
     install
+    diagnose
+    repair
+    cargo
 
 source
     status
     list
-    open
     acquire
     fork
 
@@ -478,91 +482,433 @@ ecosystem
     build
     test
     publish
+
     deploy
+        local
+        steam
 ```
 
-`source` represents authored-source registration, selection, acquisition, and source-context operations.
+The exact future CLI projection of Development Session operations such as Open, Focus, Close, Forget, and realization selection is deliberately not frozen yet.
 
-It must not become a generic bucket for development-environment tooling merely because development happens against source.
+Those semantics exist independently in the **Vapor Context, Identity, Session And Selection Model**.
 
-External IDE integration, development diagnostics, and similar capabilities belong conceptually to the Vapor SDK/development environment rather than to the Source domain.
+The CLI should gain syntax for them only when the command shape has been pressure-tested against the SDK/Core model.
 
-The exact `ecosystem` / root-source terminology remains open.
+`source` represents source acquisition, source availability, provider linkage, and source-oriented operations.
 
-`publish` / `deploy` semantics also remain subject to implementation pressure.
+It must not become a generic bucket for:
+
+* every development-context operation;
+* Project selection;
+* SDK session state;
+* IDE integration;
+* arbitrary filesystem navigation.
+
+Likewise, `ecosystem` represents Vapor ecosystem/root development as a semantic domain rather than merely a directory containing Vapor's own repositories.
 
 ---
 
-# Cross-Cutting Diagnose and Repair
+# Diagnose and Repair
 
-Diagnosis and repair are cross-cutting operations over Vapor-managed operational state.
+Diagnosis and repair may appear at meaningful owning scopes.
 
-The universal CLI therefore exposes them directly:
-
-```text
-vapor diagnose
-vapor repair
-```
-
-They are operations rather than artificial namespaces.
-
-This avoids multiplying semantically overlapping command paths such as:
+Examples include:
 
 ```text
-installation repair
-toolchain repair
-source ide repair
-source repair
+vapor installation diagnose
+vapor installation repair
+
+vapor toolchain diagnose
+vapor toolchain repair
 ```
 
-merely because the underlying implementation spans several subsystems.
+Narrow operations should diagnose or reconcile the domain they own.
 
-`vapor diagnose` should inspect the currently resolvable Vapor environment and summarize relevant health across areas such as:
+The graphical SDK may additionally provide aggregated Problems/health views spanning several domains without requiring one artificial CLI namespace for every cross-cutting presentation.
 
-* Installation state.
-* Managed tooling.
-* Source/development context.
-* Superworkspace recognition.
-* Existing SDK/external-IDE integration.
-* Other regeneratable managed state.
+Repair must remain conservative.
 
-`vapor repair` may reconcile safe Vapor-managed or derived state when a canonical answer exists.
+It must not treat authored source as disposable.
 
-Repair must not treat authored source as disposable.
+In particular, repair must not silently:
 
-In particular, broad repair must not silently rewrite, delete, reset, or modernize authored Git repositories merely because an old or incompatible Vapor checkout exists locally.
+* reset dirty Git repositories;
+* destroy uncommitted source;
+* discard unpushed commits;
+* attach unrelated similarly named checkouts;
+* rewrite explicit authored configuration merely because a generated state differs.
 
-Legacy or incompatible checkouts may remain visible to diagnosis while remaining inactive in the current development model.
+Where a canonical managed answer exists, ordinary operations may proactively reconcile safe derived state.
 
-Dedicated Vapor applications may expose projections of the same underlying diagnosis and repair operations where appropriate.
-
-For example, a future dedicated SDK CLI may expose:
-
-```text
-vapor-sdk diagnose
-vapor-sdk repair
-```
-
-Those commands would project the same shared Vapor Core semantics toward the SDK/development environment rather than independently reimplementing them.
-
-Likewise, dedicated application surfaces may perform narrower automatic reconciliation as part of ordinary successful workflows.
-
-Diagnosis and repair are escape hatches and observability tools rather than mandatory happy-path workflow steps.
-
-Where Vapor can safely determine the canonical managed state, ordinary operations should keep that state synchronized proactively.
-
+Diagnose/Repair remain especially valuable for observability and failure recovery.
 
 ---
 
-# Context Discovery
+# Semantic Target Model
 
-Vapor should discover obvious source and development context automatically.
+CLI operations should target Vapor semantic or structural objects rather than implementation paths wherever possible.
 
-Users should not normally need to repeatedly provide implementation-level source roots or Cargo paths.
+Examples include:
 
-Explicit selectors and path overrides should remain available when context is ambiguous or the user intentionally targets another source context.
+```text
+GHF-Studios/Vapor-Root/Vapor/Client
+GHF-Studios/Vapor-Examples/Wheel-Rules
+```
 
-For Rust-backed Content, context discovery may use Cargo-native project inspection rather than inventing parallel project-layout detection unnecessarily.
+depending on target domain.
+
+Filesystem paths, Cargo manifest paths, provider URLs, and Cargo Package IDs remain legitimate implementation/diagnostic selectors where an operation explicitly needs them.
+
+They are not preferred semantic identity.
+
+---
+
+# Canonical Identity and Selectors
+
+A CLI argument which identifies a Vapor object is conceptually a **selector** unless the command explicitly requires a canonical ID.
+
+The selector may be:
+
+```text
+full canonical identity
+qualified suffix
+local name
+local alias
+exact realization selector
+```
+
+depending on the operation and available context.
+
+For example, Project selectors might conceptually include:
+
+```text
+GHF-Studios/Vapor-Root/Vapor/Client
+Vapor-Root/Vapor/Client
+Vapor/Client
+Client
+```
+
+The shorter forms are not alternate canonical IDs.
+
+They are context-dependent selectors.
+
+Once resolved, Vapor Core operates on exact canonical identity and, when physical work is required, an exact local realization.
+
+---
+
+# Minimal Information Principle
+
+The CLI should accept the shortest selector which safely resolves the requested target.
+
+The principle is:
+
+> **Require no more identifying information than is necessary to perform the operation unambiguously.**
+
+This allows ergonomic commands without weakening identity.
+
+For example:
+
+```text
+vapor library resolve Wheel-Rules
+```
+
+may be valid when the effective development context contains exactly one Library matching that selector.
+
+If several candidates exist, Vapor reports ambiguity.
+
+It does not guess.
+
+---
+
+# Ambiguity
+
+Ambiguity is a normal resolution result.
+
+A useful CLI error should explain:
+
+* what selector was ambiguous;
+* which exact candidates matched;
+* what additional qualification would distinguish them.
+
+Example:
+
+```text
+error: Project selector `Client` is ambiguous
+
+Candidates:
+    GHF-Studios/Vapor-Root/Vapor/Client
+    Leslie/Vapor-Fork/Vapor/Client
+
+Use a more qualified selector or establish a narrower development context.
+```
+
+Non-interactive CLI behavior must remain deterministic.
+
+Optional interactive selection for explicitly human-oriented workflows may be introduced later, but automation must never depend on it.
+
+---
+
+# Operation Cardinality
+
+The CLI does not require every development domain to have exactly one globally active object.
+
+Vapor Core operations define the target cardinality they accept.
+
+Conceptually:
+
+```text
+ExactlyOne<Project>
+Many<Project>
+ExactlyOne<Packagepack>
+Many<Content>
+```
+
+If resolution produces:
+
+```text
+0 candidates
+```
+
+the operation is unresolved.
+
+If it produces:
+
+```text
+1 candidate
+```
+
+a singular operation may proceed.
+
+If it produces multiple candidates and the operation accepts multiplicity, all explicitly resolved candidates may participate.
+
+If it produces multiple candidates and the operation requires one, the CLI reports ambiguity.
+
+CLI implementation convenience must not distort the underlying development model into one global `active_project`.
+
+---
+
+# CLI Context Resolution
+
+The CLI constructs an ephemeral operation context from modeled state and command input.
+
+Conceptually it may use:
+
+```text
+explicit selector
+    ↓
+qualified/local selector resolution
+    ↓
+relevant persisted/resumed development context
+    ↓
+current working directory as a safe physical hint
+    ↓
+unique usable candidate
+    ↓
+ambiguity / unresolved
+```
+
+This is a CLI projection of the shared Context Model rather than a separate identity system.
+
+Exact precedence may vary where an explicit selector provides stronger information than ambient context.
+
+The invariant is:
+
+> **Explicit semantic intent outranks accidental environment.**
+
+---
+
+# Current Working Directory
+
+CWD is useful because shell users naturally invoke commands from inside repositories and Projects.
+
+CWD may therefore help identify:
+
+* Superworkspace;
+* Container Repo;
+* Workspace realization;
+* Project realization.
+
+But:
+
+> **CWD is an ambient hint, not durable Vapor identity.**
+
+CWD must not silently:
+
+* change persisted SDK Focus;
+* replace exact remembered identities;
+* become an implicit source root recorded as truth;
+* force unrelated commands to depend on the shell's current directory.
+
+A command issued inside a known Project may naturally operate there.
+
+The same command issued from `~` should still work when stronger modeled context and selectors make the target unambiguous.
+
+---
+
+# Raw Path Overrides
+
+Path arguments remain legitimate escape hatches for operations which intentionally target local storage or bootstrap unknown source.
+
+Examples may include:
+
+* registering a previously unknown checkout;
+* locating a moved realization;
+* opening/importing an arbitrary local directory;
+* debugging local source discovery.
+
+They should not be required on ordinary already-modeled Content operations.
+
+A normal command should prefer:
+
+```text
+Vapor ID
+Project selector
+Workspace selector
+realization selector
+```
+
+over:
+
+```text
+../../some/local/root
+```
+
+---
+
+# Cargo Execution Context
+
+Cargo requires a physical Project/workspace execution context.
+
+Vapor's managed Cargo wrapper should therefore resolve the relevant Vapor Project before spawning Cargo where a Project is required.
+
+Conceptually:
+
+```text
+vapor toolchain cargo
+    ↓
+Cargo arguments
+    ↓
+explicit Project selector if supplied
+    ↓
+Cargo package selector if it uniquely identifies a Vapor Project
+    ↓
+ephemeral CLI/CWD context
+    ↓
+unique Project
+    ↓
+managed Cargo
+```
+
+`--project` is therefore a **Project selector**, not inherently a globally unique Project ID argument.
+
+A short selector such as:
+
+```text
+--project Client
+```
+
+is valid only when the effective context resolves it unambiguously.
+
+A canonical Project identity remains valid independent of local shorthand.
+
+Cargo-native selectors such as `-p/--package` may assist physical Project resolution, but Cargo package identity does not become Vapor semantic identity.
+
+---
+
+# Managed Cargo
+
+`vapor toolchain cargo -- ...` exposes the Installation-owned managed Cargo tool without globally exposing the managed Rust/Cargo toolchain through the user's shell PATH.
+
+The wrapper should:
+
+* discover the active Vapor Installation;
+* establish the Installation-owned managed toolchain environment for the child;
+* resolve a Vapor Project when the Cargo operation requires one;
+* preserve Cargo arguments;
+* execute Cargo in the selected Project context;
+* return Cargo's success/failure meaningfully.
+
+Global Vapor command exposure and private managed-tool exposure remain distinct concerns.
+
+---
+
+# Development Session and CLI
+
+A one-shot CLI invocation does not need to become a permanently live session like the SDK.
+
+It may construct an ephemeral Development Session from:
+
+* exact command targets;
+* persisted Resume/default state;
+* known local realizations;
+* CWD;
+* other safe context.
+
+The CLI should not silently mutate durable SDK Focus merely because an operation resolved successfully.
+
+Commands which deliberately mutate Open/Focus/Resume state may be added explicitly once their CLI grammar is settled.
+
+---
+
+# GUI / CLI / Automation Equality
+
+GUI and CLI equality means semantic and operational equality rather than interaction equality.
+
+The GUI may use:
+
+```text
+Explorer
+multi-selection
+Inspector
+dialogs
+graph interactions
+context menus
+```
+
+The CLI may use:
+
+```text
+selectors
+flags
+canonical IDs
+machine-readable output
+```
+
+Automation may prefer:
+
+```text
+canonical identities
+exact realization identifiers
+structured output
+non-interactive deterministic behavior
+```
+
+All should call the same underlying Vapor Core operations.
+
+The CLI should not imitate awkward GUI gestures merely for symmetry.
+
+The GUI should not be crippled because a particular interaction is awkward to spell in shell syntax.
+
+---
+
+# SDK / CLI Discoverability
+
+CLI errors should teach the model where possible.
+
+Good errors should expose:
+
+* canonical candidate identities;
+* missing Role/capability;
+* missing realization;
+* required target cardinality;
+* possible repair;
+* relevant qualification syntax.
+
+The SDK may present the same semantic problem visually.
+
+For example, the GUI may show an ambiguous target picker while the CLI lists exact candidates.
+
+The semantic reason is identical.
 
 ---
 
@@ -571,32 +917,41 @@ For Rust-backed Content, context discovery may use Cargo-native project inspecti
 * CLI structure does not mirror Rust module structure.
 * CLI structure does not mirror Cargo workspace structure.
 * CLI structure does not automatically mirror the Vapor type hierarchy.
-* Vapor Content kinds are explicit first-class CLI namespaces.
-* A generic `content` namespace is not used merely as a taxonomy bucket.
-* `library` means the Vapor Content kind; Content Library is a separate local/Launcher concept.
+* Vapor Content kinds remain explicit first-class CLI namespaces where useful.
+* A generic `content` namespace is not introduced merely as a taxonomy bucket.
+* `library` means the Vapor Content kind; Content Library is a separate product concept.
 * Packagepack workflows do not require ordinary users to manually switch between Packagepack, Composition, and Vapor App namespaces.
 * Shared semantic operations are implemented once in Vapor Core.
-* Dedicated Vapor binaries expose projections of those shared operations.
-* Packs may aggregate testing across their resolved Content.
-* Vapor dependency resolution is generic, recursive, and transitive.
-* Packagepack validation is layered above generic resolution.
-* Packagepacks may obtain Engine/Game through Enginepack/Gamepack.
-* Cargo metadata may describe physical realization but does not define Vapor semantic identity.
-* Role controls installed tooling/workflow exposure.
+* Dedicated Vapor binaries expose projections of those operations.
+* CLI selectors are not automatically canonical IDs.
+* Short selectors are accepted only when unambiguous.
+* Canonical structural identities are case-preserving and slash-separated.
+* Project selectors resolve to exact Project identity before physical execution.
+* Cargo package identity does not replace Vapor Project identity.
+* Raw paths are realization/bootstrap escape hatches rather than normal semantic selectors.
+* CWD is an ephemeral hint rather than durable context.
+* Multiple objects may be Open/Focused even when an operation requires one.
+* Operation cardinality determines whether multiplicity is valid.
+* Ambiguous singular operations fail rather than choosing arbitrarily.
+* CLI operations must remain deterministic for automation.
+* GUI, CLI, and automation share Core semantics but may use different interaction mechanics.
+* Role controls locally equipped workflow capability.
 * Authorization controls protected operations against protected targets.
-* Root Authority is an authority rather than an installed Role.
+* Root Authority is authority rather than an installed Role.
 * User-authored source remains outside the disposable Steam App Instance by default.
 
 ---
 
 # Open CLI Questions
 
-* `verify` versus `validate` terminology.
-* Exact `publish` versus `deploy` boundary.
-* Exact `ecosystem` / root-source namespace terminology.
-* Whether `source` requires a general `create` operation.
+* Exact CLI spelling of Open / Focus / Close / Forget.
+* Exact syntax for selecting one local realization among several.
+* Whether human-oriented mode offers optional interactive ambiguity resolution.
+* Exact machine-readable output modes.
+* Exact selector grammar beyond canonical slash-separated structural IDs.
 * Exact Packagepack install/select/remove lifecycle terminology.
 * Exact template-selection syntax.
-* Exact selectors and context-override syntax.
 * Whether standalone `resolve` should eventually be exposed for every dependency-bearing Content kind.
 * Exact CLI presentation of Cargo-reconciliation and local-override state.
+* Exact provider/fork qualification syntax.
+* Exact relationship between future `vapor-sdk` CLI/session commands and the universal `vapor` surface.

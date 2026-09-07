@@ -30,16 +30,32 @@ Vapor can already:
 * model local Vapor Roles independently from external authorization;
 * expose the current core through a declarative Clap CLI;
 * resolve arbitrary local Content graphs independently of Packagepack realization.
+* model Library as first-class Vapor Content;
+* inspect Rust/Cargo package realization for Libraries;
+* verify Vapor semantic Library dependencies against Cargo realization;
+* repair safely missing Cargo dependency bindings through managed Cargo;
+* execute managed Cargo through the Installation-owned pinned toolchain;
+* resolve Cargo execution to an appropriate Vapor Project rather than requiring shell CWD;
+* locally deploy rewritten Vapor back into the canonical Steam App Instance;
+* distinguish local and Steam ecosystem deployment targets explicitly;
+* model structural identity, local realization, Development Session, Open/Focus/Selection, and frontend target resolution;
+* define the Launcher-integrated Vapor SDK as the primary graphical development surface.
 
 The current implementation is therefore no longer merely a prototype parser or conceptual model.
 
 > **Vapor already has an operational semantic dependency graph which can affect a real Rust/Cargo build and produce a runnable application.**
 
-The current architectural pressure is no longer whether Vapor composition can work.
+The current architectural pressure is no longer whether Vapor composition, managed self-hosting, or basic Cargo supervision can work.
 
-It is now:
+Those mechanisms have now produced enough real UX/DX pressure to expose another missing architectural layer:
 
-> **How should Vapor supervise ordinary Rust/Cargo projects and statically realize arbitrarily extensible Engine/Game/Mod ecosystems without stealing their runtime or API semantics?**
+> **How should canonical identity, local realizations, development sessions, selection, CLI automation, and the graphical Vapor SDK form one coherent development experience?**
+
+That design checkpoint is intentionally being resolved before deeper Bevy/static-extension realization continues.
+
+The broader runtime pressure remains:
+
+> **How should Vapor statically realize arbitrarily extensible Engine/Game/Mod ecosystems without stealing their runtime or API semantics?**
 
 ---
 
@@ -623,31 +639,44 @@ The implementation is currently between two generations of architecture:
 ## Already generalized
 
 ```text
-Vapor identity
+Vapor Content identity/versioning
 Vapor manifests
-local discovery
+local Content discovery
 semantic dependency graph
 generic graph resolution
-role model
-CLI model
-managed toolchain
-workspace self-hosting
+Library Content
+initial Cargo inspection/reconciliation
+role / authority separation
+declarative CLI model
+Installation-owned managed toolchain
+managed Cargo handoff
+workspace/ecosystem self-hosting
+local ecosystem deployment
+Steam deployment backend
+source / Superworkspace discovery
+initial Project-context resolution
 ```
 
-## Still Vertical-Slice-specific
+## Still Vertical-Slice-specific / incomplete
 
 ```text
-Cargo dependency realization
+final Cargo-reconciliation edge cases
+local-override persistence/publishability
 final App realization
 Engine/Game/Mod static integration
 example runtime APIs
 multi-Mod realization
-Library Content
-provider-backed source acquisition
-installation deployment
+provider-backed general source acquisition
+complete context/session implementation
+canonical structural-ID implementation
+multi-realization selection
+full Launcher/SDK GUI
+production Registry/publication/distribution
 ```
 
-This is the correct current pressure boundary.
+This remains the correct broad pressure boundary.
+
+A bounded Context / Identity / Session / SDK design checkpoint has been inserted before the Bevy extension slice because the rewrite's self-hosting workflows exposed real ambiguity around Project identity, source realization, CWD, persistent context, CLI targeting, and future GUI behavior.
 
 ---
 
@@ -655,7 +684,7 @@ This is the correct current pressure boundary.
 
 ## Phase A — Library Content
 
-Next.
+Implemented at the initial architecture-proving level.
 
 Add the `Library` Content kind and its basic semantics.
 
@@ -700,6 +729,21 @@ Requirements:
 * local overrides remain distinguishable from publishable state.
 
 This phase should answer how much Cargo metadata Vapor must persist to supervise the relationship reliably.
+
+---
+
+## Architecture Checkpoint — Context, Identity, Session, and SDK
+
+This checkpoint was introduced by real self-hosting/Cargo workflow pressure.
+
+The implementation had reached a state where commands could:
+
+```text
+global installed Vapor
+→ Installation-owned managed Cargo
+→ source-built Vapor
+→ remembered development source
+→ semantic Content resolution
 
 ---
 

@@ -1,0 +1,75 @@
+@startuml
+title Vapor Development Context Model
+
+skinparam backgroundColor transparent
+skinparam shadowing false
+skinparam componentStyle rectangle
+skinparam packageStyle rectangle
+skinparam defaultTextAlignment center
+
+package "Local Development Environment" {
+    rectangle "Vapor Superworkspace\n(local physical container)\n\nNOT canonical identity" as SW
+    artifact "Superworkspace.vapor.toml\n(optional local configuration)" as SWM
+    artifact ".vaporignore\n(local view configuration)" as IGNORE
+
+    SW o-- SWM
+    SW o-- IGNORE
+}
+
+package "Canonical Structural Model" {
+    rectangle "Namespace\nGHF-Studios" as NS
+
+    rectangle "Container Repo\nVapor-Root\n\nID:\nGHF-Studios/Vapor-Root" as CR
+
+    rectangle "Workspace / Source Repo\nVapor\n\nID:\nGHF-Studios/Vapor-Root/Vapor" as WS
+
+    rectangle "Project\nClient\n\nID:\nGHF-Studios/Vapor-Root/Vapor/Client" as PROJECT
+
+    NS *-- CR
+    CR *-- WS
+    WS *-- PROJECT
+}
+
+package "Semantic Artifact Model" {
+    rectangle "Vapor Content A\nsemantic Content ID" as CONTENT_A
+    rectangle "Vapor Content B\nsemantic Content ID" as CONTENT_B
+
+    PROJECT o-- CONTENT_A : hosts
+    PROJECT o-- CONTENT_B : hosts
+}
+
+package "Local Realizations" {
+    rectangle "Workspace Realization A\nOfficial checkout\nmain\n/path/a" as REAL_A
+    rectangle "Workspace Realization B\nDeveloper fork\ncontext-redesign\n/path/b" as REAL_B
+}
+
+SW o-- REAL_A : contains
+SW o-- REAL_B : contains
+
+WS .. REAL_A : realizes
+WS .. REAL_B : realizes
+
+note right of SW
+A second independently-created
+container is a different Superworkspace,
+even if it contains equivalent checkouts.
+end note
+
+note right of WS
+One Source Repo = one Vapor Workspace.
+
+Provider URL and filesystem path
+are realization/linkage properties,
+not canonical structural identity.
+end note
+
+note bottom of PROJECT
+Project identity is structural.
+
+Content identity is semantic.
+
+One Project may host
+multiple Content artifacts.
+end note
+
+@enduml

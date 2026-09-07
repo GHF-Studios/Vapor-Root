@@ -1,0 +1,61 @@
+@startuml
+title Vapor Selection Resolution Model
+
+skinparam backgroundColor transparent
+skinparam shadowing false
+
+start
+
+:Receive Vapor Core operation request;
+
+:Read operation target specification;
+note right
+Target kind(s)
+Cardinality
+Availability/health requirements
+Role / authority requirements
+end note
+
+if (Explicit target selector?) then (yes)
+    :Resolve canonical / qualified /\nminimal unique selector;
+else (no)
+    if (Transient frontend selection?) then (yes)
+        :Use explicitly selected object(s);
+    else (no)
+        if (Relevant Focus exists?) then (yes)
+            :Use Focus as candidate intent;
+        else (no)
+            :Use Open/enclosing scopes;
+        endif
+
+        if (Frontend ambient anchor available?) then (yes)
+            :Refine candidates using safe ambient hint;
+            note right
+            CLI example:
+            current working directory.
+
+            Ambient hints do NOT
+            silently persist Focus.
+            end note
+        endif
+
+        :Find uniquely usable candidate set;
+    endif
+endif
+
+:Canonicalize semantic identity\nand local realization;
+
+if (Candidate count satisfies\noperation cardinality?) then (yes)
+    :Validate Role / authority /\navailability / health;
+    :Execute shared Vapor Core operation;
+    stop
+else (no)
+    if (No candidates?) then (none)
+        :Return unresolved diagnostic;
+    else (ambiguous)
+        :Return ambiguity diagnostic\nwith exact candidates;
+    endif
+    stop
+endif
+
+@enduml

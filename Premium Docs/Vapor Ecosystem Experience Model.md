@@ -420,7 +420,7 @@ The detailed publication path is specified in the **Vapor Publishing and Distrib
 
 # Content Developer Experience
 
-A Content Developer creates or modifies behavioral Vapor Content.
+A Content Developer creates or modifies behavioral and reusable implementation Vapor Content.
 
 This includes:
 
@@ -429,44 +429,52 @@ This includes:
 * Engine Mod.
 * Game Mod.
 * Extension Mod.
+* Library.
 
-Engine Developer, Game Developer, and Mod Developer are not separate fundamental capability levels.
+Engine Developer, Game Developer, Library Developer, and Mod Developer are specializations of Content Development rather than separate fundamental Roles.
 
-They are specializations of Content Development.
+Content Developer capability introduces active implementation/source authoring.
 
-Content Developer capability introduces active behavioral source authoring.
+The developer now legitimately encounters:
 
-The developer now needs access to:
-
-* Vapor Projects.
+* Vapor Superworkspaces.
+* Workspaces.
+* Projects.
+* Content identities.
+* Local realizations.
 * Source editing.
 * Programming.
+* Cargo/Rust integration.
 * Configuration.
+* Semantic dependency resolution.
 * Build/run/test iteration.
 * Diagnostics.
+* Git/provider state.
 * SDK functionality.
-* More direct underlying tool visibility.
+* More direct underlying-tool visibility.
 
 The intended experience is:
 
-> **Develop the content, not the machinery required to persuade Rust, Cargo, Bevy, Git, Steam, and Vapor to cooperate.**
+> **Develop the Content, not the machinery required to persuade Rust, Cargo, Bevy, Git, Steam, and Vapor to cooperate.**
 
 Vapor should provide:
 
-* Strong structure.
+* Strong structural identity.
+* Human-readable semantic selection.
 * Guardrails.
 * Minimal boilerplate.
 * Automated environment integration.
-* Vapor-aware build/run/test operations.
+* Vapor-aware build/run/test.
 * Useful diagnostics.
-* Explicit relationships between projects and Vapor Content.
-* Access to underlying tools when needed.
+* Explicit relationships between Projects and Content.
+* Access to underlying Git/Cargo/provider reality when useful.
+* A graphical SDK which makes the model discoverable rather than forcing developers to memorize shell syntax.
 
-The Vapor SDK is the Launcher-integrated environment primarily responsible for this experience.
+The Vapor SDK is the primary first-party environment for this experience.
 
-It does not necessarily replace a full external Rust IDE.
+External IDEs remain compatible and useful.
 
-Detailed development behavior belongs in the **Vapor Development Experience Model**.
+They are complementary rather than a reason for Vapor's own SDK to remain permanently shallow.
 
 ---
 
@@ -480,48 +488,120 @@ This may include:
 * Vapor Launcher.
 * Vapor SDK.
 * Vapor CLI.
-* Vapor Root/framework code.
+* Vapor Core.
+* Vapor Root framework.
 * Vapor server infrastructure.
 * Vapor Content Registry.
 * Identity/authentication infrastructure.
-* Diagnostics infrastructure.
+* Diagnostics.
+* Toolchain integration.
 * Deployment tooling.
+* Provider integrations.
 
-The central additional capability is authorization to work with official Vapor repositories and infrastructure.
+Ecosystem Developer is the highest ordinary locally installed Vapor Role.
 
-Launcher Developer, Server Developer, Registry Developer, Toolchain Developer, and similar labels are not currently separate capability levels.
+It does **not** inherently grant official authority.
 
-They are specializations of Ecosystem Development.
+An Ecosystem Developer may locally:
 
-The intended eventual experience is a rapid integrated development loop:
+* acquire Vapor ecosystem source;
+* fork it;
+* create independent source;
+* modify Vapor;
+* build/test Vapor;
+* develop publication/deployment machinery;
+* develop authentication/authorization machinery;
+* run local equivalents of protected workflows where feasible.
 
-> Modify Vapor
-> → build/test
-> → integrate
-> → commit/push
-> → deploy to appropriate development infrastructure
-> → validate the real system
+Protected external operations separately require authorization.
 
-The exact workflow remains a development-design concern.
+Examples include:
+
+* pushing to official repositories;
+* publishing into official namespaces;
+* deploying official Steam branches/depots;
+* modifying production Registry/server infrastructure.
+
+The desired Ecosystem Developer experience is the same integrated SDK model used for Content Development, expanded by Role to expose Vapor itself as editable source.
+
+Conceptually:
+
+```text
+Enter Development
+    ↓
+open/resume Vapor Superworkspace
+    ↓
+navigate Vapor Workspaces / Projects
+    ↓
+modify
+    ↓
+build / test
+    ↓
+inspect diagnostics
+    ↓
+commit / push where authorized
+    ↓
+deploy local / Steam where authorized
+    ↓
+validate
+```
+
+Vapor should progressively absorb the manual machinery required to reproduce and develop itself.
 
 ---
 
 # Root Authority
 
-Root Authority contains all Ecosystem Developer capabilities together with ultimate ownership and administrative authority over the official Vapor ecosystem.
+Root Authority is not a locally installed capability level above Ecosystem Developer.
 
-This may include authority over:
+It is an authority state.
 
-* Official repositories.
-* Official namespaces.
-* Registry administration.
-* Production deployment.
-* Authorization systems.
-* Root-level recovery operations.
-* Ownership state.
-* Destructive administrative actions.
+A Root Authority normally uses Ecosystem Developer capability together with ultimate authorization over protected official Vapor targets.
 
-Root Authority is deliberately represented even if only one real-world person normally occupies that level.
+Root Authority may authorize operations involving:
+
+* official repositories;
+* official namespaces;
+* Registry administration;
+* production deployment;
+* authorization systems;
+* root-level recovery;
+* ownership state;
+* destructive protected administrative operations.
+
+Role and Authority remain orthogonal.
+
+---
+
+# Development Context Experience
+
+Developers should not need to think in raw filesystem roots once Vapor already understands their source.
+
+The product should favor:
+
+```text
+Superworkspace
+Container Repo identity
+Workspace identity
+Project identity
+Content identity
+local realization
+```
+
+over repeated path entry.
+
+Paths remain useful for:
+
+* initial import;
+* Locate/recovery;
+* diagnostics;
+* explicit advanced overrides.
+
+The graphical SDK should make context visible through navigation and selection.
+
+The CLI should use strong identities/selectors and deterministic resolution.
+
+The detailed rules are defined in the **Vapor Context, Identity, Session And Selection Model**.
 
 ---
 
@@ -529,82 +609,312 @@ Root Authority is deliberately represented even if only one real-world person no
 
 ## Vapor Installer
 
-The Vapor Installer changes what fundamental capabilities exist in the Steam App Instance.
+The Vapor Installer changes which fundamental capabilities and managed tools exist in the Steam App Instance.
 
 Its responsibility is:
 
-> **Change what Vapor can do on this installation.**
+> **Change what Vapor is equipped to do on this Installation.**
 
 Examples include:
 
-* Establish Composer capability.
-* Detect/install/configure Git.
-* Install/configure Rust/Cargo.
-* Install/configure SteamCMD.
-* Establish Content Developer capability.
-* Repair capability tooling.
-* Downgrade higher capabilities.
-* Establish Ecosystem Developer prerequisites.
+* establish Composer capability;
+* detect/install/configure Git;
+* install/configure Rust/Cargo;
+* install/configure SteamCMD;
+* establish Content Developer capability;
+* establish Ecosystem Developer prerequisites;
+* downgrade/remove higher Role capability;
+* repair Installation-level capability state;
+* prepare correct Vapor uninstall behavior where required.
+
+The Installer remains a distinct application boundary.
+
+SDK Mode is not a superset of Installer semantics.
 
 ---
 
 ## Vapor Launcher
 
-The Vapor Launcher uses installed capabilities.
+The Vapor Launcher is the primary ordinary Vapor desktop surface.
 
 Its responsibility is:
 
-> **Operate the Vapor ecosystem at the user's current capability level.**
+> **Operate the Vapor ecosystem using the capabilities already installed.**
 
-Depending on capability, it may expose:
+Launcher Mode may expose:
 
 * Play.
+* Vapor Apps.
+* Content Library.
 * Vapor App selection.
-* Vapor App installation/removal.
-* Discovery.
-* Library.
-* Composition.
-* Build.
-* Development projects.
-* SDK.
-* Publication.
-* Diagnostics.
-* Logs.
-* Accounts.
-* Settings.
+* discovery.
+* Packagepack/composition workflows.
+* accounts.
+* settings.
+* diagnostics.
+* logs.
+* publication/management surfaces appropriate to Role.
+
+Where development capability exists, the Launcher additionally offers an **Enter Development** transition.
 
 ---
 
-## Vapor SDK
+## Vapor SDK / Development Mode
 
-The Vapor SDK is the Content Developer-oriented portion of the Vapor Launcher.
+The Vapor SDK is the integrated development mode of the Vapor Launcher.
 
-It is concerned primarily with:
+The preferred product experience is:
 
-* Engine development.
-* Game development.
-* Engine Mod development.
-* Game Mod development.
-* Extension Mod development.
-* Vapor-specific project/configuration workflows.
-* Build/run/test integration.
-* Diagnostics and inspection.
+```text
+Vapor Launcher
+    ↓ Enter Development
+Vapor SDK
+    ↑ Return to Launcher
+```
 
-Pack authoring is Composer functionality and does not inherently require entering the SDK.
+This may substantially reconfigure the visible application.
+
+A literal animation or process-level transformation is not required.
+
+The semantic requirement is:
+
+> **SDK Mode is a development-oriented superset of relevant Launcher functionality.**
+
+The SDK may expose:
+
+* everything relevant from ordinary Launcher Mode;
+* Superworkspace Explorer;
+* Container Repo / Workspace / Project navigation;
+* Content development;
+* source editing;
+* structured manifests/configuration;
+* composition/dependency graphs;
+* Inspector;
+* Problems;
+* Build;
+* Test;
+* Run;
+* Git/VCS;
+* toolchain;
+* Cargo output;
+* logs;
+* publication;
+* Steam development/deployment;
+* ecosystem development where Role permits.
+
+Returning to Launcher Mode should hide/collapse development surfaces while preserving enough Resume State to continue later.
+
+---
+
+# SDK Superset Principle
+
+The progression between Launcher and SDK resembles Vapor's cumulative capability philosophy.
+
+Conceptually:
+
+```text
+Launcher surface
+    ⊂
+SDK / Development surface
+```
+
+This does not mean every Launcher control must remain visible at every moment in SDK layout.
+
+It means the SDK belongs to the same product model and does not require an unrelated semantic implementation.
+
+The Installer remains outside this particular superset relationship because it changes installed capability itself.
+
+---
+
+# SDK-First Rewrite Strategy
+
+The rewrite may implement the rich SDK surface before the simplified final Launcher surface.
+
+This is acceptable.
+
+The SDK exercises more of Vapor Core:
+
+```text
+identity
+context
+source
+Git
+toolchain
+Cargo
+Content
+composition
+build
+test
+run
+diagnostics
+publication
+deployment
+```
+
+A mature Launcher can later be realized largely as a simpler projection of the same desktop/Core architecture.
+
+This reduces the risk of building a Launcher architecture which later resists becoming a real development environment.
+
+---
+
+# SDK Visual Experience
+
+The existing Figma-derived Vapor SDK GUI prototype is the visual ancestor of the intended SDK.
+
+Its fake data and obsolete semantic assumptions are not normative.
+
+Its visual character should nevertheless be preserved where practical.
+
+Especially valuable qualities include:
+
+* JetBrains/RustRover-like professional density.
+* Dark neutral surfaces.
+* Subtle borders and separators.
+* Tight but readable spacing.
+* Small restrained corner radii.
+* Compact toolbars.
+* Clear tree-selection treatment.
+* Semantic green/warning/red status.
+* Monospace identity/tool output where useful.
+* Central editor/work area.
+* Left-side Explorer.
+* Right-side contextual Inspector.
+* Bottom Problems/Build/tool windows.
+* Integrated graph visualization.
+
+The final implementation should extract these qualities into a real Vapor design system rather than treating the generated prototype component as permanent architecture.
+
+---
+
+# SDK Interaction Experience
+
+The SDK should exploit GUI-native interaction.
+
+It may use:
+
+* tree navigation;
+* tabs;
+* multi-selection;
+* graph selection;
+* Inspector actions;
+* context menus;
+* dialogs;
+* drag/drop where semantically meaningful;
+* rich errors and recovery controls.
+
+These interactions construct the same typed Vapor Core operations exposed by CLI/automation.
+
+A click is not a different semantic implementation.
+
+---
+
+# Open, Focused, and Selected
+
+The SDK must distinguish:
+
+```text
+Open
+    participates in the working set
+
+Focused
+    contributes durable default targeting intent
+
+Selected
+    transient current GUI target
+```
+
+Multiple Workspaces/Projects/Content objects may be Open.
+
+Multiple may be Focused.
+
+An immediate multi-selection may target one operation without rewriting durable Focus.
+
+This makes large development environments practical without forcing one artificial globally active Project.
+
+---
+
+# Broken-State Experience
+
+Development objects should not disappear merely because their local realization is unhealthy.
+
+A previously Open Workspace may remain visible as:
+
+```text
+Vapor-Examples
+    Missing local realization
+```
+
+with actions such as:
+
+```text
+Locate
+Reacquire
+Repair
+Close
+Forget
+```
+
+This preserves the user's mental workspace and makes failures discoverable.
+
+---
+
+# Operation Experience
+
+Operations should be enabled according to semantic target compatibility.
+
+For example:
+
+```text
+three selected Projects
++ operation accepts Many<Project>
+→ enabled
+```
+
+while:
+
+```text
+three selected Projects
++ operation requires ExactlyOne<Project>
+→ ambiguity / target choice required
+```
+
+The GUI should explain disabled operations rather than hiding the underlying rule.
+
+The CLI reports the same semantic problem textually.
 
 ---
 
 ## Vapor CLI
 
-The Vapor CLI provides developer-oriented access to Vapor capabilities through command-line workflows.
+The Vapor CLI is the command-line and automation-oriented projection of Vapor Core.
 
-Its primary audience is:
+Its primary users include:
 
 * Content Developers.
 * Ecosystem Developers.
-* Root Authority.
+* automation.
+* coding agents.
+* advanced users.
 
-GUI and CLI operations should generally map to the same underlying Vapor concepts where reasonable.
+The CLI should be excellent at:
+
+* canonical identities;
+* unambiguous shorthand selectors;
+* deterministic operation targeting;
+* machine-readable output;
+* explicit failure semantics;
+* scripting;
+* automation.
+
+The CLI does not need to imitate every graphical SDK interaction.
+
+Likewise, SDK UX must not be degraded merely because a graphical interaction has no elegant one-line shell equivalent.
+
+The governing principle is:
+
+> **GUI and CLI share capabilities and semantics, not interaction mechanics.**
+
+Both should ultimately resolve exact targets and invoke the same Vapor Core operations.
 
 ---
 
