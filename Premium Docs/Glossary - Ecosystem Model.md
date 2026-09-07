@@ -48,12 +48,30 @@
 * **Game Mod**: *A Vapor Content artifact type that targets a Game and extends it using extension semantics explicitly exposed by that Game and/or its dependencies.*
 * **Extension Mod**: *A Vapor Content artifact type that targets another Engine Mod, Game Mod, or Extension Mod and extends it using extension semantics explicitly exposed by the targeted artifact and/or its dependencies.*
 * **Library**: *A Vapor Content artifact type representing reusable Rust/library implementation without inherent Engine, Game, Mod, pack, or runnable-composition semantics. A Library may expose ordinary Rust APIs, traits, algorithms, data structures, schemas, ECS Components, Resources, Events, SystemSets, plugin APIs, or other explicitly authored extension contracts. Libraries participate in normal Vapor identity, versioning, dependency, source, resolution, and publication semantics and do not require publication through crates.io.*
+* **Outbound Vapor Dependency**: *An authored requirement from one Vapor Content artifact to another. Outbound dependencies answer what the depender requires to be selected and resolved.*
+* **Inbound Vapor Dependent**: *The reverse view of one resolved dependency edge within a particular selected graph. If `A → B`, then A is an inbound dependent of B. Inbound dependents are derived rather than independently authored and must not be confused with every artifact in the global Registry which happens to depend on B.*
+* **Selected Dependency Closure**: *The complete exact set of Vapor Content reachable recursively from a selected resolution root through outbound dependencies. For a Packagepack this closure provides the semantic source from which the complete Vapor App Composition is derived.*
+* **Runtime Foundation Relationship**: *The special semantic meaning of the required Engine dependency of a Game. The edge remains an ordinary Vapor requirement while additionally identifying the Engine foundation against which the Game is authored.*
+* **Extension Target**: *The required behavioral Content which a Mod conceptually extends. An Engine Mod targets an Engine, a Game Mod targets a Game, and an Extension Mod targets another Mod. Targeting defines semantic extension structure but does not define the target's programmatic extension mechanism.*
+* **Constituent**: *Selected behavioral Vapor Content which participates in forming an effective Engine or effective Game. Constituency is normally derived from the selected dependency closure, Content kind, and target relationships rather than redundantly authored as a separate dependency type.*
+* **Base Engine**: *The singular Engine artifact underlying one complete Vapor App Composition before selected Engine-side Mod constituency is considered.*
+* **Effective Engine**: *The Base Engine together with all selected compatible Engine Mods and Engine-side Extension Mods belonging to that composition. Required Libraries and other support dependencies remain part of the resolved graph without automatically becoming Engine constituents.*
+* **Base Game**: *The singular Game artifact underlying one complete Vapor App Composition before selected Game-side Mod constituency is considered.*
+* **Effective Game**: *The Base Game together with all selected compatible Game Mods and Game-side Extension Mods belonging to that composition.*
+* **Support Dependency**: *Selected Vapor Content required by behavioral or composition Content but which is not itself automatically an Engine/Game behavioral constituent, such as a Library.*
+A Vapor dependency edge always means that one Content artifact requires another.
 
-A dependency edge between Vapor Content artifacts means that one artifact requires another.
+Some dependency edges additionally carry semantic meaning such as runtime foundation or extension target.
 
-It does not by itself define how one artifact programmatically extends another.
+These semantic roles do not determine the programmatic integration mechanism between the participating artifacts.
 
-The programmatic meaning of a dependency is defined by the APIs, ECS vocabulary, registries, traits, schemas, or other extension contracts authored by the participating Content.
+Selection is determined by reachability from the chosen composition root.
+
+Constituency is derived only from selected Content.
+
+Therefore an Engine Mod which merely exists in the Registry and targets the effective Engine does not participate unless some selected Content actually requires it.
+
+The programmatic meaning of extension remains defined by the APIs, ECS vocabulary, registries, traits, schemas, callbacks, or other extension contracts authored by the participating Content.
 
 ---
 
