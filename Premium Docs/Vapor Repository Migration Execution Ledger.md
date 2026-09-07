@@ -261,7 +261,7 @@ Only then begin Wave 1.
 Status:
 
 ```text
-NOT STARTED
+DEFERRED
 ```
 
 Purpose:
