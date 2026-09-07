@@ -1,5 +1,11 @@
 schema = 1
 
+[ecosystem]
+id = "ghf-studios/vapor"
+
+[registry]
+endpoint = "https://vapor.ghf-studios.site/api/registry"
+
 [root]
 name = "vapor-root"
 organization = "ghf-studios"
