@@ -63,7 +63,18 @@ The programmatic meaning of a dependency is defined by the APIs, ECS vocabulary,
 * **Steam Workshop**: *The external distribution system used by Vapor for built, published complete compositions. Steam Workshop does not serve as the canonical source-code distribution mechanism for individual Vapor Content.*
 * **Steam Workshop Item**: *A Steam Workshop publication/distribution container for a built published complete Vapor composition / Vapor App.*
 * **Vapor Content Registry**: *The central semantic identity and linkage layer of the Vapor ecosystem. It associates human-readable Vapor IDs/namespaces with the relevant external resources and identities used by the ecosystem, including Git-backed source and Steam Workshop-backed built composition distribution. Its exact persistence and mapping schema remains an implementation/design concern.*
-* **Server**: *An official Vapor server application hosting part of the central Vapor service infrastructure, such as the Vapor Content Registry. User-hosted Vapor registries are not currently part of the ecosystem model.*
+* **Vapor Client**: *The complete user-side Vapor product/environment delivered through the Steam App Instance. It encompasses the Launcher/SDK/CLI/Core-facing local Vapor experience, manages local Vapor Apps and development state, communicates with Vapor Platform services, and hosts or launches App Client Runtimes. It is broader than an App Client Runtime and should not be called `Vapor-App-Client`.*
+* **Vapor Platform**: *The ecosystem-level service/control domain surrounding Vapor Apps. It includes concerns such as identity, authentication, authorization, Registry, discovery, publication, diagnostics, documentation services, ecosystem administration, and future matchmaking/session discovery.*
+* **Vapor Platform Server**: *The logical server-side infrastructure implementing the Vapor Platform. It may consist of many independently deployable services/processes/hosts. The intended Container Repo/product-family name is `Vapor-Platform-Server`, replacing the old `Vapor-Server-Root` terminology.*
+* **Platform Service**: *One independently meaningful server-side service participating in the Vapor Platform, such as Identity, Registry, Diagnostics, or Documentation. Platform services may be deployed together initially and distributed independently later.*
+* **Platform Client**: *A logical capability/library for communicating with Vapor Platform services. It may be used by the Vapor Client, Vapor App Server, administrative tooling, or automation and is not necessarily an independently shipped application.*
+* **Vapor App Runtime**: *An executing realization of a Vapor App Composition. Runtime behavior is ultimately governed by the effective Engine/Game/Mods and may operate in client-side, server-side, local-only, or other explicitly supported roles.*
+* **App Client Runtime**: *The client-side runtime role of a running Vapor App, normally executed under the Vapor Client. Exact input, presentation, prediction, simulation, replication, and networking semantics remain Engine/Game-defined rather than universally imposed by Vapor.*
+* **Vapor App Server**: *A future server-side Vapor product/environment for hosting networked/server-side Vapor App runtimes. It is distinct from the Vapor Platform Server. The name `Vapor-App-Server` is reserved for this responsibility.*
+* **App Server Runtime**: *The server-side runtime role of a running Vapor App. It may provide authoritative simulation, shared state, replication, persistence hooks, or other App-defined behavior. Client/server runtime role does not necessarily imply a separate physical machine.*
+* **Platform Communication**: *Communication with ecosystem/control services such as Identity, Registry, publication, diagnostics, matchmaking, and authorization. It is conceptually distinct from App-session communication.*
+* **App-Session Communication**: *Communication belonging to a running networked Vapor App/session, such as App-defined simulation inputs, replication, events, or state updates. Vapor may provide common hosting or transport facilities, but the effective Engine/Game defines the actual runtime networking semantics.*
+
 
 ---
 
@@ -120,23 +131,17 @@ Cargo determines the concrete Rust package graph it will compile.
 
 * **Vapor Content Project**: *A Vapor Project primarily concerned with authoring Vapor Content. A Content Project may host one or more independently identified Vapor Content artifacts; Project identity and Content identity are not required to be one-to-one.*
 
-* **Vapor Root Workspace**: *The unique Vapor Workspace containing the client-side/root Vapor codebase and bootstrapping model of the Vapor ecosystem.*
-
-* **Vapor Root Project**: *A Vapor Project inside the Vapor Root Workspace modeling a coherent part of the client-side/root Vapor ecosystem. Vapor Root Projects should use meaningful names within the Workspace namespace rather than duplicating the Workspace name without semantic reason.*
-
-* **Vapor Server Root Workspace**: *The unique Vapor Workspace containing the server-side root Vapor codebase.*
-
-* **Vapor Server Root Project**: *A Vapor Project inside the Vapor Server Root Workspace modeling a coherent part of server-side Vapor infrastructure.*
-
 * **Vapor Content Workspace**: *A non-unique Vapor Workspace containing one or more Projects used for Vapor Content development.*
 
-* **Vapor Structural ID**: *A canonical human-readable, case-preserving, slash-separated identity for structural development objects below the namespace level. Structural identity incorporates semantic containment. Examples include `GHF-Studios/Vapor-Root` for a Container Repo, `GHF-Studios/Vapor-Root/Vapor` for a Workspace, and `GHF-Studios/Vapor-Root/Vapor/Client` for a Project. Superworkspace is deliberately absent because it is a local realization container.*
+* **Vapor Semantic Identity**: *A durable identity describing which modeled Vapor object something is, independent of incidental local checkout location and, where appropriate, independent of current Container Repo placement. Different object kinds may impose different rename/immutability rules.*
 
-* **Local Name**: *The final human-readable name of an object within its enclosing namespace. A Local Name such as `Client` is not globally unique and must not be treated as a canonical ID outside a context which makes it unambiguous.*
+* **Vapor Structural Address**: *A human-readable, case-preserving, slash-separated address describing an object's current modeled location in source topology, such as `GHF-Studios/Vapor-Client/Vapor/Client`. Structural Address is distinct from Semantic Identity and Local Realization and may change during an explicit source-topology migration.*
+
+* **Local Name**: *The final human-readable name of an object within its enclosing semantic or structural scope. A Local Name such as `Client` is not globally unique and must not be treated as a canonical semantic identity outside a context which makes it unambiguous.*
 
 * **Selector**: *Frontend/user input used to resolve one or more exact Vapor targets. A selector may be a full canonical identity or a shorter context-dependent form. Short selectors are conveniences rather than alternate canonical IDs. Vapor may accept the shortest selector which resolves unambiguously for the requested operation.*
 
-* **Local Realization**: *One physical local checkout/realization of a canonical source/development identity. Filesystem path, branch, provider repository, fork relationship, and local alias are realization properties rather than replacements for Vapor semantic identity. Multiple local realizations of the same Workspace identity may coexist.*
+* **Local Realization**: *One physical local checkout/realization of a semantic source/development object. Filesystem path, branch, provider repository, fork relationship, and local alias are realization properties rather than semantic identity or structural address. Multiple local realizations of the same Workspace identity may coexist.*
 
 * **Development Session**: *One frontend-local working context containing Open/Focused development objects and other active context required to perform development operations coherently. A GUI, future Vapor Shell, and one-shot CLI invocation need not share one globally mutable live focus cursor.*
 

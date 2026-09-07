@@ -668,7 +668,7 @@ example runtime APIs
 multi-Mod realization
 provider-backed general source acquisition
 complete context/session implementation
-canonical structural-ID implementation
+semantic identity / structural-address implementation
 multi-realization selection
 full Launcher/SDK GUI
 production Registry/publication/distribution
@@ -805,7 +805,7 @@ globally installed Vapor
 → semantic Vapor Content resolution
 ```
 
-That proved the managed toolchain and self-hosting direction, but also exposed that development context had accumulated too many incidental assumptions around:
+That proved the managed-toolchain and self-hosting direction, but exposed that development context had accumulated incidental assumptions around:
 
 * filesystem paths;
 * shell working directory;
@@ -814,22 +814,21 @@ That proved the managed toolchain and self-hosting direction, but also exposed t
 * persistent context;
 * future graphical SDK behavior.
 
-Rather than continue layering local fixes onto those assumptions, Vapor now has an explicit model for:
+The normalized model now distinguishes:
 
 ```text
-canonical structural identity
-+ local realizations
-+ Superworkspace development containers
-+ Development Sessions
-+ Open state
-+ Focus
-+ transient Selection
-+ operation target cardinality
-+ deterministic selector resolution
-+ GUI / CLI / automation projections over Vapor Core
+Semantic Identity
+Structural Address
+Local Realization
+Development Session
+Open
+Focus
+Transient Selection
+Operation Cardinality
+Selector Resolution
 ```
 
-The graphical product direction is also explicit:
+The graphical product direction is:
 
 ```text
 Vapor Launcher
@@ -838,41 +837,354 @@ Vapor SDK
     ↑ Return to Launcher
 ```
 
-SDK Mode is a development-oriented superset of the relevant Launcher surface.
+SDK Mode is a development-oriented superset of relevant Launcher functionality.
 
-The existing Figma/Tauri SDK prototype remains the visual design ancestor while its placeholder semantic model is progressively replaced by real Vapor Core state.
+The Figma/Tauri SDK prototype remains the visual design ancestor while its placeholder semantic model is progressively replaced by real Vapor Core state.
 
-This architecture checkpoint is intentionally bounded.
+Important corrected invariant:
 
-Its documentation-level model is now substantially established.
+> **Structural Address is not Semantic Identity.**
 
-Implementation should prove only enough of it to prevent the current self-hosting and development workflows from continuing to encode the wrong assumptions.
-
-Minimum implementation proof before returning fully to the runtime roadmap:
-
-* canonical structural identity can be represented distinctly from local names;
-* Project selectors are not treated as globally unique Project IDs;
-* local realization/path is distinct from semantic structural identity;
-* Superworkspace remains a local development container rather than semantic source truth;
-* CWD remains an ephemeral CLI hint rather than durable context;
-* Project execution context can be resolved without depending on arbitrary shell location;
-* existing managed-toolchain/self-hosting workflows continue to work;
-* the Core model leaves a clean path toward Open / Focus / Selection and the future SDK rather than requiring the complete GUI now.
-
-Do **not** implement the complete Vapor SDK as part of this checkpoint.
-
-The immediate continuation remains:
+For example:
 
 ```text
-finish Phase B adversarial Cargo conflict proof
+Workspace semantic identity:
+    GHF-Studios/Vapor
+
+Structural address:
+    GHF-Studios/Vapor-Client/Vapor
+
+Local realization:
+    /some/local/path/Vapor
+```
+
+A Container Repo rename may migrate the Structural Address without recreating the semantic Workspace.
+
+The complete graphical SDK is not required before runtime architecture work resumes.
+
+The Core must merely avoid encoding assumptions which would make that SDK/context model impossible.
+
+---
+
+## Architecture Checkpoint — Client, Platform, Naming, and Repository Topology
+
+The Context/Identity pass exposed a second architecture problem:
+
+```text
+Root
+Client
+Server
+Platform
+App
+```
+
+had accumulated overlapping and misleading meanings.
+
+The normalized product topology is:
+
+```text
+Vapor Client
+    complete user-side Vapor product/environment
+
+Vapor Platform Server
+    ecosystem/control-plane server infrastructure
+
+Vapor App Server
+    future host for server-side Vapor App runtimes
+```
+
+and:
+
+```text
+Platform Communication
+≠
+App-Session Communication
+```
+
+Vapor may host/orchestrate networked App runtimes without imposing one universal Engine/Game networking model.
+
+Repository naming follows this topology:
+
+```text
+Vapor-Root
+→ Vapor-Client
+
+Vapor-Server-Root
+→ Vapor-Platform-Server
+
+Vapor-App-Server
+    reserved for future implementation pressure
+```
+
+The word `Root` is no longer used as a vague product/repository taxonomy term.
+
+Precise uses such as filesystem root, Installation root, source root, and Root Authority remain valid.
+
+---
+
+## Repository Stabilization Epoch
+
+The naming/topology correction cannot be completed as a blind textual rename.
+
+The existing Client side contains several historical source repositories whose boundaries reflect older application-owned semantics:
+
+```text
+Vapor
+Vapor-SDK
+Vapor-Launcher
+Vapor-Shell
+Vapor-Examples
+Vapor-Installer
+Vapor-Entrypoint
+```
+
+The current Platform side contains independently meaningful services:
+
+```text
+Vapor-Homepage-Server
+Vapor-Docs-Server
+Vapor-Identity-Server
+Vapor-Diagnostics-Server
+Vapor-Registry-Server
+```
+
+These two sides intentionally migrate differently.
+
+Client direction:
+
+```text
+historical application source splits
+→ consolidate shared semantics into Vapor
+→ retain distinct binaries/product surfaces where meaningful
+```
+
+Platform direction:
+
+```text
+independent Platform services
+→ remain independent Workspaces
+→ coordinated by Vapor-Platform-Server
+```
+
+Therefore:
+
+> **Executable/product boundaries do not automatically imply Git repository boundaries.**
+
+and:
+
+> **Independent deployment/business-service boundaries may legitimately imply separate repositories.**
+
+---
+
+## Repository Migration Waves
+
+The stabilization proceeds as controlled waves:
+
+```text
+Wave 0
+    baseline / freeze / migration docs
+
+Wave 1
+    provider rename:
+        Vapor-Root → Vapor-Client
+        Vapor-Server-Root → Vapor-Platform-Server
+
+Wave 2
+    machine vocabulary / schema migration
+    Semantic Identity vs Structural Address implementation
+
+Wave 3
+    Client repository consolidation
+
+Wave 4
+    Registry authority conflict resolution
+
+Wave 5
+    authored documentation extraction
+
+Wave 6
+    code cleanroom / docsification
+
+Wave 7
+    return to runtime roadmap
+```
+
+The live operational state is tracked in:
+
+```text
+Vapor Repository Migration Execution Ledger.md
+```
+
+The repository architecture is specified by:
+
+```text
+Vapor Repository Topology And Migration Model.md
+```
+
+---
+
+## Client Consolidation Direction
+
+The intended active Client source topology after consolidation is approximately:
+
+```text
+Vapor-Client
+├── Vapor
+└── Vapor-Examples
+```
+
+with historical application repositories migrated deliberately:
+
+```text
+Vapor-Entrypoint
+→ Vapor
+
+Vapor-Installer
+→ Vapor
+
+Vapor-Launcher
+→ Vapor
+
+Vapor-SDK
+→ Vapor
+
+Vapor-Shell
+→ Vapor
+```
+
+The old repositories are archived only after useful implementation/design is migrated and replacement behavior is proven.
+
+The SDK migration has a special preservation requirement:
+
+> **The Figma-derived GUI and its successful visual/product design must not be lost merely because its old semantic model is obsolete.**
+
+---
+
+## Platform Direction
+
+The intended Platform source topology remains approximately:
+
+```text
+Vapor-Platform-Server
+├── Vapor-Homepage-Server
+├── Vapor-Docs-Server
+├── Vapor-Identity-Server
+├── Vapor-Diagnostics-Server
+└── Vapor-Registry-Server
+```
+
+These are independently meaningful Platform services and are not consolidated merely for symmetry.
+
+A separate unresolved conflict remains:
+
+```text
+Vapor-Registry
+vs
+Vapor-Registry-Server
+```
+
+There must not remain two independently canonical Registry authorities.
+
+That conflict must be resolved explicitly rather than hidden by naming.
+
+---
+
+## Documentation Stabilization
+
+The Premium Docs currently serve as normative ecosystem documentation while living inside the Client Container Repo.
+
+During the initial migration they remain there deliberately.
+
+After repository topology is stable, authored ecosystem documentation may move to:
+
+```text
+Vapor-Documentation
+```
+
+while:
+
+```text
+Vapor-Docs-Server
+```
+
+remains the Platform service responsible for serving/publishing documentation.
+
+The cleanroom/docsification pass then hardens active code using:
+
+```text
+good naming and types
++
+crate/module rustdoc
++
+useful API contracts
++
+tests/invariants
++
+normative model links
++
+generated references where possible
+```
+
+Full-file replacement is appropriate even for large files when meaningful architectural cleanup is required.
+
+Documentation must explain semantic role and non-obvious contracts rather than narrating obvious syntax.
+
+---
+
+## Stabilization Exit Condition
+
+This stabilization epoch must remain goal-directed.
+
+It is sufficiently complete to return to the runtime roadmap when:
+
+```text
+Client / Platform naming is coherent
++
+provider/container repo migration is stable
++
+active Client semantics have one clear Core authority
++
+legacy competing source boundaries are resolved enough not to distort new work
++
+identity/address/realization distinctions are represented cleanly
++
+critical active source has begun receiving clean architectural documentation
++
+known-good self-hosting/build/deploy workflows still work
+```
+
+The migration does not need to implement:
+
+```text
+complete SDK
+complete books
+future Vapor-App-Server
+all future Platform services
+all possible documentation
+```
+
+before runtime development resumes.
+
+---
+
+## Immediate Continuation
+
+The immediate sequence is now:
+
+```text
+complete Wave 0 baseline
+        ↓
+Wave 1 Container Repo provider renames
+        ↓
+restore known-good Client + Platform state
+        ↓
+Wave 2 machine vocabulary / address cleanup
+        ↓
+controlled Client consolidation + cleanroom work
+        ↓
+finish remaining Phase B adversarial Cargo proof
         ↓
 Phase C — Minimal Bevy ECS Engine
-        ↓
-coherent Wheel Game
-        ↓
-real Engine/Game/Mod extension capabilities
-        ↓
-observe static integration pressure
 ```
 
 ---

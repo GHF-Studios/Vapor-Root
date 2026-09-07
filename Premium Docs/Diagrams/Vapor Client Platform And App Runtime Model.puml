@@ -1,0 +1,58 @@
+@startuml
+title Vapor Client, Platform, and App Runtime Model
+
+skinparam backgroundColor transparent
+skinparam shadowing false
+skinparam componentStyle rectangle
+
+package "Vapor Platform Server" {
+    component "Identity" as Identity
+    component "Registry" as Registry
+    component "Diagnostics" as Diagnostics
+    component "Docs" as Docs
+    component "Future Matchmaking /\nSession Directory" as Match
+}
+
+package "Vapor Client" {
+    component "Launcher / SDK / CLI" as ClientSurface
+    component "Platform Client" as ClientPlatform
+    component "App Client Runtime" as AppClient
+}
+
+package "Vapor App Server" {
+    component "Platform Client" as ServerPlatform
+    component "App Server Runtime" as AppServer
+}
+
+ClientSurface --> ClientPlatform
+ClientSurface --> AppClient
+
+ClientPlatform --> Identity : Platform communication
+ClientPlatform --> Registry : Platform communication
+ClientPlatform --> Diagnostics : Platform communication
+ClientPlatform --> Match : Platform communication
+
+ServerPlatform --> Identity : Platform communication
+ServerPlatform --> Registry : Platform communication
+ServerPlatform --> Match : register / authorize
+
+AppClient <==> AppServer : App-session communication
+
+note bottom of AppClient
+Effective Engine/Game defines
+App-specific runtime networking semantics.
+end note
+
+note bottom of AppServer
+Vapor hosts/orchestrates the runtime;
+it does not mandate one universal
+replication or simulation protocol.
+end note
+
+note right of Match
+Platform services may help establish
+a session without becoming the
+App-session data path.
+end note
+
+@enduml

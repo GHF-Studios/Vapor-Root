@@ -131,7 +131,7 @@ Superworkspace-local files such as `.vaporignore` likewise affect the local deve
 
 A **Container Repo** is a Vapor-managed Git repository which groups related Vapor Workspaces.
 
-It participates in canonical structural identity.
+A Container Repo participates in the modeled source topology.
 
 A Container Repo may declare its Source Repo / Workspace members through Git submodules.
 
@@ -140,12 +140,14 @@ A Container Repo is not itself used as a submodule of another Container Repo.
 Conceptually:
 
 ```text
-GHF-Studios/Vapor-Root
+GHF-Studios/Vapor-Client
 ```
 
-may identify the `Vapor-Root` Container Repo within the `GHF-Studios` namespace.
+may be the structural address of the `Vapor-Client` Container Repo within the `GHF-Studios` namespace.
 
-Container Repo membership is semantically meaningful rather than merely a consequence of the current directory layout.
+Container Repo membership is meaningful modeled structure rather than merely a consequence of current filesystem nesting.
+
+However, Container Repo containment is not automatically part of a child Workspace's durable semantic identity.
 
 ---
 
@@ -160,14 +162,17 @@ The normative relationship is:
 A Vapor Workspace:
 
 * is a Git repository;
-* belongs to a Container Repo in the structural model;
+* has a durable semantic identity;
+* may belong to a Container Repo in the current source topology;
 * contains one or more Vapor Projects;
 * owns Workspace-level authored metadata;
 * may have one or more local realizations/checkouts.
 
 The provider repository URL is linkage information.
 
-It is not itself the Vapor structural identity.
+Its Container Repo placement is structural information.
+
+Neither should be confused automatically with the Workspace's durable semantic identity.
 
 ---
 
@@ -180,20 +185,18 @@ For Rust-backed development it normally corresponds to a coherent Cargo workspac
 A Vapor Project:
 
 * is not itself a Git repository;
-* is namespaced by its Vapor Workspace;
+* has identity within the semantic namespace of its Workspace;
 * should have a meaningful local name;
 * may contain zero, one, or multiple Vapor Content artifacts;
 * may contain supporting Rust packages which are not independently Vapor Content.
 
-Project identity and Content identity are therefore distinct.
+Project identity and Content identity remain distinct.
 
-The earlier intuition that one Vapor Content Project must always equal exactly one Vapor Content artifact is not a general invariant.
-
-For example, an examples Project may legitimately host several independently identified Libraries, Games, Mods, and Packagepacks.
+For example, an examples Project may host several independently identified Libraries, Games, Mods, and Packagepacks.
 
 The Project answers:
 
-> Where and within which development structure is this work authored/built?
+> Where and within which development unit is this work authored/built?
 
 The Content identity answers:
 
@@ -203,16 +206,64 @@ Those are related questions, not the same question.
 
 ---
 
-# Canonical Structural Identity
+# Identity, Address, and Realization
 
-Vapor structural identities are:
+Vapor distinguishes three related but non-equivalent concepts:
+
+```text
+Semantic Identity
+Structural Address
+Local Realization
+```
+
+This distinction is fundamental.
+
+---
+
+# Semantic Identity
+
+A **Semantic Identity** describes which modeled Vapor object something is.
+
+Semantic identity should survive changes which do not conceptually create a new object.
+
+Examples may include:
+
+* moving a Workspace to another Container Repo;
+* renaming a Container Repo around it;
+* relocating a checkout;
+* changing Git provider URL;
+* checking out a different local realization.
+
+For a Workspace, a conceptual semantic identity may resemble:
+
+```text
+GHF-Studios/Vapor
+```
+
+For a Project inside that Workspace:
+
+```text
+GHF-Studios/Vapor/Client
+```
+
+The exact persisted representation of non-Content semantic identities remains subject to implementation work.
+
+The important invariant is that current structural placement must not be mistaken for durable identity.
+
+---
+
+# Structural Address
+
+A **Structural Address** describes where an object is located in the currently modeled source topology.
+
+Structural addresses are:
 
 * human-readable;
 * case-preserving;
 * slash-separated;
-* hierarchically namespaced.
+* hierarchical.
 
-The canonical form is conceptually:
+A conceptual structural form is:
 
 ```text
 Namespace/Container-Repo/Workspace/Project
@@ -221,127 +272,182 @@ Namespace/Container-Repo/Workspace/Project
 For example:
 
 ```text
-GHF-Studios/Vapor-Root
-GHF-Studios/Vapor-Root/Vapor
-GHF-Studios/Vapor-Root/Vapor/Client
+GHF-Studios/Vapor-Client
+GHF-Studios/Vapor-Client/Vapor
+GHF-Studios/Vapor-Client/Vapor/Client
 ```
 
-These represent, respectively:
+These describe, respectively:
 
 ```text
 Container Repo
-Workspace
-Project
+Workspace placement
+Project placement
 ```
 
 A Superworkspace is deliberately absent.
 
-It is a local realization container rather than part of canonical structural identity.
+It is local development storage rather than canonical source topology.
 
 ---
 
-# Identity Segments
+# Identity vs Structural Address
 
-Each segment must carry actual semantic distinction.
+A semantic identity and structural address may look similar.
 
-Accidental repetition should not be introduced merely because several layers currently happen to share a convenient name.
+They answer different questions.
+
+Example:
+
+```text
+Workspace semantic identity:
+    GHF-Studios/Vapor
+
+Workspace structural address:
+    GHF-Studios/Vapor-Client/Vapor
+```
+
+If the Container Repo is renamed:
+
+```text
+Vapor-Root
+→ Vapor-Client
+```
+
+the Workspace may remain:
+
+```text
+GHF-Studios/Vapor
+```
+
+while its structural address migrates:
+
+```text
+GHF-Studios/Vapor-Root/Vapor
+→
+GHF-Studios/Vapor-Client/Vapor
+```
+
+This is a topology migration, not necessarily destruction/recreation of the Workspace identity.
+
+---
+
+# Structural Address Segments
+
+Each address segment should carry actual structural distinction.
+
+Accidental repetition should not be introduced merely because several layers historically share a name.
 
 For example:
 
 ```text
-GHF-Studios/Vapor-Root/Vapor/Vapor
+GHF-Studios/Vapor-Client/Vapor/Vapor
 ```
 
-is legal only if the final `Vapor` is genuinely the meaningful Project name.
+may be a valid structural address only if the final `Vapor` is genuinely the meaningful Project name.
 
-It should not be created merely because the current Cargo workspace historically used the repository name again.
+It should not arise merely because the current Cargo workspace copied its repository name.
 
-Project names should become meaningful within their Workspace namespace.
-
-Potential future names might describe actual project responsibility such as:
-
-```text
-Client
-SDK
-Server
-Examples
-Tools
-```
-
-The exact Vapor root Project decomposition remains subject to implementation pressure.
+Project names should describe their actual development responsibility.
 
 ---
 
-# Structural Movement and Identity
+# Structural Movement
 
-Container Repo containment participates in Workspace identity.
+Moving an object in source topology changes its Structural Address.
+
+It does not automatically change Semantic Identity.
 
 Therefore:
 
 ```text
-GHF-Studios/Vapor-Root/Vapor
+GHF-Studios/Vapor-Client/Vapor
 ```
 
 and:
 
 ```text
-GHF-Studios/Other-Root/Vapor
+GHF-Studios/Other-Container/Vapor
 ```
 
-are distinct structural identities.
+may describe two structural placements of the same semantic Workspace identity at different points in time or, where the model permits, different realizations.
 
-Moving an authored Workspace between canonical Container Repos is not merely moving a directory.
+Structural migration must be explicit when durable state refers to old addresses.
 
-It changes structural identity unless an explicit future identity-migration operation defines otherwise.
+Vapor should be capable of migrating remembered structural references without pretending the semantic object became unrelated.
 
-Likewise, changing an identity-bearing segment is not treated as a cosmetic rename by default.
+---
+
+# Semantic Rename
+
+Changing the semantic identity/name of an object is different from changing only its Structural Address.
+
+For example:
+
+```text
+Workspace ID:
+    GHF-Studios/Vapor
+→
+    GHF-Studios/Vapor-NG
+```
+
+is an identity-level rename/migration.
+
+That operation may have stronger compatibility, publication, or reference consequences.
+
+The exact allowed rename rules vary by object kind.
+
+In particular, immutable published Vapor Content identity remains subject to stricter Content rules.
 
 ---
 
 # Vapor Content Identity
 
-Vapor Content maintains its own semantic identity model.
+Vapor Content maintains its established semantic identity model.
 
-Content identity is not mechanically derived from Project identity.
+Content identity is not mechanically derived from Project Structural Address.
 
 A single Project may host several Content IDs.
 
-A Content artifact may therefore be selected semantically without requiring the user to manually identify its physical Project first when Vapor can resolve that relationship.
+A Content artifact may therefore be selected semantically without requiring the user to identify its physical Project first when Vapor can resolve that relationship.
 
-Structural identity and Content identity may use related human-readable conventions, but they remain distinct domains.
+Content identity may be stricter than development-structure identity.
 
-The exact migration of existing Content IDs toward stronger case-preserving naming conventions is outside the scope of this document.
+Published Content IDs remain immutable unless a future explicit migration model says otherwise.
 
 ---
 
 # Local Realization
 
-A canonical identity does not uniquely identify a physical checkout.
-
-A **Local Realization** is one locally available physical realization of a canonical source/development identity.
+A **Local Realization** is one physical local realization of a semantic source/development object.
 
 Conceptually:
 
 ```text
-Workspace identity:
-    GHF-Studios/Vapor-Root/Vapor
+Workspace semantic identity:
+    GHF-Studios/Vapor
+
+Structural address:
+    GHF-Studios/Vapor-Client/Vapor
 
 Realization A:
-    official checkout
-    main branch
-    /some/local/path
+    provider: GHF-Studios/Vapor
+    branch: main
+    path: /some/local/path
 
 Realization B:
-    developer fork checkout
-    experiment branch
-    /another/local/path
+    provider: developer fork
+    branch: experiment
+    path: /another/local/path
 ```
 
-Both may be useful simultaneously.
+Both local realizations may correspond to the same semantic Workspace.
 
-Filesystem paths are therefore realization properties, not semantic identities.
+Filesystem path, provider URL, branch, and checkout state are realization properties.
 
----
+They are not semantic identity.
+
+A realization may move physically while preserving both semantic identity and structural role once Vapor safely relocates/recognizes it.
 
 # Multiple Realizations
 
