@@ -1,389 +1,1377 @@
 > [!info]
-> This document defines the semantic command model shared by Vapor's command-line surfaces.
+> This document defines the semantic command-line model shared by Vapor's CLI surfaces.
 >
-> It describes command hierarchy, application projections, role visibility, and the relationship between CLI operations and Vapor Content kinds.
+> It describes command hierarchy, operation subjects, contextual resolution, explicit selection, first-party bespoke command surfaces, source-topology commands, typed creation, diagnostics, and the relationship between Vapor CLI semantics and underlying Git/Rust/Cargo tooling.
 >
-> Exact command leaves may evolve as implementation pressure reveals better semantics.
+> Canonical identity, Superworkspace, Context, Selection, and operation-resolution semantics are defined normatively by the **Vapor Context, Identity, Session And Selection Model**.
+>
+> Broader authoring and development workflows are defined by the **Vapor Development Experience Model**.
+>
+> Exact command spelling may still evolve where explicitly marked open.
 
 ---
 
 # Core Principle
 
-The Vapor CLI models Vapor concepts rather than Cargo structure, repository layout, implementation modules, or arbitrary utility groupings.
+The Vapor CLI should express the work the user intends to perform in Vapor terms.
 
-A command namespace must represent a meaningful Vapor domain or first-class entity.
+It should neither:
 
-Namespaces must not exist merely to classify or cosmetically scope an operation.
+* mirror Rust module structure;
+* mirror Cargo structure;
+* mirror Git repository implementation mechanically;
+* invent generic namespaces merely to organize commands cosmetically;
+* force users to restate information Vapor already knows from resolved identity.
 
-The CLI should remain explicit, flattened, and predictable.
+The governing rule is:
 
----
+> **Use explicit semantic nouns where the noun itself matters, and generic operations where the target identity already provides the missing semantic type.**
 
-# Shared Core and CLI Surfaces
+This deliberately produces an asymmetric command language.
 
-Vapor applications expose different projections of the same underlying Vapor Core operations.
-
-The intended command-line binaries are:
-
-* `vapor`
-* `vapor-installer`
-* `vapor-launcher`
-* `vapor-sdk`
-
-`vapor` is the broad universal CLI projection.
-
-The dedicated binaries expose subsets appropriate to their application and installed Role.
-
-For example, an Installer Role operation exposed as:
-
-```text
-vapor role status
-```
-
-is the same underlying operation exposed by:
-
-```text
-vapor-installer role status
-```
-
-Application binaries must not independently reimplement Vapor semantics.
-
-The logical Vapor SDK may be integrated into the Launcher while also having a dedicated `vapor-sdk` executable/CLI projection.
-
-Those are different surfaces over the same Vapor Core rather than independent SDK implementations.
+That asymmetry is desirable when it reflects real semantics.
 
 ---
 
-# Top-Level Purity
+# Command Shape
 
-Top-level namespaces should correspond to stable Vapor domains or first-class Vapor entity kinds.
+Three major command shapes exist.
 
-Current system-oriented namespaces include:
+## Generic System Domains
+
+Stable cross-cutting Vapor concepts may own generic namespaces.
+
+Examples include:
 
 ```text
 installation
 role
 authority
 toolchain
-source
-ecosystem
+source-repo-container
+source-repo
 ```
 
-Current Vapor Content namespaces are explicit:
+These namespaces exist because the objects beneath them share meaningful generic semantics.
+
+---
+
+## Bespoke First-Party Facilities
+
+Some trusted first-party Vapor facilities own dedicated command namespaces because their lifecycle and operation semantics are inherently bespoke.
+
+Current intended examples include:
 
 ```text
-packagepack
-enginepack
-gamepack
-modpack
-engine
-game
-engine-mod
-game-mod
-extension-mod
-library
+client
+platform-server
+examples
 ```
 
-There is intentionally no generic `content` namespace merely to mirror the Vapor Content taxonomy.
+These namespaces represent semantic facilities.
 
-Likewise, ordinary workflows should not require the user to jump between separate `composition` and `app` namespaces merely because a Packagepack moves through resolution, build, installation, and runtime states.
+They are not merely aliases for particular Git directories.
 
-Packagepack, Vapor App Composition, and Vapor App remain distinct model terms where that distinction matters.
-
-`library` here means the first-class Vapor Content kind.
-
-It is distinct from the Launcher/local **Content Library** surface.
+Their underlying source topology may evolve without requiring their public names to change.
 
 ---
 
-# Content Command Model
+## Existing-Object Operations
 
-Each Vapor Content kind exposes the operations semantically applicable to that kind.
+Once a normal Vapor object already exists, Vapor can resolve its identity and determine its kind.
 
-The current command shape is:
-
-```text
-packagepack
-    create
-    list
-    inspect
-    resolve
-    verify
-    build
-    test
-    install
-    select
-    run
-    remove
-    publish
-
-enginepack
-    create
-    list
-    inspect
-    resolve
-    verify
-    test
-    publish
-
-gamepack
-    create
-    list
-    inspect
-    resolve
-    verify
-    test
-    publish
-
-modpack
-    create
-    list
-    inspect
-    resolve
-    verify
-    test
-    publish
-
-engine
-    create
-    list
-    inspect
-    verify
-    test
-    publish
-
-game
-    create
-    list
-    inspect
-    verify
-    test
-    publish
-
-engine-mod
-    create
-    list
-    inspect
-    verify
-    test
-    publish
-
-game-mod
-    create
-    list
-    inspect
-    verify
-    test
-    publish
-
-extension-mod
-    create
-    list
-    inspect
-    verify
-    test
-    publish
-
-library
-    create
-    list
-    inspect
-    resolve
-    verify
-    test
-    publish
-```
-
-This tree is semantic rather than mechanically uniform.
-
-An operation should be present wherever it makes sense rather than being artificially segregated by Content kind.
-
-For packs, `test` runs the applicable tests contributed by the resolved Content graph together.
-
-For a Library, `resolve` exposes its semantic dependency graph and the Rust/Cargo realization information relevant to that graph.
-
-This does not mean Cargo defines Vapor dependency semantics.
-
----
-
-# Packagepack Lifecycle
-
-Packagepack is the complete-composition Vapor Content kind.
-
-A Packagepack may therefore support complete-composition operations that subordinate Content kinds do not independently support, including:
-
-* Build.
-* Install.
-* Select.
-* Run.
-* Remove.
-
-A Packagepack remains the authored composition identity throughout these workflows.
-
-A resolved Vapor App Composition and built Vapor App are precise derived states or realizations of that Packagepack rather than mandatory separate CLI namespaces.
-
----
-
-# Resolution Model
-
-Resolution is implemented as a generic Vapor Content graph operation.
-
-Vapor semantic resolution is authoritative for:
-
-* Vapor IDs.
-* Vapor versions.
-* Dependency bindings.
-* Vapor Content kinds.
-* Vapor-level dependency relationships.
-
-CLI exposure remains explicit per Content kind where a standalone resolution operation is useful.
-
-Examples include:
-
-```text
-vapor packagepack resolve ...
-vapor enginepack resolve ...
-vapor gamepack resolve ...
-vapor modpack resolve ...
-vapor library resolve ...
-```
-
-These commands use the same underlying semantic resolver rather than separate kind-specific dependency solvers.
-
-Resolution recursively follows dependencies declared by Vapor Content.
-
-Binding names do not determine Content semantics.
-
-Resolved identities, kinds, and authored relationships do.
-
-A Packagepack may obtain its effective Engine either directly or transitively through an Enginepack.
-
-Likewise, it may obtain its effective Game directly or through a Gamepack.
-
-Nested packs, Mods, Libraries, and other dependencies are resolved transitively.
-
-A valid Packagepack ultimately yields exactly one effective Engine and exactly one effective Game together with all other required Content.
-
-Packagepack-specific validation is layered on top of generic graph resolution.
-
----
-
-# Vapor Resolution vs Cargo Resolution
-
-Rust-backed Vapor Content introduces a second, distinct graph:
-
-```text
-Vapor semantic graph
-        ↓
-Rust/Cargo realization
-        ↓
-Cargo package graph
-```
-
-Vapor is authoritative for the semantic Vapor graph.
-
-Cargo is authoritative for the physical Rust package graph it actually resolves and compiles.
-
-Vapor should use Cargo-native mechanisms, including `cargo metadata` where useful, to:
-
-* inspect Cargo workspace/package structure;
-* identify physical Rust packages and targets;
-* observe Cargo dependency declarations;
-* observe Cargo's resolved package graph;
-* verify that Vapor semantic dependencies are physically realized;
-* diagnose divergence between Vapor and Cargo state.
-
-Cargo Package IDs and similar identifiers are Cargo-domain physical identifiers.
-
-They must not become replacements for Vapor semantic identity.
-
----
-
-# Cargo Reconciliation
-
-Vapor should supervise the Cargo entries that physically realize Vapor semantic dependencies without taking ownership of unrelated Cargo configuration.
+Therefore ordinary existing-object operations should not require users to redundantly restate that kind.
 
 Conceptually:
 
 ```text
-Vapor.toml
-    semantic dependency intent
-        ↓
-Vapor resolver
-    exact desired Vapor graph
-        ↓
-Cargo reconciliation
-        ↓
-editable Cargo.toml
-        ↓
-Cargo resolution / metadata
-        ↓
-actual physical graph
-        ↓
-Vapor verification
+vapor test <TARGET>
+vapor inspect <TARGET>
+vapor publish <TARGET>
 ```
 
-A developer may continue to edit ordinary Cargo configuration directly.
-
-Vapor should distinguish at least:
+is preferable to requiring:
 
 ```text
-valid
-stale
-conflicting
-explicitly locally overridden
-repairable
+vapor game test <TARGET>
+vapor game inspect <TARGET>
+vapor game publish <TARGET>
 ```
 
-Verification should diagnose disagreement.
+when `<TARGET>` already resolves to a Game Project.
 
-Repair may reconcile Vapor-managed physical dependency entries.
-
-Explicit local/unlocked overrides may be valid development state but must not silently become publishable state.
+Creation is different because the object does not yet exist.
 
 ---
 
-# Creation and Templates
+# Typed Creation
 
-Creation is a first-class operation for authored Vapor entities.
+Creation requires the user to state what kind of Project they intend to create.
 
 Examples include:
 
 ```text
 vapor packagepack create ...
+vapor enginepack create ...
+vapor gamepack create ...
+vapor modpack create ...
+
 vapor engine create ...
+vapor game create ...
+vapor engine-mod create ...
 vapor game-mod create ...
+vapor extension-mod create ...
 vapor library create ...
 ```
 
-Creation should establish canonical structural boilerplate for the selected Vapor entity.
+Creation syntax supplies semantic information unavailable from a nonexistent target.
 
-This may include:
+Conceptually:
 
-* Vapor manifests.
-* Source/project structure.
-* Cargo structure where applicable.
-* Dependency declarations.
-* Initial tests.
-* Appropriate repository/workspace placement.
+```text
+game create <NEW-PROJECT-PATH>
+    ↓
+create Project
+kind = Game
+```
 
-Creation may support templates.
+After the Project exists:
 
-The initial implementation may use built-in canonical templates.
+```text
+test <PROJECT>
+inspect <PROJECT>
+publish <PROJECT>
+```
 
-More general versioned or externally supplied template systems should be introduced only when concrete pressure requires them.
+may resolve the Project and learn:
 
-The same creation model may eventually extend to Vapor ecosystem/root source structures and remote repository creation.
+```text
+kind = Game
+```
+
+without requiring the caller to repeat `game`.
+
+---
+
+# Canonical Source Hierarchy
+
+The CLI follows the canonical hierarchy:
+
+```text
+Authority
+└── Source Repo Container
+    └── Source Repo
+        └── Project
+```
+
+A complete Project path has the form:
+
+```text
+Authority/Source-Repo-Container/Source-Repo/Project
+```
+
+For example:
+
+```text
+GHF-Studios/Loo-Cast/Game/Loo-Cast
+```
+
+The hierarchy is structural.
+
+The Superworkspace is not part of this path.
+
+---
+
+# Superworkspace
+
+Vapor has one canonical local Superworkspace.
+
+The Superworkspace:
+
+* has no Vapor identity;
+* is not supplied as an argument to ordinary create/acquire commands;
+* has a known local location;
+* provides the local realization root for Source Repo Containers.
+
+Therefore ordinary acquisition should not look like:
+
+```text
+vapor source-repo-container acquire GHF-Studios/Loo-Cast /some/random/path
+```
+
+Instead:
+
+```text
+vapor source-repo-container acquire GHF-Studios/Loo-Cast
+```
+
+places the acquired Container at its canonical location beneath the configured Superworkspace.
+
+Superworkspace relocation/configuration is a separate local-development-environment concern.
+
+---
+
+# Vapor Paths
+
+CLI targets should normally use Vapor Paths or unambiguous selectors.
+
+A full path may identify any hierarchy layer:
+
+```text
+GHF-Studios
+GHF-Studios/Loo-Cast
+GHF-Studios/Loo-Cast/Game
+GHF-Studios/Loo-Cast/Game/Loo-Cast
+```
+
+These identify:
+
+```text
+Authority
+Source Repo Container
+Source Repo
+Project
+```
+
+respectively.
+
+The operation determines which target kinds it accepts.
+
+Vapor does not automatically descend to an arbitrary leaf merely because a parent path was supplied.
+
+---
+
+# Minimal Information Principle
+
+The CLI should require no more information than is safely necessary.
+
+The rule is:
+
+> **Accept the shortest selector that resolves unambiguously within the applicable operation context.**
+
+A full Project path may be:
+
+```text
+GHF-Studios/Loo-Cast/Game/Loo-Cast
+```
+
+but shorter input may be accepted when enough surrounding information is already known.
+
+This shorthand never creates an alternative canonical identity.
+
+It is only a selector which resolves to one exact canonical object.
+
+---
+
+# Context, Subject, and Selection
+
+The CLI resolution model follows:
+
+```text
+context  →  operation subject  →  selection
+  left            middle            right
+```
+
+These are different concepts.
+
+## Context
+
+Context supplies missing hierarchy to the left.
+
+## Operation Subject
+
+The command establishes what the operation is fundamentally about.
+
+## Selection
+
+Selection optionally supplies/narrows descendants to the right.
+
+This model applies whether the operation subject comes from a bespoke noun or an explicit target argument.
+
+---
+
+# Persistent Context
+
+Persistent Context is a lightweight convenience.
+
+For example, conceptually:
+
+```text
+vapor source-repo open GHF-Studios/Loo-Cast/Game
+```
+
+may establish:
+
+```text
+GHF-Studios/Loo-Cast/Game
+```
+
+as the current Vapor resolution prefix.
+
+A later selector:
+
+```text
+Loo-Cast
+```
+
+may therefore resolve to:
+
+```text
+GHF-Studios/Loo-Cast/Game/Loo-Cast
+```
+
+Persistent Context must not be required for Vapor to function.
+
+A fully specified or otherwise unambiguous command works without it.
+
+---
+
+# Context Does Not Imply Operation Scope
+
+This is a fundamental safety rule.
+
+Suppose the current persistent Context is:
+
+```text
+GHF-Studios/Vapor-Platform-Server/Registry
+```
+
+Then:
+
+```text
+vapor platform-server test
+```
+
+still means:
+
+> Test the complete natural Vapor Platform Server subject.
+
+It does not silently become:
+
+```text
+test only Registry
+```
+
+Likewise:
+
+```text
+vapor platform-server deploy vps
+```
+
+must not become a Registry-only deployment because the user happened to navigate there previously.
+
+Context affects name/path resolution.
+
+Selection affects operation scope.
+
+---
+
+# Transient Context Override
+
+A single CLI invocation must be able to override persistent Context without changing it.
+
+The intended generic shape is approximately:
+
+```text
+--context <VAPOR-PATH>
+```
+
+For example:
+
+```text
+vapor inspect My-Game \
+    --context GHF-Studios/My-Stuff/Game
+```
+
+may resolve:
+
+```text
+My-Game
+```
+
+as:
+
+```text
+GHF-Studios/My-Stuff/Game/My-Game
+```
+
+The transient Context exists only for this invocation.
+
+It does not rewrite persistent state.
+
+The exact final flag spelling remains open, but the semantic capability is required.
+
+---
+
+# Context Resolution Rules
+
+Conceptually:
+
+```text
+full exact path
+    → use directly
+
+relative selector + explicit transient context
+    → resolve against transient context
+
+relative selector + persistent context
+    → resolve against persistent context
+
+selector uniquely resolvable from operation subject
+    → use unique candidate
+
+otherwise
+    → ambiguity / unresolved diagnostic
+```
+
+A context-relative path may omit only a complete leading prefix.
+
+It may not omit middle hierarchy segments.
+
+---
+
+# Current Working Directory
+
+CWD is not ordinary Vapor Context.
+
+The CLI must not depend on shell location for semantic Vapor targeting when stronger modeled information exists.
+
+A developer may be physically inside:
+
+```text
+some unrelated Git repository
+```
+
+while intentionally operating on:
+
+```text
+Vapor Client
+Vapor Platform Server
+another Project in the Superworkspace
+```
+
+Therefore:
+
+> **Filesystem location and Vapor semantic location are separate.**
+
+Raw filesystem paths remain valid where the physical filesystem itself is the operation's subject, such as:
+
+* explicit import/bootstrap operations;
+* low-level diagnostics;
+* locating externally moved files;
+* underlying Git/Cargo use.
+
+CWD may still naturally matter to Git or Cargo themselves when those tools are used directly.
+
+It is not Vapor's canonical semantic navigation mechanism.
+
+---
+
+# Explicit Selection
+
+An operation may support explicit selection beneath its natural subject.
+
+The intended generic shape is approximately:
+
+```text
+--select <SELECTION>
+```
+
+For example:
+
+```text
+vapor platform-server test \
+    --select "Registry"
+```
+
+selects the `Registry` Source Repo scope beneath Platform Server.
+
+And:
+
+```text
+vapor platform-server test \
+    --select "Registry/core"
+```
+
+may select Project `core` beneath that Source Repo.
+
+The selector itself expresses topology.
+
+The user does not need to redundantly say:
+
+```text
+--source-repo Registry
+--project core
+```
+
+when the resolved path already tells Vapor which object kinds were selected.
+
+---
+
+# Multiple Selection
+
+Where an operation supports several explicit selections, Vapor should prefer one coherent selection expression rather than requiring excessive repeated flags.
+
+Conceptually:
+
+```text
+--select "Registry, Identity"
+```
+
+may select two Source Repo subtrees.
+
+And:
+
+```text
+--select "Registry/core, Identity/core"
+```
+
+may select two Projects.
+
+The exact quoting/list delimiter remains open.
+
+Vapor Core should receive exact resolved selections rather than command-line syntax.
+
+---
+
+# Hierarchical Selection
+
+Selection is hierarchical.
+
+Selecting a parent node selects that operation scope together with whatever descendants the operation considers part of that scope.
+
+For example:
+
+```text
+--select "Registry"
+```
+
+does not need a second generic:
+
+```text
+--all-projects
+```
+
+flag merely to indicate that Registry's relevant descendants participate.
+
+The operation definition decides what performing that operation at Source Repo scope actually means.
+
+Likewise, no explicit selector means:
+
+> use the natural complete operation subject
+
+rather than:
+
+> secretly act as though `--all` was supplied.
+
+This distinction is important.
+
+---
+
+# Natural Subject Scope
+
+Every operation has a natural complete subject.
+
+For example:
+
+```text
+vapor platform-server test
+```
+
+means:
+
+> Test Vapor Platform Server.
+
+It does not mechanically mean:
+
+```text
+run `test` once against every Project
+```
+
+The Platform Server test operation may include:
+
+* Project tests;
+* integration tests;
+* generated validation;
+* service health checks;
+* other authored steps.
+
+The operation recipe defines the actual realization.
+
+---
+
+# Operation-Specific Legality
+
+The existence of generic selection syntax does not imply every operation accepts every selection shape.
+
+Whether a selection is legal may depend on:
+
+```text
+subject
+operation
+operation variant
+deployment/run target
+selected topology
+authored operation recipe
+Project/Source Repo relationships
+first-party subsystem semantics
+```
+
+Therefore Vapor must avoid universal assumptions such as:
+
+```text
+deployment can never target a Project
+```
+
+A particular operation may support:
+
+```text
+platform-server deploy local
+    selected Source Repo allowed
+```
+
+while rejecting:
+
+```text
+platform-server deploy vps
+    selected Source Repo forbidden
+```
+
+because VPS deployment requires the whole configured deployment unit.
+
+---
+
+# Specific Failure Diagnostics
+
+Invalid operation requests should explain the actual violated rule.
+
+Bad:
+
+```text
+error: invalid scope
+```
+
+Good:
+
+```text
+error: Platform Server VPS deployment requires the complete
+       Platform Server deployment scope
+
+selected:
+    Source Repo `Registry`
+
+required:
+    entire Vapor Platform Server
+
+help: deploy the complete Platform Server:
+      vapor platform-server deploy vps
+
+note: Source Repo-scoped deployment is supported by `deploy local`
+```
+
+The UX principle is:
+
+> **Specific operation legality → specific error → specific safe resolution.**
+
+This should be a defining quality of Vapor.
+
+---
+
+# Exhaustive Ambiguity Diagnostics
+
+When a selector is ambiguous, Vapor should enumerate the known relevant candidates and useful safe resolution methods.
+
+For example:
+
+```text
+error: Project `core` is ambiguous within Vapor Platform Server
+
+matches:
+
+  Source Repo `Registry`
+      Project `core`
+
+  Source Repo `Identity`
+      Project `core`
+
+  Source Repo `Diagnostics`
+      Project `core`
+
+help: select one explicitly:
+
+      --select "Registry/core"
+      --select "Identity/core"
+      --select "Diagnostics/core"
+
+help: or establish a narrower persistent Context and retry
+```
+
+Where exact persistent-context commands are known, Vapor should print them too.
+
+Diagnostics should be exhaustive with respect to safe modeled alternatives Vapor can actually prove.
+
+They should not provide speculative actions as guaranteed fixes.
+
+---
+
+# Source Repo Container Commands
+
+A **Source Repo Container** is a Registry-recognized Vapor Container Repo.
+
+The generic namespace is:
+
+```text
+source-repo-container
+```
+
+Current intended operations include:
+
+```text
+source-repo-container
+    create
+    acquire
+    status / inspect
+    open
+    close
+```
+
+Exact final status/inspect/open/close spelling remains subject to later CLI polishing.
+
+---
+
+# Source Repo Container Acquisition
+
+Generic acquisition accepts only a registered Vapor Source Repo Container identity.
+
+Conceptually:
+
+```text
+vapor source-repo-container acquire GHF-Studios/Loo-Cast
+```
+
+means:
+
+```text
+resolve identity through Registry
+→ verify it is a valid registered Source Repo Container
+→ resolve provider linkage
+→ acquire its Git repository into canonical Superworkspace location
+→ initialize authored Source Repo/submodule topology
+→ validate resulting Vapor source topology
+```
+
+It is not equivalent to arbitrary:
+
+```text
+git clone <URL>
+```
+
+Vapor acquisition must reject arbitrary unregistered Git repositories.
+
+The default acquisition unit is the entire Source Repo Container.
+
+---
+
+# Acquisition Destination
+
+Ordinary acquisition does not accept an arbitrary destination path.
+
+Vapor already knows the canonical Superworkspace.
+
+The resulting local path is derived from:
+
+```text
+Superworkspace
++ Authority
++ Source Repo Container
+```
+
+For example:
+
+```text
+<Superworkspace>/GHF-Studios/Loo-Cast
+```
+
+Acquisition into arbitrary filesystem locations is not the normal Vapor model.
+
+---
+
+# Source Repo Container Creation
+
+Conceptually:
+
+```text
+vapor source-repo-container create GHF-Studios/My-Stuff
+```
+
+means:
+
+```text
+establish Source Repo Container identity
+→ create provider-backed Git repository
+→ initialize Vapor Container metadata
+→ place local checkout into canonical Superworkspace
+→ register/provider-link through Vapor Registry
+```
+
+Creating a Container does not implicitly create Source Repos or Projects.
+
+A new Container may legitimately begin empty.
+
+Provider visibility should be conservative/private by default unless explicitly changed.
+
+---
+
+# Source Repo Commands
+
+A **Source Repo** is one Git repository and one Vapor Workspace inside a Source Repo Container.
+
+Current intended generic namespace:
+
+```text
+source-repo
+```
+
+Possible operations include:
+
+```text
+source-repo
+    create
+    acquire
+    status / inspect
+    open
+    close
+```
+
+Independent Source Repo acquisition is more constrained than Container acquisition.
+
+---
+
+# Source Repo Creation
+
+Conceptually:
+
+```text
+vapor source-repo create GHF-Studios/My-Stuff/Game
+```
+
+means:
+
+```text
+create provider Git repository
+→ initialize Vapor Workspace
+→ register Source Repo
+→ add it as authored Git submodule of the parent Container
+→ update parent Container topology
+```
+
+The operation is explicit.
+
+Creating a Game/Engine/Library Project must not silently create a missing Source Repo.
+
+---
+
+# Source Repo Independent Acquisition
+
+The conservative default is:
+
+```text
+Source Repo Container
+    = atomic acquisition unit
+```
+
+A Source Repo may be independently acquired only when the Registry/topology explicitly permits it.
+
+Conceptually:
+
+```text
+vapor source-repo acquire GHF-Studios/Foo/Examples
+```
+
+is valid only if `Examples` is independently acquirable.
+
+Otherwise Vapor should explain:
+
+```text
+error: Source Repo `GHF-Studios/Foo/Internal`
+cannot be acquired independently
+
+it belongs to Source Repo Container:
+    GHF-Studios/Foo
+
+help: acquire the complete Container:
+      vapor source-repo-container acquire GHF-Studios/Foo
+```
+
+The fact that Git can technically clone the repository is not sufficient.
+
+---
+
+# Missing Source vs Missing Git Submodule
+
+Acquisition and Git reconciliation are different.
+
+If an entire registered Source Repo Container is not locally available:
+
+```text
+acquire
+```
+
+is appropriate.
+
+If the Container already exists and declares a Source Repo submodule whose checkout is missing:
+
+```text
+Git topology reconciliation
+```
+
+is appropriate.
+
+Vapor must not disguise the second case as fresh Source Repo acquisition.
+
+---
+
+# Git-Oriented Diagnostics
+
+Git remains fundamental and visible.
+
+Vapor may diagnose:
+
+```text
+dirty working tree
+missing submodule checkout
+unexpected gitlink
+detached HEAD
+unpushed commits
+merge conflict
+branch divergence
+```
+
+using recognizably Git-oriented language.
+
+For example:
+
+```text
+Source Repo `Registry` is declared as a Git submodule but its
+checkout is missing.
+
+inspect:
+    git status
+    git submodule status
+
+possible reconciliation:
+    git submodule update --init -- Registry
+
+warning:
+    this changes the local Git checkout. Vapor cannot guarantee that
+    applying it is appropriate for your current development state.
+```
+
+Vapor should make stronger corrective recommendations only when it can actually prove they are safe.
+
+---
+
+# Diagnose and Repair
+
+Diagnose and Repair are not synonyms for source restoration.
+
+Diagnosis may inspect:
+
+* Vapor metadata;
+* Registry linkage;
+* Git topology/state;
+* Cargo realization;
+* generated state;
+* toolchain state;
+* IDE integration;
+* operation configuration.
+
+Repair is intentionally conservative.
+
+Repair must not silently:
+
+* clone missing authored source;
+* reacquire Source Repo Containers;
+* restore authored files from Git;
+* reset dirty repositories;
+* discard unpushed commits;
+* change branches;
+* overwrite authored configuration.
+
+Repair is primarily for safely derivable Vapor-owned state such as:
+
+* generated metadata;
+* caches;
+* indexes;
+* deterministic Cargo reconciliation owned by Vapor;
+* IDE integration;
+* generated operation realization;
+* derived configuration.
+
+---
+
+# First-Party Bespoke Namespaces
+
+First-party source may receive bespoke top-level command surfaces when that improves Vapor UX.
+
+Current intended examples:
+
+```text
+client
+platform-server
+examples
+```
+
+This is a capability available to trusted first-party facilities.
+
+It is not required for every first-party repository.
+
+It is not available to arbitrary third-party source.
+
+---
+
+# First-Party Trust Boundary
+
+A third-party Source Repo Container cannot declare:
+
+```text
+I am first-party
+```
+
+and thereby inject new root CLI commands.
+
+First-party trust is controlled through Vapor Root Authority / trusted Registry state.
+
+Conceptually, a Container may have independent dimensions such as:
+
+```text
+identity:
+    GHF-Studios/Vapor-Client
+
+trust:
+    first-party
+
+facility:
+    client
+```
+
+versus:
+
+```text
+identity:
+    Some-Author/My-Content
+
+trust:
+    standard
+
+facility:
+    none
+```
+
+First-party trust makes bespoke command semantics possible.
+
+Actual semantic usefulness determines whether such a namespace exists.
+
+---
+
+# Vapor Client Namespace
+
+The Vapor Client is a known singleton first-party facility.
+
+The intended command family is approximately:
+
+```text
+client
+    acquire
+    status
+    build
+    test
+
+    deploy
+        local
+        steam
+```
+
+`client acquire` resolves the trusted registered source identity backing the Client and invokes the appropriate generic acquisition machinery.
+
+Users do not need to repeat:
+
+```text
+GHF-Studios/Vapor-Client
+```
+
+because `client` already identifies the singleton facility.
+
+Its deployment semantics remain Client-specific.
+
+---
+
+# Vapor Platform Server Namespace
+
+The Vapor Platform Server is another known singleton first-party facility.
+
+The intended command family is approximately:
+
+```text
+platform-server
+    acquire
+    status
+    build
+    test
+
+    deploy
+        local
+        vps
+```
+
+`vps` is the current descriptive deployment-target spelling.
+
+It may later be generalized if the production deployment model outgrows a single VPS.
+
+The semantic distinction must remain:
+
+```text
+deploy local
+    local Platform Server realization/deployment
+
+deploy vps
+    actual remote production/development VPS deployment
+```
+
+Platform Server operations may have different selection legality per deployment target.
+
+---
+
+# Examples Namespace
+
+Official Vapor Examples may receive a lightweight bespoke namespace:
+
+```text
+examples
+    acquire
+    status
+    ...
+```
+
+The namespace represents the official Examples facility rather than its current Git topology.
+
+Today Examples might be backed by one Source Repo inside another Container.
+
+Later it could move elsewhere.
+
+The user-facing `examples` subject need not change solely because source topology changes.
+
+---
+
+# Bespoke Does Not Mean Duplicated Implementation
+
+Bespoke public semantics should reuse shared Vapor Core mechanisms.
+
+For example:
+
+```text
+client acquire
+platform-server acquire
+examples acquire
+```
+
+may all share:
+
+* trusted identity resolution;
+* Registry access;
+* provider-backed acquisition;
+* Git orchestration;
+* topology validation;
+* diagnostics.
+
+Likewise bespoke build/test/deploy operations may share:
+
+* operation recipe execution;
+* selection resolution;
+* process execution;
+* health checks;
+* reporting.
+
+The public semantics are bespoke.
+
+The implementation primitives should be shared where meaningful.
+
+---
+
+# Operation Recipes
+
+Some operation behavior should be configurable/authored rather than permanently hardcoded into Rust.
+
+This is especially important for first-party build/test/deployment orchestration.
+
+The intended model is lightweight:
+
+```text
+authored declarative operation recipe
++
+Vapor-native safe primitives
++
+small explicit scripts/process calls where necessary
+```
+
+It should resemble:
+
+```text
+task/workflow configuration
+```
+
+more than:
+
+```text
+arbitrary application/plugin runtime
+```
+
+Possible authored information includes:
+
+* supported selection shapes;
+* required Source Repos;
+* required Projects;
+* build steps;
+* ordering;
+* parallelism;
+* validation;
+* artifact relationships;
+* deployment steps;
+* health checks.
+
+The exact schema is intentionally not frozen here.
+
+---
+
+# Vapor Metadata and Generated Operation State
+
+Authored operation intent should live in Vapor-owned authored configuration such as appropriate `*.vapor.toml` manifests.
+
+Generated/resolved realization may live under `.vapor/`.
+
+The general principle is:
+
+```text
+authored Vapor manifests
+    semantic intent
+
+.vapor/
+    derived/generated realization
+```
+
+Vapor should not casually rewrite human-authored sections merely to store generated state.
+
+---
+
+# Existing-Object Generic Operations
+
+The final complete set of generic existing-object operations is not frozen.
+
+Likely candidates include:
+
+```text
+inspect
+verify
+resolve
+build
+test
+run
+publish
+```
+
+where applicable.
+
+The key semantic rule is frozen:
+
+> **Existing-object operations should resolve the target first and validate its kind/operation compatibility rather than requiring the kind to be redundantly encoded in the command grammar.**
+
+For example:
+
+```text
+vapor test GHF-Studios/My-Stuff/Game/My-Game
+```
+
+may resolve:
+
+```text
+Project
+kind = Game
+```
+
+and invoke Game-compatible test semantics.
+
+If the resolved kind cannot support `test`, Vapor should explain why.
+
+---
+
+# Project Kind-Specific Operations
+
+Some operations may remain kind-specific where the operation itself is semantically inseparable from that kind.
+
+Creation is the clearest example.
+
+Packagepack also has lifecycle semantics unavailable to ordinary subordinate Projects, such as complete-composition installation/selection/runtime behavior.
+
+Therefore the CLI must not pursue syntactic uniformity at the cost of semantic clarity.
+
+---
+
+# Rust/Cargo Vocabulary
+
+Vapor source topology is:
+
+```text
+Source Repo Container
+→ Source Repo
+→ Project
+```
+
+Rust/Cargo realization may contain:
+
+```text
+Cargo workspace
+package
+crate
+target
+binary
+example
+...
+```
+
+The CLI should use these names only when it genuinely means the Rust/Cargo object.
+
+For example, managed Cargo may expose Cargo-native selectors.
+
+A generic Vapor Source Repo selector should not be called `--workspace` merely because Source Repo also equals Vapor Workspace.
+
+---
+
+# Managed Cargo
+
+`vapor toolchain cargo -- ...` exposes Vapor's managed Cargo environment.
+
+Its job may include:
+
+* discovering the Vapor-managed Rust/Cargo toolchain;
+* applying Vapor's managed environment;
+* resolving a Project when Cargo requires one;
+* invoking Cargo in the correct physical context;
+* preserving Cargo-native arguments;
+* returning Cargo output faithfully.
+
+Cargo-native `-p/--package` remains Cargo vocabulary.
+
+Vapor Project identity remains Vapor vocabulary.
+
+The two may assist each other's resolution without becoming the same identity system.
 
 ---
 
 # Role and Authority
 
-Role and authorization are separate concepts.
+Installed Role and external Authority remain separate.
 
-A Vapor Role describes the kinds of work for which the local Steam App Instance is equipped.
-
-The installed Role progression is:
+Current Role progression:
 
 ```text
 Player
@@ -392,60 +1380,25 @@ Player
 → Ecosystem Developer
 ```
 
-Ecosystem Developer is locally attainable.
+Root Authority is not another installed Role.
 
-An Ecosystem Developer may acquire, fork, create, modify, build, and test Vapor ecosystem source without official Vapor authorization.
+A locally equipped Ecosystem Developer may develop Vapor source and run local first-party workflows without automatically possessing permission to modify official remote infrastructure.
 
-Authorization determines whether a particular operation may affect a particular protected external target.
+Protected actions may additionally require authorization such as:
 
-Examples include:
+* creating/pushing official repositories;
+* publishing under protected namespaces;
+* deploying Steam branches/depots;
+* deploying production Platform infrastructure;
+* administering Registry/identity infrastructure.
 
-* Pushing to official GHF Studios repositories.
-* Creating repositories in protected organizations.
-* Publishing into official namespaces.
-* Deploying official Steam branches or depots.
-* Modifying production registry/server infrastructure.
-
-The same operation may therefore be locally available while a particular target remains unauthorized.
-
-Protected operations should be visibly distinguishable rather than conceptually hidden.
-
----
-
-# Root Authority
-
-Root Authority is not an installed development Role above Ecosystem Developer.
-
-It is an authority state granting ultimate administrative and ownership authority over protected official Vapor ecosystem resources.
-
-A Root Authority normally operates with Ecosystem Developer Role plus Root Authority authorization.
-
----
-
-# Role-Based Surface Exposure
-
-Underlying Vapor Core operations may exist even when a particular user-facing surface does not expose them.
-
-Installed Role influences which operations and tooling are presented.
-
-For example:
-
-* Player surfaces focus on consuming and running finished Vapor Apps.
-* Composer surfaces expose pack composition workflows.
-* Content Developer surfaces expose Engine/Game/Mod/Library creation and development.
-* Ecosystem Developer surfaces expose Vapor ecosystem source development.
-
-Role-based visibility is distinct from authorization.
-
-An operation visible to an Ecosystem Developer may still reject a protected target for lack of authority.
+CLI visibility and remote authorization are separate concerns.
 
 ---
 
 # System-Oriented Namespaces
 
-System-oriented namespaces represent stable Vapor domains or first-class system concepts.
-
-The currently intended shape is approximately:
+The intended system-facing shape is approximately:
 
 ```text
 installation
@@ -468,490 +1421,336 @@ toolchain
     repair
     cargo
 
-source
-    status
-    list
-    acquire
-    fork
-
-ecosystem
-    status
-    acquire
-    fork
+source-repo-container
     create
+    acquire
+    status / inspect
+    open
+    close
+
+source-repo
+    create
+    acquire
+    status / inspect
+    open
+    close
+
+client
+    acquire
+    status
     build
     test
-    publish
+    deploy local
+    deploy steam
 
-    deploy
-        local
-        steam
+platform-server
+    acquire
+    status
+    build
+    test
+    deploy local
+    deploy vps
+
+examples
+    acquire
+    status
 ```
 
-The exact future CLI projection of Development Session operations such as Open, Focus, Close, Forget, and realization selection is deliberately not frozen yet.
+This is not frozen as an exhaustive implementation checklist.
 
-Those semantics exist independently in the **Vapor Context, Identity, Session And Selection Model**.
+It captures the current semantic command ownership.
 
-The CLI should gain syntax for them only when the command shape has been pressure-tested against the SDK/Core model.
+Notably absent:
 
-`source` represents source acquisition, source availability, provider linkage, and source-oriented operations.
+```text
+ecosystem
+```
 
-It must not become a generic bucket for:
-
-* every development-context operation;
-* Project selection;
-* SDK session state;
-* IDE integration;
-* arbitrary filesystem navigation.
-
-Likewise, `ecosystem` represents Vapor ecosystem/root development as a semantic domain rather than merely a directory containing Vapor's own repositories.
+There is no generic public `ecosystem` object whose `create`, `fork`, `build`, `test`, or `deploy` operations form one coherent universal lifecycle.
 
 ---
 
-# Diagnose and Repair
+# No Generic Ecosystem Namespace
 
-Diagnosis and repair may appear at meaningful owning scopes.
+“Vapor ecosystem” remains a useful descriptive phrase for Vapor as a whole.
 
-Examples include:
+It is not a sufficiently concrete CLI object.
+
+The old shape:
 
 ```text
-vapor installation diagnose
-vapor installation repair
-
-vapor toolchain diagnose
-vapor toolchain repair
+vapor ecosystem ...
 ```
 
-Narrow operations should diagnose or reconcile the domain they own.
+should therefore be retired.
 
-The graphical SDK may additionally provide aggregated Problems/health views spanning several domains without requiring one artificial CLI namespace for every cross-cutting presentation.
+Operations previously grouped there must move to their actual semantic owners:
 
-Repair must remain conservative.
+```text
+Client work
+    → client
 
-It must not treat authored source as disposable.
+Platform Server work
+    → platform-server
 
-In particular, repair must not silently:
+source topology
+    → source-repo-container / source-repo
 
-* reset dirty Git repositories;
-* destroy uncommitted source;
-* discard unpushed commits;
-* attach unrelated similarly named checkouts;
-* rewrite explicit authored configuration merely because a generated state differs.
+derived-state reconciliation
+    → diagnose / repair at appropriate owner
 
-Where a canonical managed answer exists, ordinary operations may proactively reconcile safe derived state.
-
-Diagnose/Repair remain especially valuable for observability and failure recovery.
+ordinary Content Projects
+    → semantic Project operations
+```
 
 ---
 
-# Semantic Target Model
+# No Arbitrary Ecosystem Create/Fork
 
-CLI operations should target Vapor semantic or structural objects rather than implementation paths wherever possible.
-
-Examples include:
+The CLI should not expose:
 
 ```text
-GHF-Studios/Vapor-Root/Vapor/Client
-GHF-Studios/Vapor-Examples/Wheel-Rules
+ecosystem create
+ecosystem fork
 ```
 
-depending on target domain.
+Creating an entire alternative Vapor ecosystem through Vapor is not an ordinary development operation.
 
-Filesystem paths, Cargo manifest paths, provider URLs, and Cargo Package IDs remain legitimate implementation/diagnostic selectors where an operation explicitly needs them.
+Likewise, forking all of Vapor as one conceptual umbrella operation is too extreme and semantically unclear.
 
-They are not preferred semantic identity.
+Normal development should operate on concrete registered source topology or first-party facilities.
 
 ---
 
-# Canonical Identity and Selectors
+# No Generic Arbitrary Git Acquisition
 
-A CLI argument which identifies a Vapor object is conceptually a **selector** unless the command explicitly requires a canonical ID.
+Vapor acquisition does not replace ordinary Git.
 
-The selector may be:
+If a user wants an arbitrary Git repository, they can use Git.
 
-```text
-full canonical identity
-qualified suffix
-local name
-local alias
-exact realization selector
-```
+Vapor's acquisition commands are for modeled registered Vapor source.
 
-depending on the operation and available context.
-
-For example, Project selectors might conceptually include:
+Therefore:
 
 ```text
-GHF-Studios/Vapor-Root/Vapor/Client
-Vapor-Root/Vapor/Client
-Vapor/Client
-Client
+git clone torvalds/linux
 ```
 
-The shorter forms are not alternate canonical IDs.
+is ordinary Git.
 
-They are context-dependent selectors.
+But:
 
-Once resolved, Vapor Core operates on exact canonical identity and, when physical work is required, an exact local realization.
+```text
+vapor source-repo-container acquire torvalds/linux
+```
+
+must fail unless that identity is actually a registered Vapor Source Repo Container.
 
 ---
 
-# Minimal Information Principle
+# Plain Git Remains Valid
 
-The CLI should accept the shortest selector which safely resolves the requested target.
+Advanced users may continue to use Git directly.
 
-The principle is:
+Vapor should not require that every valid checkout was created by Vapor itself.
 
-> **Require no more identifying information than is necessary to perform the operation unambiguously.**
+If a user manually performs the equivalent correct Git operations inside the canonical Superworkspace and the resulting topology matches registered Vapor source, Vapor should be capable of recognizing it.
 
-This allows ergonomic commands without weakening identity.
+The acquisition operation is a convenient modeled orchestration path.
+
+It is not magical provenance.
+
+---
+
+# Helpful Missing-Parent Diagnostics
+
+Creation commands should explain missing hierarchy precisely.
 
 For example:
 
 ```text
-vapor library resolve Wheel-Rules
+vapor game create GHF-Studios/My-Stuff/Game/My-Game
 ```
 
-may be valid when the effective development context contains exactly one Library matching that selector.
+when `My-Stuff` does not exist may produce:
 
-If several candidates exist, Vapor reports ambiguity.
+```text
+error: Source Repo Container `GHF-Studios/My-Stuff` does not exist
 
-It does not guess.
+help: create it:
+      vapor source-repo-container create GHF-Studios/My-Stuff
+```
+
+If it exists remotely/Registry-side but is not locally available:
+
+```text
+error: Source Repo Container `GHF-Studios/My-Stuff`
+       is not available in the local Superworkspace
+
+help: acquire it:
+      vapor source-repo-container acquire GHF-Studios/My-Stuff
+```
+
+If the Container exists but Source Repo `Game` does not:
+
+```text
+error: Source Repo `GHF-Studios/My-Stuff/Game` does not exist
+
+help: create it:
+      vapor source-repo create GHF-Studios/My-Stuff/Game
+```
+
+Vapor must not silently create missing parents during higher-level Project creation.
 
 ---
 
-# Ambiguity
+# Error Philosophy
 
-Ambiguity is a normal resolution result.
+CLI errors are part of Vapor's teaching surface.
 
-A useful CLI error should explain:
+A strong error should explain, where applicable:
 
-* what selector was ambiguous;
-* which exact candidates matched;
-* what additional qualification would distinguish them.
+* what Vapor resolved;
+* what it could not resolve;
+* exact candidate identities;
+* target kinds;
+* violated operation invariant;
+* required Role;
+* missing authority;
+* missing local source;
+* relevant source parent;
+* safe acquisition/create operations;
+* contextual-resolution alternatives;
+* explicit-selection alternatives;
+* relevant Git inspection;
+* relevant operation variant which does support the requested scope.
 
-Example:
+This is particularly important because Vapor should remain approachable to developers who may also be learning:
 
-```text
-error: Project selector `Client` is ambiguous
-
-Candidates:
-    GHF-Studios/Vapor-Root/Vapor/Client
-    Leslie/Vapor-Fork/Vapor/Client
-
-Use a more qualified selector or establish a narrower development context.
-```
-
-Non-interactive CLI behavior must remain deterministic.
-
-Optional interactive selection for explicitly human-oriented workflows may be introduced later, but automation must never depend on it.
-
----
-
-# Operation Cardinality
-
-The CLI does not require every development domain to have exactly one globally active object.
-
-Vapor Core operations define the target cardinality they accept.
-
-Conceptually:
-
-```text
-ExactlyOne<Project>
-Many<Project>
-ExactlyOne<Packagepack>
-Many<Content>
-```
-
-If resolution produces:
-
-```text
-0 candidates
-```
-
-the operation is unresolved.
-
-If it produces:
-
-```text
-1 candidate
-```
-
-a singular operation may proceed.
-
-If it produces multiple candidates and the operation accepts multiplicity, all explicitly resolved candidates may participate.
-
-If it produces multiple candidates and the operation requires one, the CLI reports ambiguity.
-
-CLI implementation convenience must not distort the underlying development model into one global `active_project`.
+* Git;
+* Rust;
+* Cargo;
+* game development;
+* software development generally.
 
 ---
 
-# CLI Context Resolution
+# Safety of Suggested Actions
 
-The CLI constructs an ephemeral operation context from modeled state and command input.
+Vapor should distinguish safe deterministic guidance from potentially destructive actions.
 
-Conceptually it may use:
+Safe:
 
 ```text
-explicit selector
-    ↓
-qualified/local selector resolution
-    ↓
-relevant persisted/resumed development context
-    ↓
-current working directory as a safe physical hint
-    ↓
-unique usable candidate
-    ↓
-ambiguity / unresolved
+Source Repo Container not local
+→ acquire registered Container
 ```
 
-This is a CLI projection of the shared Context Model rather than a separate identity system.
+Potentially state-changing Git reconciliation:
 
-Exact precedence may vary where an explicit selector provides stronger information than ambient context.
+```text
+missing submodule checkout
+→ inspect Git state
+→ possible `git submodule update --init`
+→ explicit caution
+```
 
-The invariant is:
-
-> **Explicit semantic intent outranks accidental environment.**
+Vapor must not present destructive Git actions as guaranteed fixes unless their safety is actually known.
 
 ---
 
-# Current Working Directory
+# CLI / GUI / Automation Equality
 
-CWD is useful because shell users naturally invoke commands from inside repositories and Projects.
+All frontends share Vapor Core semantics.
 
-CWD may therefore help identify:
+Their interaction mechanics differ.
 
-* Superworkspace;
-* Container Repo;
-* Workspace realization;
-* Project realization.
+## CLI
 
-But:
+Uses:
 
-> **CWD is an ambient hint, not durable Vapor identity.**
+* Vapor Paths;
+* selectors;
+* `--context`;
+* `--select`;
+* explicit commands;
+* deterministic diagnostics.
 
-CWD must not silently:
+## SDK / GUI
 
-* change persisted SDK Focus;
-* replace exact remembered identities;
-* become an implicit source root recorded as truth;
-* force unrelated commands to depend on the shell's current directory.
+May use:
 
-A command issued inside a known Project may naturally operate there.
+* tree navigation;
+* dialogs;
+* Inspector actions;
+* multi-selection;
+* persistent navigation state.
 
-The same command issued from `~` should still work when stronger modeled context and selectors make the target unambiguous.
+## Automation
 
----
+May prefer:
 
-# Raw Path Overrides
+* exact canonical paths;
+* explicit structured selection;
+* machine-readable output;
+* deterministic operation results.
 
-Path arguments remain legitimate escape hatches for operations which intentionally target local storage or bootstrap unknown source.
+The GUI should not be crippled merely because some gesture is awkward to spell in CLI syntax.
 
-Examples may include:
-
-* registering a previously unknown checkout;
-* locating a moved realization;
-* opening/importing an arbitrary local directory;
-* debugging local source discovery.
-
-They should not be required on ordinary already-modeled Content operations.
-
-A normal command should prefer:
-
-```text
-Vapor ID
-Project selector
-Workspace selector
-realization selector
-```
-
-over:
-
-```text
-../../some/local/root
-```
-
----
-
-# Cargo Execution Context
-
-Cargo requires a physical Project/workspace execution context.
-
-Vapor's managed Cargo wrapper should therefore resolve the relevant Vapor Project before spawning Cargo where a Project is required.
-
-Conceptually:
-
-```text
-vapor toolchain cargo
-    ↓
-Cargo arguments
-    ↓
-explicit Project selector if supplied
-    ↓
-Cargo package selector if it uniquely identifies a Vapor Project
-    ↓
-ephemeral CLI/CWD context
-    ↓
-unique Project
-    ↓
-managed Cargo
-```
-
-`--project` is therefore a **Project selector**, not inherently a globally unique Project ID argument.
-
-A short selector such as:
-
-```text
---project Client
-```
-
-is valid only when the effective context resolves it unambiguously.
-
-A canonical Project identity remains valid independent of local shorthand.
-
-Cargo-native selectors such as `-p/--package` may assist physical Project resolution, but Cargo package identity does not become Vapor semantic identity.
-
----
-
-# Managed Cargo
-
-`vapor toolchain cargo -- ...` exposes the Installation-owned managed Cargo tool without globally exposing the managed Rust/Cargo toolchain through the user's shell PATH.
-
-The wrapper should:
-
-* discover the active Vapor Installation;
-* establish the Installation-owned managed toolchain environment for the child;
-* resolve a Vapor Project when the Cargo operation requires one;
-* preserve Cargo arguments;
-* execute Cargo in the selected Project context;
-* return Cargo's success/failure meaningfully.
-
-Global Vapor command exposure and private managed-tool exposure remain distinct concerns.
-
----
-
-# Development Session and CLI
-
-A one-shot CLI invocation does not need to become a permanently live session like the SDK.
-
-It may construct an ephemeral Development Session from:
-
-* exact command targets;
-* persisted Resume/default state;
-* known local realizations;
-* CWD;
-* other safe context.
-
-The CLI should not silently mutate durable SDK Focus merely because an operation resolved successfully.
-
-Commands which deliberately mutate Open/Focus/Resume state may be added explicitly once their CLI grammar is settled.
-
----
-
-# GUI / CLI / Automation Equality
-
-GUI and CLI equality means semantic and operational equality rather than interaction equality.
-
-The GUI may use:
-
-```text
-Explorer
-multi-selection
-Inspector
-dialogs
-graph interactions
-context menus
-```
-
-The CLI may use:
-
-```text
-selectors
-flags
-canonical IDs
-machine-readable output
-```
-
-Automation may prefer:
-
-```text
-canonical identities
-exact realization identifiers
-structured output
-non-interactive deterministic behavior
-```
-
-All should call the same underlying Vapor Core operations.
-
-The CLI should not imitate awkward GUI gestures merely for symmetry.
-
-The GUI should not be crippled because a particular interaction is awkward to spell in shell syntax.
-
----
-
-# SDK / CLI Discoverability
-
-CLI errors should teach the model where possible.
-
-Good errors should expose:
-
-* canonical candidate identities;
-* missing Role/capability;
-* missing realization;
-* required target cardinality;
-* possible repair;
-* relevant qualification syntax.
-
-The SDK may present the same semantic problem visually.
-
-For example, the GUI may show an ambiguous target picker while the CLI lists exact candidates.
-
-The semantic reason is identical.
+The CLI should not imitate GUI gestures unnecessarily.
 
 ---
 
 # CLI Invariants
 
-* CLI structure does not mirror Rust module structure.
-* CLI structure does not mirror Cargo workspace structure.
-* CLI structure does not automatically mirror the Vapor type hierarchy.
-* Vapor Content kinds remain explicit first-class CLI namespaces where useful.
-* A generic `content` namespace is not introduced merely as a taxonomy bucket.
-* `library` means the Vapor Content kind; Content Library is a separate product concept.
-* Packagepack workflows do not require ordinary users to manually switch between Packagepack, Composition, and Vapor App namespaces.
-* Shared semantic operations are implemented once in Vapor Core.
-* Dedicated Vapor binaries expose projections of those operations.
-* CLI selectors are not automatically canonical IDs.
-* Short selectors are accepted only when unambiguous.
-* Canonical structural identities are case-preserving and slash-separated.
-* Project selectors resolve to exact Project identity before physical execution.
-* Cargo package identity does not replace Vapor Project identity.
-* Raw paths are realization/bootstrap escape hatches rather than normal semantic selectors.
-* CWD is an ephemeral hint rather than durable context.
-* Multiple objects may be Open/Focused even when an operation requires one.
-* Operation cardinality determines whether multiplicity is valid.
-* Ambiguous singular operations fail rather than choosing arbitrarily.
-* CLI operations must remain deterministic for automation.
-* GUI, CLI, and automation share Core semantics but may use different interaction mechanics.
-* Role controls locally equipped workflow capability.
-* Authorization controls protected operations against protected targets.
-* Root Authority is authority rather than an installed Role.
-* User-authored source remains outside the disposable Steam App Instance by default.
+* CLI grammar reflects semantic Vapor concepts rather than code layout.
+* There is no public generic `ecosystem` namespace.
+* Superworkspace is not a CLI identity segment.
+* Ordinary acquisition never asks for a destination path.
+* Source Repo Container acquisition requires Registry-recognized Vapor source.
+* Container acquisition is conservative/atomic by default.
+* Source Repo independent acquisition requires explicit modeled permission.
+* Source Repo equals Vapor Workspace.
+* Project is the final Vapor source hierarchy layer before deeper Rust/Cargo realization.
+* Typed Content kinds are Project kinds, not identity segments.
+* Creation states the new Project kind explicitly.
+* Existing-object operations should not redundantly restate already-resolved kind.
+* Context supplies missing information to the left.
+* Selection supplies/refines information to the right.
+* Persistent Context does not imply operation scope.
+* Explicit transient Context overrides persistent Context for one invocation.
+* CWD is not ordinary semantic Vapor Context.
+* No selector means natural complete subject scope, not hidden `--all`.
+* Parent selection naturally includes relevant descendants according to operation semantics.
+* Selection legality is operation-specific.
+* Ambiguity is never guessed.
+* Ambiguity diagnostics should enumerate useful candidates and safe resolutions.
+* Git remains visible and Git-oriented.
+* Repair does not reacquire authored source or reset Git.
+* First-party bespoke TLDs are trusted Vapor facilities.
+* Third-party source cannot inject root CLI grammar.
+* Bespoke semantics should reuse shared Vapor Core mechanisms.
+* Operation recipes should remain lightweight rather than becoming arbitrary application/plugin runtimes.
+* GUI, CLI, and automation invoke shared Core semantics.
 
 ---
 
 # Open CLI Questions
 
-* Exact CLI spelling of Open / Focus / Close / Forget.
-* Exact syntax for selecting one local realization among several.
-* Whether human-oriented mode offers optional interactive ambiguity resolution.
-* Exact machine-readable output modes.
-* Exact selector grammar beyond canonical slash-separated structural IDs.
-* Exact Packagepack install/select/remove lifecycle terminology.
-* Exact template-selection syntax.
-* Whether standalone `resolve` should eventually be exposed for every dependency-bearing Content kind.
-* Exact CLI presentation of Cargo-reconciliation and local-override state.
-* Exact provider/fork qualification syntax.
-* Exact relationship between future `vapor-sdk` CLI/session commands and the universal `vapor` surface.
+The following remain intentionally unsettled:
+
+* Final public spelling of `source-repo-container`, if a shorter equally precise term proves better.
+* Final exact spellings of persistent Context operations such as `open` and `close`.
+* Final spelling of `--context`.
+* Final spelling and expression grammar of `--select`.
+* Exact list delimiter/quoting syntax for multiple selections.
+* Exact generic existing-object operation inventory.
+* Exact relationship between Project-generic operations and kind-specific Packagepack lifecycle commands.
+* Exact machine-readable output format.
+* Exact first-party recipe configuration schema.
+* Exact provider creation/authentication UX for `source-repo-container create` and `source-repo create`.
+* Exact public/private visibility flags and defaults.
+* Exact Superworkspace relocation/configuration command.
+* Exact CLI treatment of independently acquirable Source Repos.
+* Exact deeper Rust/Cargo target-selection grammar under a selected Vapor Project.
+* Exact generic command for low-level Git reconciliation wrappers, if Vapor eventually provides one.

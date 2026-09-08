@@ -1,100 +1,162 @@
-
 > [!info]
-> This document defines the source-authoring and development experience for Vapor.
+> This document defines Vapor's source-authoring and development experience.
 >
-> It covers Composer, Content Developer, Ecosystem Developer, Git/repository structure, Vapor Superworkspaces, Workspaces, Projects, SDK integration, and build/run/test iteration.
+> It covers Composer, Content Developer, Ecosystem Developer, the canonical Superworkspace, source acquisition and creation, Git/provider interaction, Project development, Rust/Cargo realization, external IDE integration, build/test/run workflows, diagnostics, and development-state safety.
 >
-> Publication itself is specified separately in the **Vapor Publishing and Distribution Model**.
+> Canonical identity, Source Repo Container / Source Repo / Project hierarchy, Context, Selection, and ambiguity semantics are owned by the **Vapor Context, Identity, Session And Selection Model**.
+>
+> Exact command-line grammar is owned by the **Vapor CLI Model**.
+>
+> Publication itself is owned by the **Vapor Publishing And Distribution Model**.
+
+---
+
+# Core Principle
+
+Vapor development should feel like developing the thing the user actually intends to create.
+
+The developer should not need to manually orchestrate:
+
+```text
+Git hosting
+→ Git repositories
+→ submodules
+→ Rust toolchains
+→ Cargo workspaces/packages
+→ generated configuration
+→ build targets
+→ Steam
+→ Registry state
+→ IDE configuration
+```
+
+merely to express:
+
+```text
+Create this Game.
+Test this Project.
+Develop Vapor Client.
+Publish this Library.
+```
+
+Vapor exists to model and coordinate those underlying systems without pretending they do not exist.
+
+The governing principle is:
+
+> **Vapor owns the semantic development workflow; Git, Cargo, Rust, Steam, providers, and external IDEs remain visible underlying tools with their own legitimate semantics.**
 
 ---
 
 # Development Capability Layers
 
-Development capability grows cumulatively.
+Vapor development capability grows cumulatively:
 
-> Player
-> → Composer
-> → Content Developer
-> → Ecosystem Developer
+```text
+Player
+→ Composer
+→ Content Developer
+→ Ecosystem Developer
+```
 
 These are locally installed Vapor Roles.
 
-A Role describes the kinds of work for which the local Vapor environment is equipped.
+Root Authority is not another Role.
 
-External authority is separate.
+It is external authority over protected official Vapor resources.
 
-A user may therefore become an Ecosystem Developer, acquire or fork Vapor ecosystem source, modify it, and build/test it locally without permission from the official Vapor ecosystem.
+Therefore:
 
-Specific operations against protected official resources may additionally require authentication and authorization.
+```text
+Role
+    = what this local Vapor environment is equipped to do
 
-Root Authority is an authority state rather than another installed development Role.
+Authority
+    = what this identity is permitted to do to a protected target
+```
 
-The development model begins meaningfully at Composer capability because composition authoring requires source and local builds.
+An Ecosystem Developer can develop Vapor locally without possessing official Root Authority.
+
+A Content Developer can develop local Content without being authenticated to GitHub.
+
+Local capability must not unnecessarily depend on remote authorization.
 
 ---
 
 # Composer Development
 
-A Composer authors composition artifacts without authoring behavioral implementation.
+A Composer authors composition-oriented Projects.
 
-A Composer may create and modify:
+These may include:
 
-* Packagepacks.
-* Enginepacks.
-* Gamepacks.
-* Modpacks.
+```text
+Packagepack
+Enginepack
+Gamepack
+Modpack
+```
 
-A Composer may acquire and consume:
+A Composer may consume existing behavioral/reusable Projects such as:
 
-* Engines.
-* Games.
-* Engine Mods.
-* Game Mods.
-* Extension Mods.
+```text
+Engine
+Game
+Engine Mod
+Game Mod
+Extension Mod
+Library
+```
 
-A Composer may inspect behavioral source where useful.
+without necessarily possessing authority to modify their implementation.
 
-Editing that behavioral source as authored Vapor Content requires Content Developer capability.
+The normal Composer loop is approximately:
 
-The primary Composer loop is:
+```text
+acquire or create source
+→ modify composition
+→ resolve dependencies
+→ build/test complete composition
+→ inspect result
+→ revise
+→ optionally publish
+```
 
-> Acquire source
-> → compose
-> → resolve
-> → build
-> → run/test
-> → revise
-> → optionally publish
+The developer should think primarily in Vapor composition semantics.
 
-This is a conceptual loop rather than an exhaustive serialized workflow.
+Cargo and Git remain inspectable but should not define the ordinary workflow.
 
 ---
 
 # Content Development
 
-A Content Developer additionally authors:
+A Content Developer additionally authors behavioral and reusable Projects such as:
 
-* Engine.
-* Game.
-* Engine Mod.
-* Game Mod.
-* Extension Mod.
+```text
+Engine
+Game
+Engine Mod
+Game Mod
+Extension Mod
+Library
+```
 
-Content development involves changing behavior rather than merely changing composition.
+Typical Content development is approximately:
 
-The core loop is approximately:
+```text
+acquire or create source topology
+→ create/open Project
+→ edit implementation/configuration
+→ resolve required dependencies
+→ test/build in an appropriate composition context
+→ inspect diagnostics/runtime behavior
+→ revise
+→ optionally publish
+```
 
-> Open/create source
-> → edit/configure
-> → integrate into a Packagepack context
-> → resolve/build
-> → run/test
-> → inspect diagnostics/runtime behavior
-> → revise
+Because Vapor Apps are statically composed, behavioral Projects may ultimately need testing inside a complete Packagepack composition.
 
-Because Vapor compositions are static, behavioral development is ultimately tested through complete composition builds.
+This does not require every local edit to trigger a physically complete rebuild.
 
-Incremental compilation should make this practical without changing the logical complete-build model.
+Cargo/Vapor incremental compilation and caching should optimize iteration while preserving the semantic complete-composition model.
 
 ---
 
@@ -104,888 +166,2183 @@ An Ecosystem Developer develops Vapor itself.
 
 This may include:
 
-* Installer.
-* Launcher.
-* SDK.
-* CLI.
-* Vapor Root framework.
-* Registry/server components.
-* Distribution tooling.
-* Build orchestration.
-* Internal development tooling.
-
-Ecosystem Developer capability is locally attainable and does not inherently imply official Vapor authority.
-
-An Ecosystem Developer may:
-
-* Acquire official ecosystem source where publicly available.
-* Fork ecosystem source.
-* Create independent ecosystem source.
-* Modify Vapor locally.
-* Build and test Vapor locally.
-* Develop and test publication, deployment, authentication, and authorization machinery locally.
-
-Operations against protected official targets may separately require authorization.
-
-Examples include:
-
-* Pushing to official repositories.
-* Creating repositories in protected organizations.
-* Publishing into official namespaces.
-* Deploying official Steam branches or depots.
-* Modifying production server or Registry infrastructure.
-
-The intended eventual official-development loop is:
-
-> Open ecosystem source context
-> → modify
-> → build/test locally
-> → authenticate/authorize protected operation
-> → commit/push
-> → deploy to the appropriate development environment
-> → validate integrated behavior
-
-Vapor should progressively automate this loop without making local ecosystem development depend on official authorization.
-
----
-
-# Repository and Development-Context Hierarchy
-
-The structural development hierarchy is:
-
-> **Vapor Superworkspace**
-> → **Container Repo**
-> → **Source Repo / Vapor Workspace**
-> → **Vapor Project**
-
-Vapor Content may then be authored inside Projects.
-
-This hierarchy combines two different concerns:
-
 ```text
-local development containment
-    Superworkspace
-
-canonical source/development structure
-    Container Repo
-    → Workspace
-    → Project
+Vapor Core
+Vapor Client
+Vapor Installer
+Vapor Launcher / SDK surfaces
+Vapor CLI
+managed toolchain integration
+Registry
+Identity
+Diagnostics
+documentation infrastructure
+Platform Server services
+deployment orchestration
+distribution tooling
+provider integrations
+internal examples/tooling
 ```
 
-The detailed identity, realization, Open/Focus, session, selector, and ambiguity rules are defined in the **Vapor Context, Identity, Session And Selection Model**.
+Ecosystem Developer is locally attainable.
+
+It does not inherently grant authority to:
+
+```text
+push to protected official repositories
+publish into protected official namespaces
+deploy official Steam branches/depots
+modify production Platform infrastructure
+administer Root-Authority-controlled resources
+```
+
+Those operations require separate authorization.
+
+The normal first-party development experience should therefore support:
+
+```text
+acquire first-party source
+→ modify locally
+→ build/test locally
+→ inspect
+→ commit/push where authorized
+→ deploy to an appropriate target where authorized
+→ validate
+```
+
+without requiring protected authority merely to reach the local build/test stages.
 
 ---
 
-## Vapor Superworkspace
+# Canonical Development Topology
 
-A Vapor Superworkspace is primarily a local SDK/development container.
+Vapor development uses one canonical source hierarchy:
 
-Its purpose is comparable to an IDE workspace containing several related repositories and Projects.
-
-It is not:
-
-* a Git repository;
-* a canonical remote source identity;
-* part of canonical Workspace or Project identity;
-* required to understand every filesystem object around it.
-
-A Superworkspace may contain:
-
-* one or more Container Repos;
-* related independently checked-out Vapor Workspaces;
-* multiple local realizations of source needed for development;
-* unrelated filesystem entries which Vapor does not own.
-
-Creating equivalent checkouts in a second local container creates a second Superworkspace.
-
-The source identities inside it may remain the same.
-
----
-
-## Implicit and Configured Superworkspaces
-
-A Superworkspace may be recognized implicitly from the Vapor development structures it contains.
-
-A `Superworkspace.vapor.toml` may optionally provide durable local SDK configuration.
-
-Such configuration may contain information such as:
-
-* friendly display name;
-* attached local roots;
-* local aliases;
-* presentation/layout preferences;
-* recovery hints;
-* other local development preferences.
-
-It must not become canonical truth for:
-
-* Workspace identity;
-* Project identity;
-* Content identity;
-* Container Repo membership;
-* Git history;
-* Registry state;
-* publication state;
-* provider authority.
-
-Likewise, Superworkspace-local mechanisms such as `.vaporignore` affect the local SDK/development view rather than canonical source topology.
-
-A Superworkspace should therefore remain useful even when its optional local configuration is missing or regenerated.
-
----
-
-## Container Repo
-
-A Container Repo is a Vapor-managed Git repository grouping related Source Repos / Vapor Workspaces.
-
-Container Repos normally coordinate these Workspaces using Git submodules.
-
-A Container Repo:
-
-* participates in canonical structural identity;
-* is Git-managed;
-* is not itself intended to be a submodule of another Container Repo;
-* expresses meaningful source organization rather than arbitrary filesystem nesting.
+```text
+Authority
+└── Source Repo Container
+    └── Source Repo
+        └── Project
+```
 
 For example:
 
 ```text
-GHF-Studios/Vapor-Root
+GHF-Studios/Loo-Cast/Game/Loo-Cast
 ```
 
-may identify the canonical `Vapor-Root` Container Repo.
+represents:
+
+```text
+GHF-Studios    Authority
+Loo-Cast       Source Repo Container
+Game           Source Repo
+Loo-Cast       Project
+```
+
+The hierarchy is owned normatively by the Context/Identity model.
+
+This document focuses on how that hierarchy is realized and used during development.
 
 ---
 
-## Source Repo / Vapor Workspace
+# The Canonical Superworkspace
 
-A Source Repo and Vapor Workspace are the same primary source-bearing unit viewed from Git and Vapor respectively.
+Vapor maintains one canonical local **Superworkspace**.
 
-The normative relationship is:
+The Superworkspace is the development source root.
 
-> **One Source Repo = one Vapor Workspace.**
+It is locally foundational but globally meaningless.
 
-A Vapor Workspace:
+It:
 
-* is a Git repository;
-* belongs structurally to a Container Repo;
-* contains one or more Vapor Projects;
-* owns Workspace-level authored metadata;
-* may have multiple local physical realizations/checkouts.
-
-A provider URL identifies external source linkage.
-
-It does not replace Vapor structural identity.
-
----
-
-## Vapor Project
-
-A Vapor Project is a coherent development unit inside a Vapor Workspace.
-
-For Rust-backed development, it normally corresponds to a Cargo workspace or another coherent Cargo execution context.
-
-A Project:
-
-* is not itself a Git repository;
-* is namespaced by its Workspace;
-* should have a meaningful Project name;
-* may contain several Cargo packages;
-* may host zero, one, or multiple Vapor Content artifacts;
-* may contain supporting packages which are not independently Vapor Content.
-
-Project identity is therefore distinct from Vapor Content identity.
-
-The Project answers:
-
-> **Where and within which development structure is this work authored and built?**
-
-A Content identity answers:
-
-> **Which semantic Vapor artifact is this?**
-
-The relationship may be one-to-one for some Projects.
-
-It is not required to be one-to-one generally.
-
----
-
-# Canonical Structural Identity
-
-Structural development identities are human-readable, case-preserving, slash-separated, and hierarchically namespaced.
+* has no Vapor identity;
+* is never part of an Authority/Container/Repo/Project ID;
+* has one known configured physical location;
+* contains canonical local source realizations;
+* may contain multiple Authorities;
+* is not itself a Git repository merely because it is a Superworkspace;
+* is not supplied repeatedly to ordinary create/acquire operations.
 
 Conceptually:
 
 ```text
-Namespace/Container-Repo/Workspace/Project
+<Superworkspace>/
+├── GHF-Studios/
+│   ├── Vapor-Client/
+│   ├── Vapor-Platform-Server/
+│   └── Loo-Cast/
+└── Some-Author/
+    └── My-Content/
 ```
 
-Examples:
+Its filesystem name is irrelevant.
+
+Its physical location may change without changing any Vapor identity.
+
+---
+
+# Superworkspace Location
+
+The Superworkspace location is local development configuration.
+
+For example, one developer might use:
 
 ```text
-GHF-Studios/Vapor-Root
-GHF-Studios/Vapor-Root/Vapor
-GHF-Studios/Vapor-Root/Vapor/Client
+~/Development/Vapor
 ```
 
-The Superworkspace is intentionally absent because it is a local realization container.
-
-Each identity segment should represent real semantic distinction.
-
-Duplication such as:
+while another uses:
 
 ```text
-GHF-Studios/Vapor-Root/Vapor/Vapor
+/mnt/Development/Vapor
 ```
 
-is legal only if the final `Vapor` is genuinely the meaningful Project name.
+Those locations do not participate in Vapor identity.
 
-Current rewrite-era Project names may be renamed or decomposed as architecture pressure reveals more meaningful boundaries.
+Vapor should provide a deliberate way to configure or relocate the Superworkspace as one unit.
+
+Acquisition itself should not accept arbitrary destination paths.
+
+This avoids turning every source operation into filesystem-placement policy.
 
 ---
 
-# Structural Identity vs Local Realization
+# Steam Installation, User Data, and Source
 
-Canonical identity does not uniquely determine one physical checkout.
-
-A Workspace may have multiple local realizations, such as:
+Development state should be separated into three conceptual storage roots:
 
 ```text
-GHF-Studios/Vapor-Root/Vapor
-
-├── official checkout / main
-└── developer fork / context-redesign
+Steam App Instance
+Vapor User Data
+Superworkspace
 ```
 
-Filesystem paths, Git branches, provider repositories, and fork relationships describe realizations.
+## Steam App Instance
 
-They are not substitutes for Vapor semantic identity.
+Owned primarily by Steam/depot distribution.
 
-This distinction allows Vapor to support:
+It contains replaceable shipped application/runtime files.
 
-* upstream and fork checkouts;
-* experimental branches;
-* isolated test realizations;
-* relocation;
-* multiple development environments.
+## Vapor User Data
 
-When an operation changes or builds source, Vapor must ultimately resolve an exact local realization.
+Owned by Vapor for mutable and derived local state.
 
-The GUI should normally make this a modeled choice rather than requiring raw filesystem paths.
+This may include:
 
----
+```text
+Role/tooling state
+managed toolchain metadata
+Context/resume information
+caches
+generated realization
+local indexes
+IDE integration state
+diagnostics state
+configured Superworkspace location
+```
 
-# Workspace Types
+## Superworkspace
 
-## Vapor Root Workspace
+Contains authored development source.
 
-The unique client/root Vapor Workspace.
+This includes Git repositories and user-authored project files.
 
-It contains one or more meaningful Vapor Root Projects representing coherent parts of the local/client Vapor ecosystem.
+The central safety property is:
 
-Project decomposition should reflect real architectural responsibility rather than duplicating Workspace naming without reason.
-
----
-
-## Vapor Server Root Workspace
-
-The unique server-root Vapor Workspace.
-
-It contains Vapor Server Root Projects representing coherent server-side Vapor infrastructure.
+> **Steam installation replacement must not imply authored source replacement.**
 
 ---
 
-## Vapor Content Workspace
+# Authored vs Derived Development State
 
-A non-unique Workspace used for Vapor Content development.
+Development state must be classified by ownership.
 
-A Content Workspace may contain one or more Projects.
+## Authored
 
----
+Examples include:
 
-## Vapor Content Project
+```text
+Container metadata
+Workspace.vapor.toml
+Vapor.toml
+Cargo.toml
+source code
+tests
+scripts
+Git commits/branches/remotes
+explicit operation recipes
+explicit developer configuration
+```
 
-A Vapor Content Project is a Project primarily concerned with authoring Vapor Content.
+Authored state requires strong preservation guarantees.
 
-It may host one or more Content artifacts such as:
+## Derived
 
-* Packagepack;
-* Enginepack;
-* Gamepack;
-* Modpack;
-* Engine;
-* Game;
-* Engine Mod;
-* Game Mod;
-* Extension Mod;
-* Library.
+Examples may include:
 
-One Project is not required to equal exactly one Content artifact.
+```text
+indexes
+caches
+generated glue
+resolved operation state
+IDE project projections
+generated Cargo/Vapor reconciliation
+build caches
+temporary artifacts
+diagnostic indexes
+```
 
-The semantic relationship between Project, Cargo packages, and Content must remain explicit even when several artifacts share one Project.
+The derived-state invariant is:
 
----
+```text
+deleteable
+→ rediscoverable
+→ regeneratable
+→ idempotently repairable
+```
 
-# Git Model
-
-Git is fundamental Composer-and-above infrastructure.
-
-Vapor should automate Git without pretending Git does not exist.
-
-Vapor may provide operations such as:
-
-* Clone.
-* Fetch.
-* Pull.
-* Commit.
-* Push.
-* Branch selection.
-* Repository creation.
-* Submodule initialization/update.
-* Status.
-* Diff.
-* Conflict detection.
-
-Advanced users must still be able to access normal Git directly.
+If a piece of state cannot satisfy that standard, Vapor should be careful before labeling it derived.
 
 ---
 
-# Git Safety
+# Source Repo Container
 
-User-authored source is not disposable.
+A **Source Repo Container** is a registered Vapor Git repository grouping related Source Repos.
 
-Vapor must assume that:
+It is the default independent source acquisition boundary.
 
-* Uncommitted changes may exist.
-* Unpushed commits may exist.
-* Detached/local branches may exist.
-* External Git tools may modify repositories.
-* The user may intentionally diverge from the state Vapor expected.
-* Filesystem paths may change outside Vapor.
+A Container may exist initially without Source Repos.
 
-Therefore Vapor must not silently:
+Example:
 
-* Reset repositories destructively.
-* Delete dirty repositories.
-* Replace local source with remote state.
-* Drop unpushed commits.
-* Recreate a Superworkspace as though every checkout were disposable.
-* Attach an arbitrary similarly named checkout in place of a missing realization.
+```text
+GHF-Studios/My-Stuff
+```
 
-Automation should become more conservative as destructive potential increases.
+may initially realize as:
+
+```text
+<Superworkspace>/
+└── GHF-Studios/
+    └── My-Stuff/
+        └── .git/
+```
+
+A Container should not need a fake Cargo package, dummy Workspace, or placeholder Project merely to exist.
 
 ---
 
-# Git vs Git Hosting
+# Source Repo
 
-Git capability does not imply GitHub authentication.
+A **Source Repo** is one Git repository and one Vapor Workspace.
 
-Local authoring/building/testing should remain possible without GitHub or another hosting provider.
+The invariant is:
 
-A Git host becomes relevant when an operation requires external hosting.
+> **One Source Repo = one Vapor Workspace.**
 
-Provider-oriented operations may include:
+Source Repos normally participate in a Container's authored Git topology through submodules.
 
-* Clone private repository.
-* Create repository.
-* Push.
-* Access protected source.
-* Open collaboration workflows.
-* Resolve fork/upstream relationships.
-* Access official Vapor repositories.
+For example:
 
-The domain model should avoid hardcoding GitHub where the concept is really Git hosting.
+```text
+My-Stuff/
+├── .gitmodules
+├── Game/
+└── Libraries/
+```
 
-Provider ownership and Vapor semantic identity must remain distinguishable.
+where:
+
+```text
+Game
+Libraries
+```
+
+are Source Repos / Vapor Workspaces.
+
+This is real source topology.
+
+It should remain visible as Git.
+
+---
+
+# Project
+
+A **Project** is a modeled Vapor development unit inside one Source Repo.
+
+A Project is not itself a Git repository.
+
+A Project may represent a Content kind such as:
+
+```text
+Game
+Engine
+Library
+Packagepack
+...
+```
+
+or an internal/non-Content responsibility where appropriate for first-party development.
+
+For Rust-backed Projects it may contain:
+
+```text
+one or more Cargo packages
+one or more crates/targets
+tests
+examples
+generated integration
+supporting packages
+```
+
+Vapor Project boundaries should express meaningful development responsibility.
+
+They should not merely duplicate repository names because that is mechanically convenient.
+
+---
+
+# Vapor Topology vs Cargo Topology
+
+These are different layers.
+
+Vapor source/development topology:
+
+```text
+Source Repo Container
+→ Source Repo
+→ Project
+```
+
+Rust/Cargo realization may then include:
+
+```text
+Cargo workspace
+→ package
+→ crate/target
+```
+
+The user should be able to descend into Cargo terminology where relevant.
+
+Vapor should not rename Cargo concepts.
+
+Likewise, Vapor should not call Source Repos Cargo workspaces merely because Rust implementation happens to use Cargo.
+
+---
+
+# Explicit Source Topology Creation
+
+Vapor should not silently invent missing source hierarchy during higher-level creation.
+
+The normal explicit sequence is:
+
+```text
+create Source Repo Container
+→ create Source Repo
+→ create typed Project
+```
+
+For example:
+
+```text
+vapor source-repo-container create GHF-Studios/My-Stuff
+
+vapor source-repo create GHF-Studios/My-Stuff/Game
+
+vapor game create GHF-Studios/My-Stuff/Game/My-Game
+```
+
+Each operation creates exactly the semantic layer it names.
+
+This makes source topology intentional and comprehensible.
+
+---
+
+# Creating a Source Repo Container
+
+Creating:
+
+```text
+GHF-Studios/My-Stuff
+```
+
+conceptually involves:
+
+```text
+verify/create Authority relationship
+→ establish registered Container identity
+→ create provider-backed Git repository
+→ initialize Container metadata
+→ place checkout in canonical Superworkspace
+→ establish Registry/provider linkage
+```
+
+It creates zero Source Repos unless explicitly requested separately.
+
+Provider visibility should be conservative.
+
+New repositories should default to private where provider semantics and user authority permit that default.
+
+Public source should be an intentional state.
+
+---
+
+# Creating a Source Repo
+
+Creating:
+
+```text
+GHF-Studios/My-Stuff/Game
+```
+
+conceptually involves:
+
+```text
+verify parent Container
+→ create provider-backed Git repository
+→ initialize Vapor Workspace metadata
+→ register Source Repo identity/topology
+→ add repository as authored Git submodule
+→ update parent Container Git topology
+```
+
+This is a Git operation as well as a Vapor operation.
+
+Vapor should not pretend the submodule relationship is mystical internal state.
+
+Advanced users should be able to inspect normal:
+
+```text
+.gitmodules
+git status
+git submodule status
+```
+
+and understand what happened.
+
+---
+
+# Creating a Project
+
+Typed Project creation occurs only after its parent Source Repo exists.
+
+For example:
+
+```text
+vapor game create GHF-Studios/My-Stuff/Game/My-Game
+```
+
+creates a Project with:
+
+```text
+kind = Game
+```
+
+within Source Repo:
+
+```text
+GHF-Studios/My-Stuff/Game
+```
+
+Project creation may generate appropriate:
+
+```text
+Vapor metadata
+Cargo structure
+source layout
+tests
+starter configuration
+```
+
+according to Project kind.
+
+It must not silently create missing Containers or Source Repos.
+
+---
+
+# Missing Parent Experience
+
+When a requested hierarchy does not exist, Vapor should teach the missing step.
+
+For example:
+
+```text
+vapor game create GHF-Studios/My-Stuff/Game/My-Game
+```
+
+when the Container is absent:
+
+```text
+error: Source Repo Container `GHF-Studios/My-Stuff` does not exist
+
+help: create it:
+      vapor source-repo-container create GHF-Studios/My-Stuff
+```
+
+If the Container exists remotely but not locally:
+
+```text
+error: Source Repo Container `GHF-Studios/My-Stuff`
+       is not available in the local Superworkspace
+
+help: acquire it:
+      vapor source-repo-container acquire GHF-Studios/My-Stuff
+```
+
+If only the Source Repo is missing:
+
+```text
+error: Source Repo `GHF-Studios/My-Stuff/Game` does not exist
+
+help: create it:
+      vapor source-repo create GHF-Studios/My-Stuff/Game
+```
+
+Errors should describe actual state rather than emitting canned generic advice.
 
 ---
 
 # Source Acquisition
 
-Composer-and-above users acquire source through Vapor-compatible Git repositories.
+Vapor source acquisition is Registry-aware.
 
-The ideal experience is not:
+It is not merely a synonym for `git clone`.
 
-> Search for URLs manually, clone them to arbitrary directories, and repeatedly tell Vapor where they ended up.
-
-Instead Vapor should be capable of resolving semantic identity into appropriate source/provider information.
-
-A source-acquisition operation may conceptually include:
-
-* Resolve Vapor identity.
-* Determine source/provider linkage.
-* Determine appropriate Container Repo / Workspace relationship.
-* Reuse a compatible known realization where appropriate.
-* Clone/fetch required source.
-* Initialize submodules where required.
-* Validate Vapor compatibility.
-* Register local realization/availability.
-* Expose the result in the current Superworkspace or SDK session.
-
-Exact checkout/version/fork rules remain subject to provider and publication design.
-
----
-
-# Opening Existing Development State
-
-Opening development state is a session/context operation.
-
-Vapor should support starting from:
-
-* configured Superworkspace;
-* implicit Superworkspace;
-* Container Repo;
-* Vapor Workspace;
-* Vapor Project;
-* known local realization;
-* existing Git checkout not yet known to Vapor;
-* freshly acquired source;
-* newly created source.
-
-The user should not need to reconstruct structural metadata manually.
-
-When a deep exact target is opened, Vapor may automatically establish its exact ancestors.
-
-For example, opening:
+The normal flow is:
 
 ```text
-GHF-Studios/Vapor-Root/Vapor/Client
+Vapor source identity
+→ Registry
+→ provider linkage
+→ Git acquisition
+→ authored topology initialization
+→ Vapor validation
+→ canonical Superworkspace availability
 ```
 
-may establish the relevant Workspace and Container context.
-
-This is safe because the parent relationship is canonical structure rather than analogy.
+A generic acquisition operation should only accept registered Vapor source of the appropriate kind.
 
 ---
 
-# Open, Focus, and Selection
+# Source Repo Container Acquisition
 
-Development context is not represented by one global active Project.
+The normal source acquisition unit is a complete Source Repo Container.
 
-Several Workspaces, Projects, or Content targets may be Open simultaneously.
-
-Several may also be Focused.
-
-These concepts are distinct:
+Conceptually:
 
 ```text
-Open
-    participates in the working set
-
-Focused
-    contributes durable targeting intent
-
-Selected
-    transient target for the immediate frontend action
+vapor source-repo-container acquire GHF-Studios/Loo-Cast
 ```
 
-A GUI click should therefore not automatically rewrite persisted Focus.
-
-Likewise, multiple Focus is legitimate even when a particular operation ultimately requires exactly one target.
-
-The operation's cardinality decides whether the candidate set is valid.
-
----
-
-# Missing and Broken Development State
-
-Known/Open/Focused objects may become unavailable or unhealthy.
-
-Examples include:
-
-* moved checkout;
-* disconnected drive;
-* deleted directory;
-* incompatible Workspace metadata;
-* invalid manifest;
-* broken Git state;
-* missing dependency.
-
-Availability/health is independent of Open/Focus state.
-
-A previously focused Workspace may therefore remain:
+means:
 
 ```text
-Known
-Missing
-Open
-Focused
+resolve Registry identity
+→ verify Source Repo Container kind
+→ resolve provider
+→ clone canonical Container repository
+→ initialize authored Source Repo submodules
+→ validate topology
+→ recognize contained Workspaces and Projects
 ```
 
-so that the SDK can explain the problem and offer recovery.
+Acquisition is conservative at the Container boundary because nested Source Repos may depend on each other for coherent build/test/development behavior.
 
-Useful recovery actions may include:
+---
+
+# Atomic Acquisition
+
+The default principle is:
+
+> **A Source Repo Container is the smallest independently acquirable unit unless a narrower unit is explicitly declared independently realizable.**
+
+This is not a claim that Git technically cannot clone a Source Repo.
+
+It is a Vapor semantic guarantee.
+
+A Container acquisition provides the source family expected by its authored topology.
+
+---
+
+# Independently Acquirable Source Repos
+
+Some Source Repos may legitimately be useful independently.
+
+Independent acquisition is opt-in modeled behavior.
+
+For example:
 
 ```text
-Locate
-Repair
-Reacquire
-Close
-Forget
+vapor source-repo acquire GHF-Studios/Some-Container/Examples
 ```
 
-A broken object should not simply disappear from the user's mental workspace.
+may succeed when Registry/topology explicitly permits it.
 
----
-
-# Closing Development State
-
-Close is a session operation.
-
-Closing a parent context closes its Open descendants.
-
-For example, closing a Workspace may also close Projects inside it.
-
-The frontend should communicate that cascade.
-
-Close must remain distinct from stronger effects such as:
+Otherwise Vapor should explain:
 
 ```text
-Forget
-Remove checkout
-Delete authored source
-Uninstall capability
+error: Source Repo `GHF-Studios/Some-Container/Internal`
+cannot be acquired independently
+
+it belongs to Source Repo Container:
+    GHF-Studios/Some-Container
+
+help: acquire the complete Container:
+      vapor source-repo-container acquire GHF-Studios/Some-Container
 ```
 
-Closing development context must never silently destroy authored Git source.
+Independent acquisition should default to disabled/private-to-Container.
 
 ---
 
-# Creating Development State
+# Arbitrary Git Repositories
 
-When creating new authored work, Vapor should automate structural boilerplate while asking the developer for semantic choices.
+Vapor acquisition is not intended to replace general Git cloning.
 
-Creating Content may involve:
-
-* selecting or creating an appropriate Workspace/Project;
-* generating required Vapor manifests;
-* establishing Cargo structure where appropriate;
-* creating initial source/tests;
-* declaring dependencies/targets;
-* registering the new Content in the local development environment.
-
-Creation should operate through semantic identity and modeled placement rather than requiring users to hand-build repository layouts.
-
----
-
-# Development Session and Resume State
-
-A live frontend uses a Development Session containing Open/Focused state and other live context.
-
-The SDK has such a session.
-
-A future Vapor Shell may have one.
-
-A one-shot CLI invocation may construct an ephemeral one.
-
-Durable Resume State exists to reconstruct a useful future session.
-
-For example, reopening the SDK may restore:
-
-* previous Superworkspace;
-* Open Workspaces;
-* Open Projects;
-* exact Focus;
-* useful SDK navigation state.
-
-Resume State is not necessarily one globally shared mutable cursor used by every simultaneous frontend.
-
-Exact multi-process synchronization remains an implementation concern.
-
----
-
-# Vapor SDK
-
-The Vapor SDK is the primary first-party graphical development environment for Vapor.
-
-It is not merely a configuration companion beside a separate IDE.
-
-The preferred product model is:
+An arbitrary repository remains:
 
 ```text
-Vapor Launcher
-    ↓ Enter Development
-Vapor SDK
-    ↑ Return to Launcher
+git clone ...
 ```
 
-SDK Mode is a development-oriented superset of the ordinary Launcher experience.
+If the repository is not registered as a Vapor Source Repo Container or independently acquirable Source Repo, Vapor should reject it from generic Vapor acquisition.
 
-It may expose:
-
-* Superworkspace Explorer;
-* Workspace/Project/Content navigation;
-* source;
-* structured configuration;
-* semantic dependency/composition graphs;
-* Inspector;
-* Problems;
-* Build/Test/Run;
-* Git;
-* toolchain;
-* logs;
-* publication/deployment;
-* ecosystem development where Role permits.
-
-Detailed graphical behavior is defined in the **Vapor SDK Experience Model**.
-
-The SDK may still integrate external editors and IDEs.
-
-That integration is complementary rather than proof that Vapor's own SDK must remain permanently shallow.
+That restriction provides semantic guarantees.
 
 ---
 
-# SDK State Ownership
+# Manually Acquired Valid Source
 
-SDK state must distinguish:
+Vapor must not require that it personally performed every Git operation.
 
-## Authored state
+An advanced user may manually:
+
+```text
+clone a registered Container
+place it at its canonical Superworkspace location
+initialize required submodules
+```
+
+using ordinary Git.
+
+If the resulting source matches valid registered Vapor topology, Vapor should recognize it.
+
+This preserves the principle:
+
+> **Vapor orchestrates Git; it does not claim exclusive ownership of Git.**
+
+---
+
+# Provider Independence
+
+GitHub may be the primary provider today.
+
+The conceptual model should remain:
+
+```text
+Vapor identity
+→ Registry
+→ Git provider/repository
+```
+
+rather than:
+
+```text
+Vapor identity = GitHub URL
+```
+
+Provider-native IDs and URLs remain important linkage and diagnostic information.
+
+They are not the canonical Vapor source identity.
+
+---
+
+# Forks
+
+Git forks remain Git/provider concepts.
+
+A fork does not automatically become a new Vapor Source Repo identity merely because its provider owner differs.
+
+Conversely, an independently registered new Vapor source identity is a semantic operation, not merely a provider fork.
+
+Vapor should preserve both facts:
+
+```text
+semantic Vapor identity
+provider/fork relationship
+```
+
+without collapsing one into the other.
+
+Exact collaboration/fork UX may evolve later.
+
+---
+
+# First-Party Source
+
+Official Vapor facilities may receive bespoke development workflows.
+
+Current examples include:
+
+```text
+Vapor Client
+Vapor Platform Server
+Vapor Examples
+```
+
+A first-party facility may map to one or more registered source identities.
+
+For example:
+
+```text
+client acquire
+```
+
+may internally resolve:
+
+```text
+GHF-Studios/Vapor-Client
+```
+
+without requiring the developer to type that identity.
+
+This is a semantic convenience over normal source machinery.
+
+---
+
+# First-Party Trust
+
+There is an important distinction between:
+
+```text
+GHF-Studios/Vapor-Client
+```
+
+and:
+
+```text
+Some-Author/My-Content
+```
+
+The difference should not be modeled merely as a self-declared manifest flag.
+
+First-party status is trusted Registry/Root-Authority state.
+
+A third-party Container cannot grant itself authority to:
+
+```text
+introduce new Vapor root CLI namespaces
+override Client semantics
+override Platform Server semantics
+become an official Vapor subsystem
+```
+
+First-party trust is a capability boundary.
+
+---
+
+# Source Repo Container Kind / Purpose
+
+Source Repo Containers may eventually need modeled purpose/kind information in addition to trust.
+
+For example:
+
+```text
+trust:
+    first-party
+
+facility:
+    client
+```
+
+is different from:
+
+```text
+trust:
+    standard
+
+facility:
+    none
+```
+
+There may also be useful distinctions among ordinary Content-oriented Containers and internal infrastructure Containers.
+
+The exact taxonomy is intentionally not frozen yet.
+
+What is frozen is:
+
+> **Trusted first-party facility semantics cannot be self-declared by arbitrary third-party source.**
+
+---
+
+# Bespoke First-Party Development
+
+A Root/Ecosystem Developer should be able to work directly with facilities such as:
+
+```text
+vapor client acquire
+vapor client build
+vapor client test
+vapor client deploy local
+vapor client deploy steam
+```
+
+and:
+
+```text
+vapor platform-server acquire
+vapor platform-server build
+vapor platform-server test
+vapor platform-server deploy local
+vapor platform-server deploy vps
+```
+
+These operations may internally reuse generic:
+
+```text
+source acquisition
+selection resolution
+operation recipes
+Git execution
+Cargo execution
+deployment primitives
+diagnostics
+```
+
+Bespoke UX does not require duplicated implementation.
+
+---
+
+# Operation Recipes
+
+Complex first-party build/test/deploy behavior should not require every orchestration detail to be hardcoded permanently into Vapor Core.
+
+Vapor should support lightweight authored operation recipes.
+
+The desired character is:
+
+```text
+declarative workflow
++
+Vapor-native primitives
++
+small scripts/process calls
+```
+
+not:
+
+```text
+arbitrary application/plugin framework
+```
+
+An operation recipe may eventually describe:
+
+```text
+accepted topology scopes
+required Source Repos
+required Projects
+step dependencies
+parallelism
+build/test steps
+artifacts
+environment requirements
+deployment actions
+health checks
+validation
+```
+
+The exact schema remains unsettled.
+
+---
+
+# Authored Operation Scripts
+
+Where declarative primitives are insufficient, small checked-in scripts are acceptable.
 
 Examples:
 
-* source;
-* Vapor manifests;
-* Workspace metadata;
-* Git history;
-* explicit semantic configuration.
+```text
+scripts/deploy-local.sh
+scripts/deploy-vps.sh
+scripts/smoke-test.sh
+```
 
-Authored state is not disposable.
+Such scripts should remain:
 
-## Durable local development configuration
+* visible;
+* version controlled;
+* inspectable;
+* narrowly scoped;
+* subordinate to the modeled Vapor operation.
 
-Examples:
+Vapor should not encourage entire hidden applications to be smuggled into “operation recipes.”
 
-* configured Superworkspace metadata;
-* aliases;
-* SDK preferences;
-* resume information.
+---
 
-This may be regenerated or reconfigured but should not be silently discarded without reason.
+# Operation Scope
 
-## Derived state
+A development operation has a natural subject.
 
-Examples:
+For example:
 
-* caches;
-* indexes;
-* generated views;
-* diagnostics;
-* Cargo metadata snapshots;
-* temporary realization state.
+```text
+Vapor Client
+Vapor Platform Server
+one Source Repo
+one Project
+one Packagepack
+```
 
-Derived state should where practical be:
+No explicit selector means:
 
-> discoverable
-> → regeneratable
-> → idempotently repairable
+> operate on the subject according to that operation's natural complete semantics.
 
-Derived state should normally live beneath explicit Vapor-managed storage boundaries.
+It does not generically mean:
+
+```text
+select every descendant and run one identical command against each
+```
+
+This distinction is important for first-party workflows.
+
+---
+
+# Explicit Selection
+
+Developers may explicitly narrow an operation to a meaningful descendant/subtree where the operation supports that scope.
+
+For example:
+
+```text
+Platform Server test
+    subject = complete Platform Server
+
+selection = Registry
+```
+
+may request a Registry-scoped test.
+
+Selecting a Source Repo naturally includes the relevant descendants for that Source Repo-scoped operation.
+
+A generic extra:
+
+```text
+--all-projects
+```
+
+is not required merely to say “include its children.”
+
+---
+
+# Operation-Specific Legality
+
+Different operations may support different scopes.
+
+For example:
+
+```text
+platform-server test --select Registry
+```
+
+may be valid.
+
+```text
+platform-server deploy local --select Registry
+```
+
+may also be valid.
+
+But:
+
+```text
+platform-server deploy vps --select Registry
+```
+
+may be invalid because production deployment requires the complete configured Platform Server deployment unit.
+
+These rules should come from actual operation semantics/recipes rather than a universal hardcoded assumption such as:
+
+```text
+deploy never supports partial selection
+```
+
+---
+
+# Specific Development Diagnostics
+
+Errors should explain the actual development invariant.
+
+For example:
+
+```text
+error: Platform Server VPS deployment requires the complete
+       Platform Server deployment scope
+
+selected:
+    Source Repo `Registry`
+
+required:
+    entire Vapor Platform Server
+
+help: deploy the complete Platform Server:
+      vapor platform-server deploy vps
+
+note:
+    Source Repo-scoped deployment is supported by `deploy local`
+```
+
+This style is especially important for developers who may still be learning:
+
+```text
+Vapor
+Git
+Rust
+Cargo
+game development
+software development
+```
+
+Vapor should teach rather than merely reject.
+
+---
+
+# Context During Development
+
+Persistent Vapor Context is a lightweight location/resolution convenience.
+
+It is not the development source itself.
+
+It is not operation scope.
+
+It is not a required global “active Project.”
+
+A developer may navigate to:
+
+```text
+GHF-Studios/Loo-Cast/Game
+```
+
+so that:
+
+```text
+Loo-Cast
+```
+
+can later resolve to the Project beneath it.
+
+But unrelated commands such as:
+
+```text
+vapor client test
+```
+
+remain unaffected.
+
+This is a deliberate safety property.
+
+---
+
+# CWD During Development
+
+Vapor semantic targeting must not depend on shell CWD.
+
+A developer may be physically inside one repository while intentionally operating on another modeled object.
+
+Therefore Vapor should use:
+
+```text
+canonical IDs
+persistent Context
+explicit per-command Context
+operation subjects
+explicit selections
+```
+
+rather than silently interpreting CWD as semantic location.
+
+Underlying tools remain free to use CWD when invoked directly.
+
+For example:
+
+```text
+git status
+cargo test
+```
+
+remain ordinary shell-tool behavior.
+
+---
+
+# Git Is Fundamental
+
+Git is Composer-and-above development infrastructure.
+
+Vapor should automate Git without pretending Git does not exist.
+
+Vapor may orchestrate operations such as:
+
+```text
+clone
+fetch
+pull
+commit
+push
+repository creation
+submodule initialization
+status inspection
+provider linkage
+```
+
+where appropriate.
+
+Advanced developers must remain able to use Git directly.
+
+---
+
+# Git Safety
+
+User-authored Git source is not disposable.
+
+Vapor must assume:
+
+```text
+dirty working trees may be intentional
+unpushed commits may exist
+detached HEADs may be intentional
+submodules may be on development commits
+branches may diverge
+external Git tools may modify repositories
+conflicts may exist
+```
+
+Therefore Vapor must not silently:
+
+```text
+reset repositories
+discard uncommitted files
+delete repositories
+drop commits
+switch branches
+force submodules back to gitlinks
+replace source with remote state
+```
+
+merely because local Git state differs from the last expected state.
+
+---
+
+# Dirty Does Not Mean Broken
+
+A dirty repository is ordinary development state.
+
+Likewise:
+
+```text
+detached submodule HEAD
+submodule ahead of parent gitlink
+local unpushed branch
+```
+
+may be completely valid during development.
+
+Vapor should distinguish:
+
+```text
+state differs from recorded baseline
+```
+
+from:
+
+```text
+source is invalid/unusable
+```
+
+Diagnosis should expose the difference clearly.
+
+---
+
+# Missing Source Repo Checkout
+
+Suppose a Container declares a Source Repo through Git submodule topology, but the local checkout is missing.
+
+This is not fresh Source Repo acquisition.
+
+The Source Repo already belongs to the acquired Container topology.
+
+It is a Git reconciliation problem.
+
+Vapor may report:
+
+```text
+Source Repo `Registry` is declared by the Container's Git topology
+but its local submodule checkout is missing.
+
+inspect:
+    git status
+    git submodule status
+```
+
+and may offer:
+
+```text
+possible reconciliation:
+    git submodule update --init -- Registry
+```
+
+with appropriate caution.
+
+---
+
+# Cautious Git Remediation
+
+Vapor should distinguish:
+
+```text
+inspection
+possible action
+proven-safe action
+```
+
+If Vapor cannot guarantee that a Git command preserves the user's intended development state, it should say so.
+
+For example:
+
+```text
+warning:
+    this command changes local Git checkout state.
+    Vapor cannot guarantee that applying it is appropriate for
+    your current development branch/worktree.
+```
+
+This is preferable to either extreme:
+
+```text
+say nothing
+```
+
+or:
+
+```text
+RUN THIS NOW OR EVERYTHING IS BROKEN
+```
+
+---
+
+# Diagnose
+
+Diagnosis observes and explains.
+
+Development diagnosis may inspect:
+
+```text
+source availability
+Registry linkage
+Container topology
+Git status
+submodule state
+Vapor manifests
+Cargo metadata
+toolchain readiness
+build state
+operation recipes
+IDE integration
+generated state
+```
+
+Diagnosis should distinguish the ownership domain of each problem.
+
+For example:
+
+```text
+Git problem
+Cargo problem
+Vapor manifest problem
+derived Vapor state problem
+provider problem
+toolchain problem
+```
+
+This helps users understand which subsystem actually owns the fix.
+
+---
+
+# Repair
+
+Repair acts only where Vapor can safely reconstruct or reconcile derived state.
+
+Examples may include:
+
+```text
+regenerate indexes
+recompute generated glue
+reconcile deterministic Vapor-owned Cargo entries
+rebuild IDE integration
+rebuild operation realization
+recreate caches
+re-register observable existing source
+```
+
+Repair must not silently:
+
+```text
+clone missing authored Containers
+restore deleted authored source
+reset Git
+discard dirty files
+drop commits
+change branch
+force submodule commits
+```
+
+Repair is not disaster-recovery source acquisition.
+
+---
+
+# Source Acquisition vs Repair
+
+The distinction should remain explicit:
+
+```text
+source absent
+    → acquire
+
+authored Container exists, submodule missing
+    → Git diagnosis/reconciliation
+
+derived Vapor state missing/broken
+    → repair
+```
+
+This separation prevents Vapor from treating user-authored source as disposable cache state.
+
+---
+
+# Rust Toolchain
+
+Rust/Cargo used for Vapor development should be managed as part of Vapor's installed development capability where appropriate.
+
+The toolchain should be:
+
+```text
+versioned
+controlled
+discoverable
+diagnosable
+repairable
+reproducible enough for Vapor development
+```
+
+Root/Ecosystem development should strongly prefer the vendored/pinned Vapor-managed toolchain rather than an arbitrary ambient system toolchain.
+
+Underlying Rust and Cargo remain real tools.
+
+Vapor manages their relationship to its development environment.
+
+---
+
+# Managed Cargo
+
+Vapor may expose managed Cargo through:
+
+```text
+vapor toolchain cargo -- ...
+```
+
+This should establish the appropriate managed toolchain environment and then preserve normal Cargo semantics.
+
+Vapor may help resolve the correct Project before invoking Cargo.
+
+Cargo-native concepts remain Cargo-native:
+
+```text
+workspace
+package
+crate
+target
+feature
+profile
+```
+
+Vapor should not rebrand them unnecessarily.
+
+---
+
+# Cargo Reconciliation
+
+Vapor semantic dependency intent and Cargo physical dependency realization remain distinct.
+
+Conceptually:
+
+```text
+Vapor semantic dependency intent
+        ↓
+Vapor resolution
+        ↓
+desired physical relationship
+        ↓
+Cargo reconciliation
+        ↓
+editable Cargo manifests
+        ↓
+Cargo resolution / metadata
+        ↓
+verified physical graph
+```
+
+Cargo remains authoritative for the graph it will actually compile.
+
+Vapor remains authoritative for Vapor semantic relationships.
+
+---
+
+# Cargo Configuration Ownership
+
+Vapor should manage only the parts of Cargo configuration it semantically owns.
+
+Developers may continue editing normal Cargo configuration.
+
+Vapor should distinguish:
+
+```text
+Vapor-managed relationship
+user-authored Cargo configuration
+local override
+conflict
+stale generated relationship
+```
+
+Repair/reconciliation must not casually overwrite unrelated Cargo intent.
 
 ---
 
 # External IDE Integration
 
-External IDE integration remains a Vapor SDK responsibility.
+Vapor's SDK is the primary first-party development environment.
 
-It is not fundamentally a Source-domain operation.
+External IDEs such as RustRover remain valuable.
 
-The division is increasingly:
+The relationship should be:
 
-**Vapor SDK / Core:**
+```text
+Vapor
+    owns semantic source topology,
+    managed toolchain,
+    generated integration,
+    build/test operations,
+    diagnostics
 
-* Understand canonical Vapor structure and identities.
-* Track local realizations.
-* Own Vapor-specific Open/Focus/session semantics.
-* Coordinate semantic build/run/test.
-* Understand which Projects host which Content.
-* Provide diagnostics and repair.
-* Manage the pinned Vapor toolchain relationship.
-* Expose source to external tools.
-* Reconcile supported IDE integration where a canonical mapping exists.
+External IDE
+    provides mature editing,
+    refactoring,
+    navigation,
+    debugging,
+    Git UI,
+    language tooling
+```
 
-**External IDE:**
-
-* May provide mature source editing.
-* May provide refactoring/code navigation.
-* May provide debugger/language tooling.
-* May provide general Git UI.
-
-The built-in SDK may progressively absorb more editing/IDE capability over time.
-
-External IDE compatibility remains valuable even if the integrated SDK eventually becomes capable enough for most Vapor work.
-
-IDE-specific integration should be created/reconciled only when present or selected.
-
-Once configured, safe synchronization should be proactive.
-
-Explicit diagnosis and repair remain available when synchronization fails.
-
-Legacy, incompatible, missing, or ignored Workspaces may remain visible in the SDK's development model without automatically participating in builds or editor integration.
+The two should cooperate rather than compete.
 
 ---
 
-# Build Experience
+# IDE State Is Derived
 
-The user should normally request a semantic Vapor build:
+IDE configuration generated/reconciled by Vapor should be treated as derived integration state where possible.
 
-> Build this Packagepack.
+The desired properties are:
 
-Vapor then coordinates the underlying work.
+```text
+deleteable
+→ rediscoverable
+→ regeneratable
+→ idempotently repairable
+```
 
-A build may involve:
+Vapor should preserve unrelated user IDE state.
 
-* Composition resolution.
-* Required source availability checks.
-* Cargo invocation.
-* Generated code/configuration.
-* Build caching.
-* Target selection.
-* Final composition artifact generation.
-* Vapor App packaging.
-* Local installation/registration.
-
-The developer should be able to inspect:
-
-* Underlying Cargo output.
-* Build commands.
-* Diagnostics.
-* Artifact locations.
-* Cache behavior where useful.
+It should only own the integration fragments for which it has a clear semantic mapping.
 
 ---
 
-# Build Context during Development
+# RustRover Integration
 
-Because behavioral content is not independently runnable as a complete Vapor App, development requires an effective Packagepack context.
+For supported RustRover integration, Vapor may manage appropriate project/toolchain configuration while preserving unrelated IDE components.
 
-A Game Mod, for example, must ultimately be exercised within a complete composition containing:
+The integration should use:
 
-* An effective Engine.
-* An effective Game.
-* The Mod.
-* Any required dependencies.
+```text
+canonical Superworkspace/source topology
+managed Rust/Cargo toolchain
+Vapor-aware Project structure
+```
 
-The SDK therefore needs some concept of a **test/run composition context**.
+rather than requiring the user to manually recreate IDE configuration after every source acquisition or recovery.
 
-Exactly how that context is represented remains open.
-
-Possible future forms include:
-
-* Explicit Packagepack selection.
-* Generated temporary Packagepack.
-* Development-only composition overlay.
-* Project-defined preferred test composition.
-
-This must be designed carefully because it directly affects iteration speed and conceptual clarity.
+IDE integration should still remain recoverable derived state.
 
 ---
 
-# Run and Test Experience
+# Build Semantics
 
-A developer-oriented Run operation should generally:
+Users should request semantic Vapor builds.
 
-* Determine intended Packagepack/test context.
-* Resolve composition.
-* Build if necessary.
-* Install/register resulting local Vapor App if necessary.
-* Launch it.
-* Associate diagnostics/runtime information with the originating development context.
+For example:
 
-This does not imply every Run must blindly rebuild everything.
+```text
+build this Packagepack
+build Vapor Client
+build this Project
+```
 
-Build currency and incremental compilation should avoid unnecessary work.
+depending on operation support.
+
+Vapor then coordinates the required physical steps.
+
+These may include:
+
+```text
+dependency resolution
+source availability checks
+Cargo invocation
+generated code
+operation recipes
+artifact creation
+validation
+local registration
+```
+
+The user should retain access to underlying commands/output where useful.
 
 ---
 
-# Diagnostics
+# Natural Operation Scope
 
-Vapor should distinguish between:
+An operation subject defines its normal scope.
 
-* Vapor-level diagnostic meaning.
-* Underlying tool output.
+For example:
+
+```text
+vapor client build
+```
+
+means:
+
+> Build Vapor Client according to the authored Client build operation.
+
+It does not mechanically mean:
+
+> Find every Project beneath Client and run `cargo build` separately against all of them.
+
+The authored operation may be richer.
+
+Likewise:
+
+```text
+vapor platform-server test
+```
+
+means:
+
+> Test Platform Server according to its complete test semantics.
+
+---
+
+# Project Build/Test
+
+Where a Project supports standalone build/test operations, Vapor may target that Project directly.
+
+For example:
+
+```text
+vapor test GHF-Studios/My-Stuff/Game/My-Game
+```
+
+resolves the Project, discovers its kind and realization, validates operation legality, then performs the appropriate test operation.
+
+The user should not need to redundantly write:
+
+```text
+vapor game test ...
+```
+
+merely because Vapor already knows that Project is a Game.
+
+---
+
+# Test Composition Context
+
+Behavioral Content may require a complete composition to exercise meaningfully.
+
+For example, a Game Mod cannot necessarily run independently.
+
+Vapor therefore needs a test/run composition mechanism.
+
+Possible sources may include:
+
+```text
+explicit Packagepack
+Project-authored preferred test Packagepack
+generated development Packagepack
+development composition overlay
+```
+
+The exact representation remains open.
+
+What is required is:
+
+> **Vapor must make complete-composition testing practical without pretending every behavioral Project is independently runnable.**
+
+---
+
+# Run Experience
+
+A development Run operation may need to:
+
+```text
+resolve effective Packagepack/test composition
+→ validate source
+→ build stale required artifacts
+→ install/register local Vapor App
+→ launch
+→ associate diagnostics/runtime logs with source context
+```
+
+This semantic sequence does not imply every invocation physically repeats every stage.
+
+Current state and caching should eliminate unnecessary work.
+
+---
+
+# Failed Build Preservation
+
+A failed rebuild must not destroy a previous working Vapor App.
+
+Development state may legitimately be:
+
+```text
+source:
+    newer / dirty
+
+latest build attempt:
+    failed
+
+previous installed Vapor App:
+    valid and runnable
+```
+
+Vapor should preserve these dimensions separately.
+
+This is important for both developer safety and understandable diagnostics.
+
+---
+
+# Development Deployment
+
+Deployment is not one universal operation.
+
+Different first-party facilities may define distinct deployment targets.
 
 Examples:
 
-* Invalid composition dependency.
-* Missing required source.
-* Cargo compilation failure.
-* Git checkout conflict.
-* Incompatible Engine/Game relationship.
-* Missing required capability.
-* Broken toolchain.
-* Runtime failure.
+```text
+client deploy local
+client deploy steam
 
-The user should receive a concise Vapor-oriented explanation while retaining access to raw output.
+platform-server deploy local
+platform-server deploy vps
+```
 
----
+Each target may have its own:
 
-# Local Source vs Installed Vapor Apps
+```text
+accepted scope
+validation
+artifact requirements
+authorization
+scripts
+health checks
+rollback/recovery behavior
+```
 
-Source and installed runnable output are different concerns.
-
-A developer may simultaneously have:
-
-* Dirty source.
-* Failed latest build.
-* Previous successful Vapor App installed.
-* Previous successful Vapor App selected.
-
-Vapor should not collapse these states.
-
-The Operational Model defines the state relationship.
+Deployment rules should remain specific rather than being flattened into one generic “deploy everything” lifecycle.
 
 ---
 
-# Development-State Removal
+# Local Deployment
 
-Removing or downgrading development capability must distinguish:
+Local deployment should be usable by ordinary Ecosystem Developers without production authority where technically possible.
 
-* Tooling.
-* Caches.
-* Generated build state.
-* User-authored Git repositories.
+This allows first-party systems to be developed and tested safely.
 
-Tooling may be removable.
+Examples:
 
-Caches may be disposable.
+```text
+local Client realization
+local Platform Server stack
+local Registry service
+local generated environment
+```
 
-Authored source requires explicit user intent before destructive removal.
+Local equivalents should approximate production semantics enough to reveal integration problems without requiring access to protected infrastructure.
 
 ---
 
-# Open Development Questions
+# Protected Deployment
 
-* Exact Superworkspace creation and registration workflow.
-* Whether multiple Container Repos commonly coexist in one Superworkspace.
-* Exact Container Repo version/submodule policy.
-* How Vapor IDs map to repository-relative project identities.
-* How source versions are pinned in pack dependencies.
-* How branch/commit selection appears to Composers.
-* Exact project-generation structure.
-* Test composition model.
-* SDK/external IDE boundary.
-* Debugger integration.
-* Automated testing model.
-* Hot-reload/runtime dynamicity boundaries.
-* How generated source/config is represented.
-* How Git conflicts are surfaced and repaired.
-* How Vapor handles repositories modified externally.
-* How local-only projects become publishable remote projects.
-* Exact Ecosystem Developer live-deployment workflow.
+Production/official deployment requires target-specific authority.
+
+For example:
+
+```text
+Steam deployment
+production Platform VPS
+protected Registry infrastructure
+official hosted services
+```
+
+Authorization failure should not be confused with missing local development capability.
+
+A developer may be fully capable of building/testing locally while correctly being denied production deployment.
+
+---
+
+# Examples Facility
+
+Official Examples serve as architecture-proving development material.
+
+They may be acquired through a stable first-party operation such as:
+
+```text
+vapor examples acquire
+```
+
+The Examples facility may contain:
+
+```text
+Content Projects
+Library examples
+composition examples
+Cargo reconciliation tests
+integration examples
+architecture-proving scenarios
+```
+
+Its current Git topology may evolve.
+
+The semantic purpose of `examples` should remain stable.
+
+---
+
+# Source Visibility and Privacy
+
+New developer source should be conservative by default.
+
+Where provider support permits:
+
+```text
+new repository
+    → private by default
+```
+
+Public visibility should be intentional.
+
+Likewise, independently acquirable Source Repo behavior should be opt-in.
+
+This makes accidental publication less likely.
+
+---
+
+# Development Removal
+
+Removing development capability must distinguish:
+
+```text
+installed tools
+derived caches
+generated state
+authored source
+```
+
+A Role downgrade may remove tooling or hide higher-capability UI.
+
+It must not silently remove authored Git source.
+
+Likewise, uninstalling/reinstalling the Steam App should not be treated as permission to erase the Superworkspace.
+
+---
+
+# Steam Reinstall
+
+Because authored source lives outside the Steam depot boundary:
+
+```text
+Steam uninstall/reinstall
+```
+
+may replace:
+
+```text
+Vapor binaries
+bootstrap files
+depot-managed runtime files
+```
+
+while preserving:
+
+```text
+Superworkspace
+authored source
+Vapor user data where appropriate
+```
+
+On reinstallation, Vapor can reconnect to its configured Superworkspace and regenerate derived state.
+
+---
+
+# Derived-State Loss
+
+If Vapor-owned derived development state is deleted, Vapor should reconstruct it from:
+
+```text
+authored source
+Registry state
+Git state
+managed configuration
+installed capability
+```
+
+For example:
+
+```text
+delete IDE integration
+delete indexes
+delete generated operation realization
+```
+
+should be recoverable through diagnosis/repair.
+
+Deleting authored source is fundamentally different.
+
+---
+
+# Disaster Recovery
+
+A robust Vapor development environment should support recovery from loss of replaceable local state.
+
+Conceptually:
+
+```text
+Steam/Vapor application reacquired
+→ user data reconstructed/reattached
+→ registered source reacquired where actually missing
+→ authored Git topology restored explicitly/safely
+→ derived state regenerated
+→ toolchain/IDE integration reconciled
+→ build/test restored
+```
+
+Recovery must distinguish:
+
+```text
+recoverable remote-authored source
+unique local authored changes
+derived local state
+```
+
+Unique local work must never be treated as safely disposable merely because remote source exists.
+
+---
+
+# Development Context UX
+
+The user should not need to repeatedly enter raw filesystem paths once Vapor understands the topology.
+
+Preferred concepts are:
+
+```text
+Authority
+Source Repo Container
+Source Repo
+Project
+Context
+Selection
+```
+
+Raw paths remain useful for:
+
+```text
+explicit filesystem diagnostics
+bootstrap/import
+locating moved data
+underlying Git/Cargo tools
+```
+
+but are not the ordinary semantic interface.
+
+---
+
+# Context Is Optional Convenience
+
+Persistent Context may make repetitive work shorter.
+
+For example:
+
+```text
+open:
+    GHF-Studios/My-Stuff/Game
+```
+
+then:
+
+```text
+My-Game
+```
+
+may be sufficient to identify:
+
+```text
+GHF-Studios/My-Stuff/Game/My-Game
+```
+
+But a developer can always provide enough explicit information directly.
+
+Context must never be the sole route to expressing location.
+
+---
+
+# Per-Operation Context Override
+
+A one-shot command or GUI action must be able to provide a temporary alternate Context.
+
+This is analogous to:
+
+> being navigated somewhere in a UI or shell, but deliberately operating on another path.
+
+Transient Context exists for one operation.
+
+It should not mutate persistent navigation state.
+
+This makes scripts and automation independent of forgotten interactive Context.
+
+---
+
+# Selection Is Operation Intent
+
+Selection is separate from Context.
+
+For example:
+
+```text
+Context:
+    GHF-Studios/Vapor-Platform-Server/Registry
+```
+
+does not cause:
+
+```text
+platform-server test
+```
+
+to become Registry-scoped.
+
+Only explicit operation selection does that.
+
+This protects against forgotten navigation state silently changing build/test/deploy behavior.
+
+---
+
+# Development Error Philosophy
+
+Vapor should make failure states useful.
+
+A good development error may explain:
+
+```text
+what object was resolved
+what parent is missing
+what kind it is
+why this operation is illegal
+what local state is missing
+what Git state differs
+what authority is absent
+what safe options are available
+```
+
+Errors are part of the developer learning experience.
+
+They should be written for someone who may not yet know the underlying tool well.
+
+---
+
+# Exhaustive Safe Guidance
+
+Where Vapor knows several safe resolutions, diagnostics should present them.
+
+For ambiguous Project selection, this may include:
+
+```text
+fully qualified candidates
+shorter disambiguating selectors
+explicit --select examples
+persistent Context/open alternatives
+transient --context alternatives
+```
+
+Where a suggested action may change authored Git state, Vapor should label it as a possible action rather than guaranteed safe remediation.
+
+---
+
+# Development-State Observability
+
+The SDK should expose enough state for developers to understand:
+
+```text
+what source exists
+where it belongs
+which Git repository owns it
+what branch/commit state exists
+which Project is being operated on
+which Cargo packages realize it
+which dependencies are resolved
+what build state exists
+which operation recipe ran
+what artifacts were produced
+why an operation was rejected
+```
+
+Convenience should not require opacity.
+
+---
+
+# SDK Development Experience
+
+The Vapor SDK is the primary first-party graphical development surface.
+
+Its development model should project the canonical hierarchy:
+
+```text
+Superworkspace
+→ Authorities
+→ Source Repo Containers
+→ Source Repos
+→ Projects
+→ deeper Project/Cargo/content detail
+```
+
+The GUI may present this with:
+
+```text
+Explorer
+Inspector
+editors
+problems
+logs
+run/test actions
+Git state
+dependency graphs
+operation output
+```
+
+The exact visual organization belongs to the SDK Experience Model.
+
+---
+
+# CLI / SDK Equality
+
+CLI and SDK should expose equivalent semantic capability where practical.
+
+That does not require identical interaction.
+
+Example:
+
+```text
+SDK:
+    navigate tree
+    select Registry
+    click Test
+
+CLI:
+    vapor platform-server test --select "Registry"
+```
+
+Both should invoke the same underlying Vapor Core operation semantics.
+
+---
+
+# Automation
+
+Automation should not depend on hidden interactive state.
+
+It should be able to provide:
+
+```text
+full canonical paths
+explicit transient context
+explicit selection
+machine-readable output
+exact operation variants
+```
+
+Persistent interactive Context may remain available but should not be required.
 
 ---
 
 # Development Invariants
 
-* Git is used for both Container Repos and Vapor Workspaces.
-* Vapor Projects are not themselves Git repositories.
-* A Superworkspace is not itself the canonical source-bearing repository.
-* Composer capability can author packs.
-* Content Developer capability can author behavioral content.
-* Local development does not inherently require GitHub authentication.
-* Dirty source remains legitimate local development state.
-* Vapor must not silently destroy uncommitted or unpushed source.
-* Behavioral content is ultimately tested within a complete composition.
-* A semantic Vapor build targets a complete Packagepack composition.
-* Incremental compilation optimizes the static build model rather than replacing it.
-* External IDE usage must remain compatible with Vapor's repository/source model.
+* Vapor has one canonical local Superworkspace.
+* The Superworkspace has no Vapor identity.
+* The Superworkspace location is local configuration, not an ID segment.
+* Authored source lives outside the disposable Steam depot boundary.
+* Authority → Source Repo Container → Source Repo → Project is the canonical source hierarchy.
+* One Source Repo equals one Vapor Workspace.
+* Projects are not Git repositories.
+* Container creation does not implicitly create Source Repos.
+* Source Repo creation does not implicitly create Projects.
+* Typed Project creation does not silently create missing parent topology.
+* Source Repo Container is the default atomic acquisition unit.
+* Source Repo independent acquisition is opt-in.
+* Vapor acquisition accepts registered Vapor source, not arbitrary Git repositories.
+* Plain Git remains valid and inspectable.
+* Vapor need not have performed the clone for valid source to be recognized.
+* Git provider identity is distinct from Vapor identity.
+* First-party status is trusted Registry/Root-Authority state.
+* Third-party source cannot self-grant bespoke root Vapor semantics.
+* Operation recipes should remain lightweight and inspectable.
+* Persistent Context affects resolution, not operation scope.
+* Explicit selection affects operation scope.
+* CWD is not ordinary Vapor semantic Context.
+* Dirty Git source is legitimate development state.
+* Repair must not reset authored Git state or reacquire authored source.
+* Missing submodule checkouts are Git reconciliation problems.
+* Authored and derived state must remain distinguishable.
+* Derived state should be safely regeneratable.
+* External IDE integration should be derived/reconcilable where possible.
+* Vapor Project topology and Cargo topology remain distinct.
+* Failed rebuilds must not destroy prior valid installed builds.
+* Local development should remain possible without production authority.
+* Steam reinstall/downgrade must not silently delete authored source.
+
+---
+
+# Open Development Questions
+
+The following remain intentionally open:
+
+* Exact Superworkspace configuration/relocation command and persisted schema.
+* Exact Vapor User Data root layout on each operating system.
+* Exact Source Repo Container purpose/kind taxonomy.
+* Exact relationship between first-party trust and Container facility classification.
+* Exact provider UX for repository creation and visibility.
+* Exact collaboration/fork workflow.
+* Exact independently-acquirable Source Repo policy representation.
+* Exact Project filesystem/manifest layout.
+* Exact typed Project templates.
+* Exact test/run Packagepack context model.
+* Exact authored operation-recipe schema.
+* Exact boundary between declarative operation recipes and checked-in scripts.
+* Exact local Platform Server deployment mechanism.
+* Exact future generalization of `deploy vps`.
+* Exact source publication/version locking behavior.
+* Exact IDE/debugger integration beyond currently supported RustRover reconciliation.
+* Exact generated-state directory layout.
+* Exact automated test taxonomy across Project, Source Repo, Container, and first-party facility scopes.
+* Exact Git wrapper/reconciliation commands Vapor should expose in addition to diagnostics.

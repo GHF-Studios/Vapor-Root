@@ -1,8 +1,9 @@
-
 > [!info]
-> This document defines the high-level **User Experience (UX)** and **Developer Experience (DX)** of the Vapor Ecosystem.
+> This document defines the high-level **User Experience (UX)** and **Developer Experience (DX)** of Vapor.
 >
-> It sits between the **Ecosystem Model Glossary** and the more focused operational, development, publishing/distribution, architecture, and implementation documents.
+> Here, **ecosystem** describes Vapor as a complete product/content/development environment.
+>
+> It does not imply one generic modeled `Ecosystem` object or universal `vapor ecosystem ...` lifecycle.
 >
 > This document answers:
 >
@@ -10,471 +11,1089 @@
 > * What are they trying to accomplish?
 > * What concepts should they encounter?
 > * What complexity should Vapor expose or hide?
-> * How should the ecosystem feel as capability increases?
+> * How should the product change as installed Role increases?
+> * How should GUI, CLI, Git, Cargo, Steam, and provider reality fit together?
 >
-> Detailed state transitions and lifecycle semantics belong in the **Vapor Ecosystem Operational Model**.
+> Detailed operational state belongs in the **Vapor Ecosystem Operational Model**.
 >
-> Detailed authoring and source-development workflows belong in the **Vapor Development Experience Model**.
+> Canonical source identity, Context, Selection, and the Superworkspace belong in the **Vapor Context, Identity, Session And Selection Model**.
 >
-> Detailed publication, source distribution, built distribution, and Registry behavior belong in the **Vapor Publishing and Distribution Model**.
+> Detailed authoring/source workflows belong in the **Vapor Development Experience Model**.
+>
+> Publication belongs in the **Vapor Publishing And Distribution Model**.
+>
+> Exact graphical SDK organization belongs in the **Vapor SDK Experience Model**.
 
 ---
 
 # Purpose
 
-Vapor exists to make a complex Rust/Cargo/Git/Steam-based content ecosystem behave like one coherent product.
+Vapor exists to make a complex combination of:
 
-Users should primarily interact with **Vapor concepts**, not with the incidental complexity of the tools used underneath them.
+```text
+Rust
+Cargo
+Git
+Git providers
+Steam
+SteamCMD
+Steam Workshop
+Registry services
+build tooling
+generated realization
+Vapor Content
+Vapor Apps
+```
 
-At a very high level:
+behave like one coherent product.
 
-> **Player:** consume complete compositions.
+Users should primarily interact with **Vapor concepts** when performing Vapor work.
 
-> **Composer:** assemble complete compositions from existing content.
+The underlying systems remain real.
 
-> **Content Developer:** create and modify the behavioral content that compositions are assembled from.
+They should remain visible and inspectable when useful.
 
-> **Ecosystem Developer:** create and maintain Vapor itself.
+The governing principle is:
 
-The implementation may involve:
-
-* Git.
-* Git hosting services.
-* Rust.
-* Cargo.
-* Steam.
-* SteamCMD.
-* Steam Workshop.
-* Bevy.
-* ECS infrastructure.
-* Generated code.
-* Build systems and caches.
-* Multiple repositories and workspaces.
-* Vapor server infrastructure.
-
-Those systems should remain accessible and inspectable where appropriate.
-
-They should not dictate the ordinary mental model of Vapor.
-
-The guiding principle is:
-
-> **Expose the work the user actually intends to perform; automate the infrastructure required to make that work possible.**
+> **Expose the work the user intends to perform; orchestrate the incidental infrastructure required to make that work possible.**
 
 Vapor is therefore neither:
 
-* A thin graphical wrapper over Cargo.
-* A replacement for every external development tool.
-* A black box that prevents advanced users from understanding what happened.
+```text
+a thin GUI over Cargo
 
-Vapor is the semantic, experiential, and orchestration layer that turns the underlying systems into one ecosystem.
+nor
+
+a replacement for Git/Rust/Steam
+
+nor
+
+a black box hiding every implementation detail
+```
+
+It is the semantic and orchestration layer connecting those systems.
 
 ---
 
-# Experience Principles
+# Role Experience Summary
+
+At the highest level:
+
+```text
+Player
+    consumes complete Vapor Apps
+
+Composer
+    assembles complete compositions from existing Content
+
+Content Developer
+    creates/modifies behavioral and reusable Content
+
+Ecosystem Developer
+    develops Vapor itself
+```
+
+These are installed local Roles.
+
+Separately:
+
+```text
+Root Authority
+    controls protected official Vapor authority
+```
+
+Root Authority is not another installed Role.
+
+---
+
+# Core Experience Principles
 
 ## Steam-First Player Experience
 
-The normal Player experience begins and remains within Steam and Vapor.
+The normal Player begins in Steam.
 
 Playing Loo Cast must not require:
 
-* Visiting GitHub.
-* Installing Git.
-* Installing Rust.
-* Installing Cargo.
-* Installing SteamCMD.
-* Understanding repositories.
-* Understanding composition builds.
-* Editing configuration files manually.
+```text
+GitHub
+Git
+Rust
+Cargo
+SteamCMD
+source repositories
+source dependency resolution
+local compilation
+manual configuration
+```
 
-The default Steam installation should behave like a conventional, immediately playable Steam product.
-
----
-
-## Progressive Capability
-
-Vapor exposes progressively larger mental models as capability increases.
-
-> **Player**
-> sees Vapor Apps.
-
-> **Composer**
-> additionally sees Vapor Content, packs, source, dependencies, and composition.
-
-> **Content Developer**
-> additionally sees behavioral source, projects, programming, SDK tooling, build/test loops, and diagnostics.
-
-> **Ecosystem Developer**
-> additionally sees Vapor itself as an editable and deployable system.
-
-> **Root Authority**
-> additionally possesses ultimate administrative authority over the official ecosystem.
-
-Higher capability is not merely a larger permission set.
-
-Each capability level introduces new kinds of work and therefore new concepts that legitimately need to become visible.
+The default Steam installation behaves like a normal playable product.
 
 ---
 
-## Golden Paths over Incidental Infrastructure
+# Progressive Disclosure
 
-Vapor should provide strongly supported normal paths for common tasks.
+Vapor reveals larger mental models only when they become useful.
 
-A Composer should normally be able to express:
+Conceptually:
 
-> Build this Packagepack.
+```text
+Player
+    Vapor Apps
 
-rather than manually expressing:
+Composer
+    + Content
+    + packs
+    + composition
+    + source
+    + dependencies
+    + builds
 
-> Find every repository, ensure every checkout is correct, configure the Rust toolchain, invoke Cargo in the correct workspace, locate the resulting artifacts, package them correctly, install them into the local Steam App Instance, update Vapor's local records, then launch the correct executable.
+Content Developer
+    + Projects
+    + implementation source
+    + Git
+    + Cargo/Rust
+    + SDK
+    + test/debug/diagnostics
 
-Those underlying operations may still happen.
+Ecosystem Developer
+    + Vapor Client source
+    + Platform Server source
+    + first-party tooling
+    + infrastructure
+    + deployment
+    + Registry/identity systems
+```
 
-Vapor should orchestrate them.
+Higher Role should feel substantially more capable.
+
+It should not merely reveal a few additional buttons.
 
 ---
 
-## Advanced Transparency
+# Golden Paths
+
+Vapor should provide strong normal workflows for common tasks.
+
+A Composer should be able to request:
+
+```text
+Build this Packagepack.
+```
+
+rather than manually performing:
+
+```text
+find every repository
+→ determine exact versions
+→ acquire source
+→ configure Rust
+→ configure Cargo
+→ generate glue
+→ invoke Cargo correctly
+→ locate artifacts
+→ package artifacts
+→ register the App
+→ select the correct executable
+```
+
+Those underlying actions may still occur.
+
+Vapor orchestrates them.
+
+---
+
+# Advanced Transparency
 
 Abstraction must not require opacity.
 
-As capability increases, users should gain increasing access to:
+As Roles increase, Vapor should expose increasingly rich underlying state such as:
 
-* Raw Git state.
-* Cargo output.
-* Build logs.
-* Dependency information.
-* Repository locations.
-* Diagnostics.
-* Generated files.
-* Provider-native identifiers.
-* Underlying commands where useful.
+```text
+canonical Vapor identities
+Git repository/provider information
+Git status
+commit hashes
+Cargo output
+Cargo packages/targets
+toolchain state
+build logs
+dependency resolution
+generated realization
+operation recipes
+provider-native identifiers
+deployment output
+```
 
-The default presentation may be Vapor-oriented.
-
-The underlying reality should remain inspectable.
-
----
-
-## Static Composition with Explicit Runtime Dynamicity
-
-A Vapor App is fundamentally a statically resolved complete composition.
-
-Composition changes normally occur before launch and require rebuilding.
-
-This does not imply that the runtime itself can contain no dynamic systems.
-
-In particular, the Spacetime Engine / USF Capability Model may provide explicitly modeled dynamic attachment points within an otherwise statically structured composition.
-
-Static composition and controlled runtime dynamicity are therefore different concerns.
-
-The composition determines **what runtime system exists**.
-
-That runtime system may itself deliberately expose structured dynamic behavior.
+A user should be able to understand what Vapor did.
 
 ---
 
-## Human-Readable Identity
+# Reuse Underlying Tools
 
-Users should work primarily with Vapor identities and names rather than provider-specific opaque identifiers.
+Where Git, Cargo, Rust, Steam, or a provider already has a meaningful concept, Vapor should preserve that concept rather than inventing a weaker replacement.
 
-Steam Workshop Item IDs, repository URLs, commit hashes, Steam IDs, and similar provider-native identifiers remain useful implementation and diagnostic information.
+Examples:
 
-They should not become the ecosystem's primary semantic identity model.
+```text
+Git branch
+    stays Git branch
+
+Cargo package
+    stays Cargo package
+
+Steam Workshop Item ID
+    stays Steam provider identity
+```
+
+Vapor adds semantic context around those systems.
+
+It does not need to rename everything.
 
 ---
 
-# Capability Model
+# Human-Readable Identity
 
-Vapor uses a cumulative capability hierarchy:
+Users should primarily see canonical Vapor identities and names.
 
-> **Player ⊂ Composer ⊂ Content Developer ⊂ Ecosystem Developer ⊂ Root Authority**
+For source:
 
-Each capability contains every capability below it.
+```text
+Authority
+/ Source Repo Container
+/ Source Repo
+/ Project
+```
+
+Example:
+
+```text
+GHF-Studios/Loo-Cast/Game/Loo-Cast
+```
+
+Provider-native information remains available for diagnostics and advanced workflows.
+
+---
+
+# Minimal Sufficient Input
+
+Users should not be forced to type a full canonical identity when Vapor already has enough information to resolve a shorter selector safely.
+
+The experience principle is:
+
+> **Ask for no more information than is needed to resolve intent unambiguously.**
+
+Full canonical identity remains available and exact.
+
+Shorter selectors are convenience.
+
+Ambiguity is never guessed.
+
+---
+
+# Ambiguity Should Teach
+
+When input matches multiple objects, Vapor should explain the topology.
+
+Example:
+
+```text
+error: Project `core` is ambiguous within Vapor Platform Server
+
+matches:
+
+    Registry/core
+    Identity/core
+    Diagnostics/core
+
+help:
+    select one explicitly
+```
+
+Where useful, GUI and CLI should additionally offer:
+
+```text
+stronger selector
+
+persistent Context
+
+transient Context override
+```
+
+as safe ways to disambiguate.
+
+---
+
+# Diagnostics Are Product UX
+
+Errors are not merely developer logging.
+
+Vapor should explain:
+
+```text
+what was resolved
+
+what could not be resolved
+
+which candidates exist
+
+which invariant failed
+
+what state is missing
+
+which provider is involved
+
+which Role is required
+
+which authority is missing
+
+which safe operations can resolve the issue
+```
+
+This is especially important because Vapor should remain approachable to users who may also be learning:
+
+```text
+Git
+Rust
+Cargo
+software development
+game development
+```
+
+---
+
+# Role Model
+
+Installed Roles are cumulative:
+
+```text
+Player
+⊂ Composer
+⊂ Content Developer
+⊂ Ecosystem Developer
+```
 
 A Content Developer is also a Composer and Player.
 
 An Ecosystem Developer is also a Content Developer.
 
-Root Authority contains every lower capability.
+---
 
-Installed local capability and external authorization are distinct.
+# Root Authority Is Orthogonal
 
-A Content Developer may possess a fully working local development environment while currently being unauthenticated to GitHub or another remote provider.
+Do not model:
 
-Such a user can still:
+```text
+Player
+→ Composer
+→ Content Developer
+→ Ecosystem Developer
+→ Root Authority
+```
 
-* Edit.
-* Compose.
-* Build.
-* Run.
-* Test.
+Instead:
 
-Only operations requiring remote authority become unavailable.
+```text
+local Role:
+    Ecosystem Developer
 
-Capability establishment and removal belong primarily to the Vapor Installer.
+authority:
+    possibly Root Authority
+```
 
-Ordinary use of installed capability belongs primarily to the Vapor Launcher and its contained surfaces.
+Root Authority answers:
+
+> What protected official Vapor resources may this identity control?
+
+Role answers:
+
+> What is this local Vapor environment equipped to do?
 
 ---
 
-# Steam App and Vapor App Model
+# Local Capability Without Remote Authentication
 
-## Steam App
+A user may have:
 
-There is one Steam-distributed product:
+```text
+Content Developer Role
 
-> **Loo Cast**
+managed toolchain ready
 
-This is the **Steam App**.
+source available
 
-The Steam App is the outer installation and product boundary through which Vapor is entered.
+GitHub logged out
+```
 
-It provides:
+and still legitimately:
 
-* Vapor Installer.
-* Vapor Launcher.
-* Required Vapor runtime/bootstrap infrastructure.
-* The default first-party Loo Cast composition.
-* Access to installed additional Vapor Apps.
-* Access to higher Vapor capabilities when installed.
+```text
+edit
+compose
+build
+test
+run
+```
 
-The Steam App is not synonymous with one particular composition.
+Only remote-provider operations should become unavailable.
+
+Examples:
+
+```text
+push
+publish
+create remote repository
+deploy protected infrastructure
+```
+
+may require authentication/authorization.
 
 ---
+
+# Steam App
+
+There is one Steam-distributed outer product:
+
+```text
+Loo Cast
+```
+
+This is the Steam App.
+
+It provides the ordinary entry point into:
+
+```text
+Vapor Client
+default Loo Cast Vapor App
+Vapor Installer
+additional Vapor Apps
+higher installed Vapor Roles
+```
+
+Steam App is not synonymous with one Vapor App Composition.
+
+---
+
+# Steam App Instance
+
+A **Steam App Instance** is one concrete Steam installation of Loo Cast.
+
+Normal model:
+
+```text
+one Steam installation
+=
+one Steam App Instance
+```
+
+The Steam App Instance is primarily a product/distribution boundary.
+
+It does not physically own the entire mutable Vapor environment.
+
+---
+
+# Local Storage Experience
+
+The local Vapor environment should conceptually distinguish:
+
+```text
+Steam App Instance
+
+Vapor User Data
+
+canonical Superworkspace
+```
 
 ## Steam App Instance
 
-A **Steam App Instance** is one concrete local installation of the Steam App.
+Primarily:
 
-The normal model assumes:
+```text
+Steam/depot-owned replaceable files
+Vapor binaries
+bootstrap
+default shipped Vapor App
+```
 
-> One Steam installation of Loo Cast = one Steam App Instance.
+## Vapor User Data
 
-The Steam App Instance provides the local product context containing or referencing:
+May contain:
 
-* Steam-managed installation state.
-* Vapor application state.
-* Installed capability.
-* Installed/built Vapor Apps.
-* Selected Vapor App Composition.
-* Relevant caches and metadata.
-* Source/development state where higher capabilities exist.
+```text
+Role state
+configured Superworkspace location
+persistent Context
+managed toolchain state
+indexes
+caches
+IDE integration
+selected/default Vapor App
+local App metadata
+resume state
+```
 
-Users do not currently create arbitrary additional Steam App Instances.
+## Superworkspace
 
-Steam-supported installation movement should be preferred over arbitrary manual copying.
+Contains authored development source.
 
----
-
-## Packagepack
-
-A **Packagepack** is the complete composition artifact.
-
-A valid Packagepack must resolve to:
-
-* Exactly one effective Engine.
-* Exactly one effective Game.
-* The applicable Engine Mods.
-* The applicable Game Mods.
-* The applicable Extension Mods.
-
-Those constituents may be expressed directly or through subordinate packs.
-
-A Packagepack is not merely a precursor to some separately authored "finished composition."
-
-It already represents the complete composition.
+This distinction must be reflected in uninstall/reinstall/recovery UX.
 
 ---
 
-## Vapor App Composition
+# Steam Reinstall Experience
 
-A **Vapor App Composition** is the effective resolved composition represented by a Packagepack in the context in which it is used by a Steam App Instance.
+Reinstalling through Steam may replace product files.
 
-It represents the effective content graph after composition/dependency resolution.
+It must not imply:
 
-A Steam App Instance has one selected Vapor App Composition for its current/default launch context.
+```text
+delete canonical Superworkspace
+delete authored Git source
+delete unpushed commits
+```
+
+After reinstall, Vapor should reconnect to appropriate persisted/recoverable local state and regenerate derived state where necessary.
 
 ---
 
-## Vapor App
+# Packagepack
 
-A **Vapor App** is a built, deployable, runnable realization of a Vapor App Composition for a supported target.
+A **Packagepack** is the complete authored composition Project.
 
-Conceptually:
+A valid Packagepack resolves to:
 
-> **Packagepack**
-> complete composition artifact
->
-> ↓ resolve
->
-> **Vapor App Composition**
-> effective resolved composition
->
-> ↓ build/deploy
->
-> **Vapor App**
-> runnable realization
+```text
+exactly one effective Engine
+exactly one effective Game
+selected compatible Mods
+Libraries/support dependencies
+subordinate packs/dependencies
+```
+
+It is not merely a precursor to another authored “finished composition” entity.
+
+---
+
+# Vapor App Composition
+
+Resolving a Packagepack produces its **Vapor App Composition**:
+
+```text
+Packagepack
+    ↓ resolve
+exact effective Content graph
+```
+
+The resolved composition is semantic state.
+
+---
+
+# Vapor App
+
+Building a Vapor App Composition produces a **Vapor App**:
+
+```text
+Packagepack
+    ↓ resolve
+Vapor App Composition
+    ↓ build
+Vapor App
+```
+
+A Vapor App is a target-specific runnable realization.
 
 Multiple Vapor Apps may coexist locally.
 
-The conceptual relationship is illustrated in [Vapor Composition Model](./Diagrams/Vapor%20Composition%20Model.puml).
+---
+
+# Selected / Default Vapor App
+
+The Steam App Instance may remember one selected/default Vapor App for:
+
+```text
+Play
+direct launch
+ordinary Launcher convenience
+```
+
+This concept is completely separate from:
+
+```text
+persistent development Context
+
+operation Selection
+
+GUI tree selection
+```
+
+The word “selected” should therefore always be qualified where ambiguity is possible.
 
 ---
 
 # Player Experience
 
-A Player consumes finished Vapor Apps.
+A Player primarily wants to:
 
-The normal Player wants to:
+```text
+install Loo Cast
 
-* Install Loo Cast through Steam.
-* Launch the default Loo Cast Vapor App.
-* Discover other complete Vapor Apps.
-* Acquire them.
-* Install them.
-* Select them.
-* Launch them.
-* Remove them.
-* Manage ordinary settings and account state.
+play default Loo Cast
 
-A Player is not expected to understand:
+discover additional Vapor Apps
 
-* Git.
-* Rust.
-* Cargo.
-* SteamCMD.
-* Vapor Workspaces.
-* Container Repos.
-* Vapor Projects.
-* Compilation.
-* Source dependency resolution.
-* Composition authoring.
+acquire/install Apps
 
-The Player-facing discovery unit inside Vapor is therefore primarily a **complete Vapor App**.
+choose an App
 
-Individual Engines, Games, Mods, and subordinate packs are not normal Player-facing discovery objects because the Player cannot meaningfully compose them inside Vapor.
+launch it
 
-The normal Player path should deal with built artifacts only.
+remove it
+
+manage settings/accounts
+```
+
+A Player should not need to understand:
+
+```text
+Authority
+Source Repo Container
+Source Repo
+Project
+Git
+Cargo
+Rust
+composition builds
+source versions
+```
+
+unless they deliberately inspect advanced information.
+
+---
+
+# Player Discovery Unit
+
+The normal Player-facing discovery unit is a complete Vapor App.
+
+Individual:
+
+```text
+Engine
+Game
+Mod
+Library
+Enginepack
+Gamepack
+Modpack
+```
+
+are not ordinary Player composition objects because Player Role does not author compositions.
+
+---
+
+# Player Acquisition
+
+Player-facing acquisition should feel approximately like:
+
+```text
+find App
+→ acquire
+→ install
+→ launch
+```
+
+Provider-native Steam Workshop details should generally remain beneath the Vapor UX.
+
+The Player does not compile.
+
+---
+
+# Default Loo Cast Experience
+
+The default first-party Packagepack is:
+
+```text
+Loo Cast Packagepack
+```
+
+It resolves to at least:
+
+```text
+Spacetime Engine
+Loo Cast Game
+```
+
+plus required dependencies.
+
+Its built Vapor App ships directly in the Steam depot.
+
+First launch must not require Steam Workshop.
+
+---
+
+# Steam Entry Points
+
+The Steam product should expose three conceptual launch choices:
+
+```text
+Play Loo Cast
+
+Start Vapor
+
+Start Installer
+```
+
+---
+
+# Play Loo Cast
+
+`Play Loo Cast` directly enters the default first-party Vapor App path.
+
+No:
+
+```text
+source acquisition
+local build
+Rust installation
+```
+
+is required.
+
+---
+
+# Start Vapor
+
+`Start Vapor` opens the Vapor Launcher.
+
+This is the normal explicit entry into Vapor's management/discovery/composition/development surfaces.
+
+---
+
+# Start Installer
+
+`Start Installer` opens the Vapor Installer.
+
+This is used to:
+
+```text
+establish higher Roles
+
+change installed tooling
+
+repair capability state
+
+downgrade capability
+
+perform setup/recovery tasks
+```
 
 ---
 
 # Composer Experience
 
-A Composer is a Player who can create and modify compositions from existing Vapor Content.
+A Composer creates and modifies composition-oriented Content.
 
-A Composer may author:
+Composer-authored kinds include:
 
-* Packagepacks.
-* Enginepacks.
-* Gamepacks.
-* Modpacks.
+```text
+Packagepack
+Enginepack
+Gamepack
+Modpack
+```
 
-A Composer may consume existing:
+Composer consumes existing:
 
-* Engines.
-* Games.
-* Engine Mods.
-* Game Mods.
-* Extension Mods.
+```text
+Engine
+Game
+Mods
+Libraries
+other packs
+```
 
-A Composer may not modify those behavioral artifact types as part of Composer capability.
+---
 
-The fundamental distinction is:
+# Composer Mental Model
 
-> **Composer:** selects and combines behavior.
+The Composer primarily reasons about:
 
-> **Content Developer:** creates or changes behavior.
+```text
+Content
+dependencies
+compatibility
+packs
+Packagepack composition
+versions
+resolution
+build
+Vapor App
+publication
+```
 
-Composer capability introduces:
+Not:
 
-* Source-backed Vapor Content.
-* Git.
-* Packs.
-* Dependencies.
-* Compatibility.
-* Composition resolution.
-* Local builds.
-* Publication.
-* More detailed local state.
+```text
+manual Cargo workspace wiring
+manual generated glue
+manual toolchain environment setup
+```
 
-A Composer should primarily reason about Vapor composition concepts rather than Cargo invocation mechanics.
+---
 
-Typical Composer work includes:
+# Composer Source Exposure
 
-* Discovering source-side Vapor Content.
-* Acquiring appropriate source repositories.
-* Creating or opening packs.
-* Selecting compatible content.
-* Resolving a Packagepack.
-* Building the complete composition.
-* Installing/registering the resulting Vapor App.
-* Running/testing it.
-* Publishing authored packs and Packagepacks.
+Composer Role introduces enough source concepts to support authored packs.
 
-The detailed source and repository experience is specified in the **Vapor Development Experience Model**.
+This includes:
 
-The detailed publication path is specified in the **Vapor Publishing and Distribution Model**.
+```text
+registered source
+canonical identities
+source acquisition
+Git-backed authored state
+Projects
+versioning/publication
+```
+
+The Composer may not need the same depth of implementation-source exposure as Content Developer.
+
+---
+
+# Composer Journey
+
+A typical Composer journey may be:
+
+```text
+Enter Development
+
+→ navigate/create/acquire relevant source
+
+→ create/open Packagepack Project
+
+→ choose Engine/Game/Mods/Libraries
+
+→ resolve composition
+
+→ inspect conflicts
+
+→ build
+
+→ install/register local Vapor App
+
+→ run/test
+
+→ revise
+
+→ optionally publish
+```
+
+The exact frontend interactions may differ between GUI and CLI.
 
 ---
 
 # Content Developer Experience
 
-A Content Developer creates or modifies behavioral and reusable implementation Vapor Content.
+A Content Developer creates or modifies behavioral/reusable Content.
 
-This includes:
+Examples:
 
-* Engine.
-* Game.
-* Engine Mod.
-* Game Mod.
-* Extension Mod.
-* Library.
+```text
+Engine
+Game
+Engine Mod
+Game Mod
+Extension Mod
+Library
+```
 
-Engine Developer, Game Developer, Library Developer, and Mod Developer are specializations of Content Development rather than separate fundamental Roles.
+Specializations such as:
 
-Content Developer capability introduces active implementation/source authoring.
+```text
+Engine Developer
+Game Developer
+Mod Developer
+Library Developer
+```
+
+are not separate fundamental installed Roles.
+
+---
+
+# Content Developer Mental Model
 
 The developer now legitimately encounters:
 
-* Vapor Superworkspaces.
-* Workspaces.
-* Projects.
-* Content identities.
-* Local realizations.
-* Source editing.
-* Programming.
-* Cargo/Rust integration.
-* Configuration.
-* Semantic dependency resolution.
-* Build/run/test iteration.
-* Diagnostics.
-* Git/provider state.
-* SDK functionality.
-* More direct underlying-tool visibility.
+```text
+canonical Superworkspace
+
+Authorities
+
+Source Repo Containers
+
+Source Repos / Vapor Workspaces
+
+Projects
+
+Content kind
+
+Git repositories
+
+Rust/Cargo realization
+
+source implementation
+
+dependencies
+
+build/test/run
+
+diagnostics
+
+SDK
+
+publication
+```
+
+---
+
+# One Canonical Superworkspace
+
+The developer sees one canonical local Superworkspace.
+
+Not:
+
+```text
+multiple active Superworkspaces
+
+implicit Superworkspace
+
+configured Superworkspace
+
+temporary Superworkspace
+```
+
+as competing normal models.
+
+Conceptually:
+
+```text
+Superworkspace
+└── Authorities
+    └── Source Repo Containers
+        └── Source Repos
+            └── Projects
+```
+
+The Superworkspace itself has no Vapor identity.
+
+---
+
+# Source Repo = Vapor Workspace
+
+The GUI may present both terms according to context:
+
+```text
+Source Repo
+    emphasizes Git/source repository
+
+Vapor Workspace
+    emphasizes Vapor development context
+```
+
+They are the same hierarchy node.
+
+They must not appear as two nested structural layers.
+
+---
+
+# Project Experience
+
+A Project is the main Vapor development unit inside a Source Repo.
+
+The developer may encounter deeper implementation detail such as:
+
+```text
+Cargo workspace
+Cargo packages
+crates
+targets
+files
+modules
+tests
+```
+
+beneath/inside the Project.
+
+Vapor should keep these distinctions visible.
+
+---
+
+# Content Project Experience
+
+For Content Projects:
+
+```text
+Project identity
+=
+Content identity
+```
+
+with:
+
+```text
+Project kind
+=
+Game / Engine / Library / Packagepack / ...
+```
+
+The UI should not present a second independent Content object nested beneath the Project merely to carry identity.
+
+---
+
+# Content Developer Goal
 
 The intended experience is:
 
-> **Develop the Content, not the machinery required to persuade Rust, Cargo, Bevy, Git, Steam, and Vapor to cooperate.**
+> **Develop the Content, not the machinery required to persuade Rust, Cargo, Git, Steam, and Vapor to cooperate.**
 
 Vapor should provide:
 
-* Strong structural identity.
-* Human-readable semantic selection.
-* Guardrails.
-* Minimal boilerplate.
-* Automated environment integration.
-* Vapor-aware build/run/test.
-* Useful diagnostics.
-* Explicit relationships between Projects and Content.
-* Access to underlying Git/Cargo/provider reality when useful.
-* A graphical SDK which makes the model discoverable rather than forcing developers to memorize shell syntax.
+```text
+strong identity
+minimal boilerplate
+structural guardrails
+managed environment
+Vapor-aware build/test/run
+specific diagnostics
+Git/Cargo transparency
+graph/relationship inspection
+```
 
-The Vapor SDK is the primary first-party environment for this experience.
+---
 
-External IDEs remain compatible and useful.
+# External IDE Experience
 
-They are complementary rather than a reason for Vapor's own SDK to remain permanently shallow.
+Vapor SDK is the first-party integrated development environment.
+
+External IDEs such as RustRover remain valuable.
+
+The relationship should be complementary:
+
+```text
+Vapor
+    owns semantic topology
+    managed tooling
+    operations
+    generated integration
+
+RustRover
+    editing
+    Rust language intelligence
+    refactoring
+    debugging
+    Git UI
+```
+
+A user should be able to use either without Vapor pretending the external IDE does not exist.
 
 ---
 
@@ -484,124 +1103,711 @@ An Ecosystem Developer develops Vapor itself.
 
 This may include:
 
-* Vapor Installer.
-* Vapor Launcher.
-* Vapor SDK.
-* Vapor CLI.
-* Vapor Core.
-* Vapor Root framework.
-* Vapor server infrastructure.
-* Vapor Content Registry.
-* Identity/authentication infrastructure.
-* Diagnostics.
-* Toolchain integration.
-* Deployment tooling.
-* Provider integrations.
+```text
+Vapor Client
 
-Ecosystem Developer is the highest ordinary locally installed Vapor Role.
+Vapor Core
 
-It does **not** inherently grant official authority.
+Launcher
 
-An Ecosystem Developer may locally:
+SDK
 
-* acquire Vapor ecosystem source;
-* fork it;
-* create independent source;
-* modify Vapor;
-* build/test Vapor;
-* develop publication/deployment machinery;
-* develop authentication/authorization machinery;
-* run local equivalents of protected workflows where feasible.
+Installer
 
-Protected external operations separately require authorization.
+CLI
 
-Examples include:
+managed toolchain
 
-* pushing to official repositories;
-* publishing into official namespaces;
-* deploying official Steam branches/depots;
-* modifying production Registry/server infrastructure.
+Platform Server
 
-The desired Ecosystem Developer experience is the same integrated SDK model used for Content Development, expanded by Role to expose Vapor itself as editable source.
+Registry
+
+Identity
+
+Diagnostics
+
+documentation infrastructure
+
+deployment
+
+provider integration
+```
+
+---
+
+# First-Party Development Subjects
+
+Ecosystem Developer should encounter concrete first-party facilities rather than a generic editable `Ecosystem` object.
+
+Primary current subjects include:
+
+```text
+Client
+
+Platform Server
+
+Examples
+```
+
+Examples of operations:
+
+```text
+client build
+
+client test
+
+platform-server test
+
+platform-server deploy local
+
+examples acquire
+```
+
+---
+
+# Acquiring First-Party Source
+
+The normal first-party flow may use stable shortcuts:
+
+```text
+client acquire
+
+platform-server acquire
+
+examples acquire
+```
+
+These resolve trusted registered source.
+
+The generic source topology remains available:
+
+```text
+source-repo-container acquire ...
+```
+
+There is no need for:
+
+```text
+ecosystem acquire
+```
+
+as a generic umbrella operation.
+
+---
+
+# First-Party Source Remains Git
+
+Developing Vapor should still expose:
+
+```text
+Git repositories
+submodules
+commits
+branches
+remotes
+dirty state
+provider links
+```
+
+Vapor should orchestrate first-party workflows without turning its own source into an opaque proprietary storage system.
+
+---
+
+# Ecosystem Developer Journey
+
+A representative journey:
+
+```text
+Enter Development
+
+→ navigate/acquire first-party source
+
+→ inspect Client / Platform Server / Examples
+
+→ choose work
+
+→ modify source
+
+→ build/test relevant subject
+
+→ inspect diagnostics
+
+→ commit/push where authorized
+
+→ deploy local where relevant
+
+→ deploy protected target where authorized
+
+→ validate
+```
+
+No generic “whole ecosystem build/test/deploy” is implied.
+
+---
+
+# Local First-Party Development Without Root Authority
+
+An Ecosystem Developer should be able to:
+
+```text
+acquire first-party source
+
+edit
+
+build
+
+test
+
+run local services
+
+perform local deployment
+
+inspect production-oriented recipes
+```
+
+where technically feasible.
+
+They may still be denied:
+
+```text
+official repository push
+
+Steam production deployment
+
+VPS production deployment
+
+Registry trust mutation
+```
+
+Those are authority concerns.
+
+---
+
+# Root Authority Experience
+
+Root Authority normally uses an Ecosystem Developer environment.
+
+It additionally has protected authorization.
+
+Examples:
+
+```text
+official repository administration
+official namespace publication
+first-party trust
+production deployment
+Registry administration
+protected recovery
+ownership/authorization changes
+```
+
+Root Authority does not require a completely separate local IDE/product mode merely because authorization is stronger.
+
+---
+
+# Development Navigation Model
+
+The development UX should follow the canonical resolution model:
+
+```text
+Context
+    → operation subject
+    → Selection
+```
 
 Conceptually:
 
 ```text
-Enter Development
-    ↓
-open/resume Vapor Superworkspace
-    ↓
-navigate Vapor Workspaces / Projects
-    ↓
-modify
-    ↓
-build / test
-    ↓
-inspect diagnostics
-    ↓
-commit / push where authorized
-    ↓
-deploy local / Steam where authorized
-    ↓
-validate
+left
+    Context
+
+middle
+    operation subject
+
+right
+    Selection
 ```
 
-Vapor should progressively absorb the manual machinery required to reproduce and develop itself.
-
 ---
 
-# Root Authority
+# Persistent Context
 
-Root Authority is not a locally installed capability level above Ecosystem Developer.
+Persistent Context is a lightweight semantic navigation/resolution prefix.
 
-It is an authority state.
-
-A Root Authority normally uses Ecosystem Developer capability together with ultimate authorization over protected official Vapor targets.
-
-Root Authority may authorize operations involving:
-
-* official repositories;
-* official namespaces;
-* Registry administration;
-* production deployment;
-* authorization systems;
-* root-level recovery;
-* ownership state;
-* destructive protected administrative operations.
-
-Role and Authority remain orthogonal.
-
----
-
-# Development Context Experience
-
-Developers should not need to think in raw filesystem roots once Vapor already understands their source.
-
-The product should favor:
+It should feel approximately like:
 
 ```text
-Superworkspace
-Container Repo identity
-Workspace identity
-Project identity
-Content identity
-local realization
+semantic cd
 ```
 
-over repeated path entry.
+without using shell CWD itself.
 
-Paths remain useful for:
+A developer may navigate to:
 
-* initial import;
-* Locate/recovery;
-* diagnostics;
-* explicit advanced overrides.
+```text
+GHF-Studios/Loo-Cast/Game
+```
 
-The graphical SDK should make context visible through navigation and selection.
+so that:
 
-The CLI should use strong identities/selectors and deterministic resolution.
+```text
+Loo-Cast
+```
 
-The detailed rules are defined in the **Vapor Context, Identity, Session And Selection Model**.
+resolves naturally beneath it.
+
+---
+
+# Context Is Optional
+
+Vapor must never require users to establish persistent Context merely to address something.
+
+Users may always provide:
+
+```text
+full Vapor paths
+
+stronger selectors
+
+transient Context overrides
+```
+
+where appropriate.
+
+Persistent Context is convenience.
+
+---
+
+# Transient Context
+
+A GUI or CLI operation may provide a temporary resolution prefix without changing persistent navigation state.
+
+This supports:
+
+> “I am currently working here, but perform this one operation over there.”
+
+That capability should be available in automation too.
+
+---
+
+# CWD Is Not Vapor Navigation State
+
+Changing terminal directory does not silently alter Vapor semantic Context.
+
+Likewise, opening a file through an external editor does not automatically change operation scope.
+
+The developer should be able to stand physically anywhere and still target Vapor objects explicitly.
+
+---
+
+# Context Is Not Operation Scope
+
+Suppose persistent Context is:
+
+```text
+GHF-Studios/Vapor-Platform-Server/Registry
+```
+
+Then:
+
+```text
+platform-server test
+```
+
+still means:
+
+```text
+test the natural complete Platform Server subject
+```
+
+not:
+
+```text
+test only Registry
+```
+
+Only explicit operation Selection narrows scope.
+
+---
+
+# GUI Navigation vs Persistent Context
+
+The SDK may have:
+
+```text
+expanded tree nodes
+
+active editor tabs
+
+selected UI rows
+
+navigation history
+```
+
+without treating every UI detail as persistent Vapor Context.
+
+Persistent Context should change only through a deliberate semantic navigation action.
+
+---
+
+# No Open-Object Working Set Model
+
+The old concept:
+
+```text
+many Workspaces Open
++
+many Projects Focused
+```
+
+is no longer the canonical target-resolution model.
+
+The SDK may still visually have:
+
+```text
+many tabs
+many expanded trees
+many documents
+many windows
+```
+
+That is frontend/session state.
+
+It does not create a durable semantic working-set hierarchy inside Vapor Core.
+
+---
+
+# No Durable Focus Set
+
+Vapor should not maintain several simultaneously Focused Projects as hidden default operation targets.
+
+This creates too much ambient operation scope.
+
+Instead:
+
+```text
+persistent Context
+    resolves names
+
+explicit Selection
+    chooses operation targets
+```
+
+That model is easier to inspect, automate, and reason about.
+
+---
+
+# GUI Selection
+
+A GUI may temporarily select:
+
+```text
+one Project
+
+several Projects
+
+one Source Repo
+
+several subtree roots
+```
+
+for an operation.
+
+That transient GUI selection can become explicit operation Selection.
+
+It does not need to become persistent Context.
+
+---
+
+# Multiple Selection
+
+Where the operation supports multiple targets, the GUI should make this natural.
+
+For example:
+
+```text
+select Registry
+select Identity
+
+→ Test Selected
+```
+
+may construct equivalent Core input to:
+
+```text
+--select "Registry, Identity"
+```
+
+The GUI should not force the user to think in CLI syntax.
+
+The semantics are shared.
+
+---
+
+# Hierarchical Selection
+
+Selecting a parent topology node means selecting that meaningful subtree/scope for the operation.
+
+Example:
+
+```text
+Registry Source Repo selected
+```
+
+should not require additionally selecting all Projects beneath it merely to indicate Source Repo scope.
+
+The operation decides what Source Repo-scoped testing/building means.
+
+---
+
+# Natural Complete Scope
+
+No explicit operation Selection means:
+
+> perform the operation on its natural complete subject.
+
+For example:
+
+```text
+Platform Server
+→ Test
+```
+
+means:
+
+> run the complete Platform Server test operation.
+
+It does not mean:
+
+> mechanically iterate every descendant Project with a generic test command.
+
+---
+
+# Operation-Specific Legality
+
+GUI operations should be enabled based on actual operation semantics.
+
+For example:
+
+```text
+Platform Server test
+    Source Repo Selection supported
+```
+
+but:
+
+```text
+Platform Server deploy vps
+    partial Selection unsupported
+```
+
+The UI should explain why.
+
+It should not simply gray out controls without explanation.
+
+---
+
+# Disabled Operation UX
+
+A disabled operation should be inspectable.
+
+For example:
+
+```text
+Deploy to VPS
+    unavailable
+
+Reason:
+    production deployment requires complete Platform Server scope
+
+Current Selection:
+    Registry
+
+Available:
+    Deploy Local
+```
+
+This turns operation constraints into discoverable product knowledge.
+
+---
+
+# Ambiguous Selection UX
+
+If a typed selector or search query is ambiguous, the GUI should show candidates.
+
+Example:
+
+```text
+core
+```
+
+could resolve to:
+
+```text
+Registry/core
+Identity/core
+Diagnostics/core
+```
+
+The UI should let the user choose one or refine Context/qualification.
+
+It must not silently pick the first result.
+
+---
+
+# Broken Source Experience
+
+Development objects should remain understandable when local source is unhealthy.
+
+Examples:
+
+```text
+Source Repo Container:
+    registered
+    not locally available
+
+Source Repo:
+    declared by Container
+    submodule checkout missing
+
+Project:
+    known from metadata
+    local files currently unavailable
+
+derived IDE state:
+    stale
+```
+
+These are different failures.
+
+---
+
+# Missing Container UX
+
+If a registered Container is not local:
+
+```text
+GHF-Studios/Loo-Cast
+    Not available locally
+```
+
+reasonable actions may include:
+
+```text
+Acquire
+Inspect Registry
+Inspect Provider
+```
+
+where permitted.
+
+---
+
+# Missing Source Repo Checkout UX
+
+If the Container is local but a declared submodule checkout is missing:
+
+```text
+Game
+    Git submodule checkout missing
+```
+
+the UX should present it as Git topology/reconciliation.
+
+Not:
+
+```text
+Reacquire Source Repo
+```
+
+unless the Source Repo is independently acquirable and that is genuinely the intended operation.
+
+---
+
+# Dirty Source UX
+
+Dirty Git state should be visible.
+
+It should not automatically be presented as a fault.
+
+Examples:
+
+```text
+Modified
+
+Uncommitted changes
+
+Local commits not pushed
+
+Detached HEAD
+
+Differs from parent gitlink
+```
+
+These may be ordinary development states.
+
+---
+
+# Repair UX
+
+Repair should appear only where Vapor knows it can reconstruct derived state safely.
+
+Examples:
+
+```text
+Regenerate IDE integration
+
+Rebuild indexes
+
+Regenerate derived operation state
+```
+
+Repair should not be a generic magic button for:
+
+```text
+dirty Git
+
+missing authored source
+
+deleted unique source
+
+branch conflicts
+```
+
+---
+
+# Git Reconciliation UX
+
+When Vapor detects a Git-state issue, it should expose:
+
+```text
+what Git state exists
+
+what Vapor expected
+
+possible inspection commands
+
+possible reconciliation action
+
+risk/caution
+```
+
+Example:
+
+```text
+Source Repo `Registry`
+    declared as submodule
+    checkout missing
+
+Inspect:
+    git status
+    git submodule status
+
+Possible reconciliation:
+    git submodule update --init -- Registry
+```
+
+with a warning if Vapor cannot prove it is safe.
 
 ---
 
@@ -609,488 +1815,1158 @@ The detailed rules are defined in the **Vapor Context, Identity, Session And Sel
 
 ## Vapor Installer
 
-The Vapor Installer changes which fundamental capabilities and managed tools exist in the Steam App Instance.
+The Installer changes what the local Vapor environment is equipped to do.
 
 Its responsibility is:
 
-> **Change what Vapor is equipped to do on this Installation.**
+> **Change installed Role/tooling capability.**
 
-Examples include:
-
-* establish Composer capability;
-* detect/install/configure Git;
-* install/configure Rust/Cargo;
-* install/configure SteamCMD;
-* establish Content Developer capability;
-* establish Ecosystem Developer prerequisites;
-* downgrade/remove higher Role capability;
-* repair Installation-level capability state;
-* prepare correct Vapor uninstall behavior where required.
-
-The Installer remains a distinct application boundary.
-
-SDK Mode is not a superset of Installer semantics.
-
----
-
-## Vapor Launcher
-
-The Vapor Launcher is the primary ordinary Vapor desktop surface.
-
-Its responsibility is:
-
-> **Operate the Vapor ecosystem using the capabilities already installed.**
-
-Launcher Mode may expose:
-
-* Play.
-* Vapor Apps.
-* Content Library.
-* Vapor App selection.
-* discovery.
-* Packagepack/composition workflows.
-* accounts.
-* settings.
-* diagnostics.
-* logs.
-* publication/management surfaces appropriate to Role.
-
-Where development capability exists, the Launcher additionally offers an **Enter Development** transition.
-
----
-
-## Vapor SDK / Development Mode
-
-The Vapor SDK is the integrated development mode of the Vapor Launcher.
-
-The preferred product experience is:
+Examples:
 
 ```text
-Vapor Launcher
-    ↓ Enter Development
-Vapor SDK
-    ↑ Return to Launcher
+install Composer capability
+
+install developer toolchain
+
+establish Content Developer
+
+establish Ecosystem Developer
+
+downgrade capability
+
+repair installed capability
 ```
 
-This may substantially reconfigure the visible application.
+Installer should not own ordinary development-source editing.
 
-A literal animation or process-level transformation is not required.
+---
 
-The semantic requirement is:
+# Vapor Launcher
 
-> **SDK Mode is a development-oriented superset of relevant Launcher functionality.**
+The Launcher is the main ordinary desktop surface.
 
-The SDK may expose:
+It may expose:
 
-* everything relevant from ordinary Launcher Mode;
-* Superworkspace Explorer;
-* Container Repo / Workspace / Project navigation;
-* Content development;
-* source editing;
-* structured manifests/configuration;
-* composition/dependency graphs;
-* Inspector;
-* Problems;
-* Build;
-* Test;
-* Run;
-* Git/VCS;
-* toolchain;
-* Cargo output;
-* logs;
-* publication;
-* Steam development/deployment;
-* ecosystem development where Role permits.
+```text
+Play
 
-Returning to Launcher Mode should hide/collapse development surfaces while preserving enough Resume State to continue later.
+Vapor Apps
+
+Content Library
+
+Discovery
+
+Composition
+
+Accounts
+
+Settings
+
+Diagnostics
+
+Logs
+
+Publication/management
+```
+
+according to installed Role.
+
+---
+
+# Enter Development
+
+Where Composer-or-higher development capability exists, Launcher should expose a clear transition into Development Mode.
+
+Conceptually:
+
+```text
+Launcher
+    ↓ Enter Development
+SDK / Development Mode
+```
+
+The exact process/window mechanics are implementation detail.
+
+---
+
+# Vapor SDK
+
+The Vapor SDK is the integrated first-party Development Mode.
+
+It should expose the richer source/development model appropriate to the Role.
+
+Examples:
+
+```text
+Superworkspace Explorer
+
+Authorities
+
+Source Repo Containers
+
+Source Repos
+
+Projects
+
+source editor
+
+Content editors
+
+dependency/composition graphs
+
+Inspector
+
+Problems
+
+Build
+
+Test
+
+Run
+
+Git
+
+Cargo
+
+toolchain
+
+logs
+
+publication
+
+first-party operations
+```
 
 ---
 
 # SDK Superset Principle
 
-The progression between Launcher and SDK resembles Vapor's cumulative capability philosophy.
-
 Conceptually:
 
 ```text
-Launcher surface
+Launcher capability surface
     ⊂
 SDK / Development surface
 ```
 
-This does not mean every Launcher control must remain visible at every moment in SDK layout.
+This means shared product semantics.
 
-It means the SDK belongs to the same product model and does not require an unrelated semantic implementation.
+It does not require every Launcher control to remain permanently visible while coding.
 
-The Installer remains outside this particular superset relationship because it changes installed capability itself.
+Installer remains separate because Installer modifies installed capability itself.
 
 ---
 
 # SDK-First Rewrite Strategy
 
-The rewrite may implement the rich SDK surface before the simplified final Launcher surface.
+Implementing the richer SDK before the polished simplified Launcher can be reasonable.
 
-This is acceptable.
-
-The SDK exercises more of Vapor Core:
+SDK exercises more Core behavior:
 
 ```text
 identity
-context
-source
+
+source topology
+
+Context
+
+Selection
+
 Git
-toolchain
-Cargo
+
+Cargo/toolchain
+
 Content
+
+build/test/run
+
+diagnostics
+
+publication
+
+first-party development
+```
+
+A mature Launcher can later project a smaller portion of the same backend.
+
+---
+
+# SDK Visual Character
+
+The Figma-derived historical Vapor SDK prototype remains a visual ancestor.
+
+Its fake data and obsolete semantics are not normative.
+
+Useful qualities include:
+
+```text
+JetBrains/RustRover-like density
+
+dark neutral surfaces
+
+subtle separators
+
+compact toolbars
+
+tight readable spacing
+
+clear tree selection
+
+restrained corner radii
+
+semantic status indicators
+
+monospace technical output
+
+central work area
+
+left Explorer
+
+right Inspector
+
+bottom Problems/Build/tool windows
+
+graph visualization
+```
+
+These qualities should become a coherent Vapor design system rather than remain tied to one generated prototype.
+
+---
+
+# SDK Interaction Model
+
+The graphical SDK should use GUI-native interaction:
+
+```text
+tree navigation
+
+tabs
+
+multi-selection
+
+context menus
+
+Inspector actions
+
+dialogs
+
+graphs
+
+drag/drop where semantically meaningful
+
+rich diagnostics
+
+inline recovery controls
+```
+
+Those interactions construct the same Core operations available to CLI/automation.
+
+---
+
+# GUI and CLI Equality
+
+The principle is:
+
+> **GUI and CLI share semantics and capabilities, not interaction mechanics.**
+
+The GUI may use:
+
+```text
+click
+selection
+tree navigation
+dialog
+graph
+```
+
+where the CLI uses:
+
+```text
+canonical path
+selector
+--context
+--select
+```
+
+Both resolve exact Core inputs.
+
+---
+
+# CLI Experience
+
+The CLI should be especially strong for:
+
+```text
+developers
+
+automation
+
+coding agents
+
+scripts
+
+advanced users
+```
+
+Its strengths should include:
+
+```text
+canonical identity
+
+minimal unambiguous selectors
+
+explicit Context override
+
+explicit Selection
+
+predictable operation grammar
+
+specific diagnostics
+
+machine-readable output
+
+stable exit/failure semantics
+```
+
+---
+
+# Coding-Agent Experience
+
+Coding agents should be able to use Vapor without reverse-engineering GUI state.
+
+Operations should be expressible explicitly through:
+
+```text
+canonical paths
+
+transient Context
+
+explicit Selection
+
+deterministic commands
+
+machine-readable diagnostics
+
+Git-visible source
+```
+
+This is another reason not to make persistent GUI Focus state semantically required.
+
+---
+
+# Plain Git Experience
+
+Advanced users should be able to use Git normally.
+
+Examples:
+
+```text
+git status
+
+git diff
+
+git commit
+
+git switch
+
+git rebase
+
+git submodule ...
+```
+
+Vapor should understand the resulting valid state rather than requiring that every source mutation originated inside Vapor.
+
+---
+
+# Plain Cargo Experience
+
+Developers may also invoke Cargo directly where useful.
+
+Vapor-managed Cargo exists to provide:
+
+```text
+correct managed toolchain
+
+appropriate environment
+
+Vapor-aware Project resolution
+```
+
+while retaining normal Cargo semantics.
+
+---
+
+# Managed Toolchain Experience
+
+Developer Roles should not require manually assembling the exact Rust/Cargo environment expected by Vapor.
+
+Vapor should manage:
+
+```text
+version
+
+installation/detection
+
+environment
+
+diagnostics
+
+repair
+```
+
+Root/first-party development should strongly prefer the pinned/vendored Vapor-managed toolchain.
+
+---
+
+# Tool Failure UX
+
+If the managed toolchain is unhealthy, Vapor should say what is wrong.
+
+Examples:
+
+```text
+Rust toolchain missing
+
+Cargo unavailable
+
+configured toolchain path missing
+
+toolchain version incompatible
+
+managed environment incomplete
+```
+
+and offer safe repair where possible.
+
+---
+
+# Build Experience
+
+Users ask Vapor to build semantic subjects.
+
+Examples:
+
+```text
+Build Packagepack
+
+Build Project
+
+Build Client
+
+Build Platform Server
+```
+
+The resulting operation may involve several Cargo/build steps.
+
+The UX should emphasize:
+
+```text
+subject
+
+current step
+
+diagnostics
+
+artifacts
+
+success/failure
+
+what remains runnable
+```
+
+---
+
+# Failed Build Experience
+
+A failed rebuild must not imply the previous working App vanished.
+
+The UI may show:
+
+```text
+Source:
+    Modified
+
+Latest Build:
+    Failed
+
+Installed App:
+    Loo Cast 0.4.1
+    Still Runnable
+```
+
+This is more truthful than one global red “broken” state.
+
+---
+
+# Test Experience
+
+Testing should be semantic to the subject.
+
+Examples:
+
+```text
+Test Project
+
+Test Source Repo scope
+
+Test Client
+
+Test Platform Server
+```
+
+The UI should make clear:
+
+```text
+what is being tested
+
+what Selection is applied
+
+which recipe/steps ran
+
+which tests failed
+
+what scope is required
+```
+
+---
+
+# Run Experience
+
+Running development Content may require a complete composition.
+
+The SDK should help resolve that test/run composition rather than pretending all Projects are independently runnable.
+
+Possible sources include:
+
+```text
+explicit Packagepack
+
+Project-preferred development Packagepack
+
+generated development composition
+```
+
+Exact mechanics remain open.
+
+---
+
+# Publication Experience
+
+Publishing should feel like one coherent Vapor workflow while still exposing meaningful stages.
+
+For Content:
+
+```text
+validate
+
+choose SemVer
+
+verify source commit
+
+publish source version
+
+Registry registration
+```
+
+For Packagepack built publication:
+
+```text
+resolve exact composition
+
+build targets
+
+validate artifacts
+
+publish distribution
+
+Registry linkage
+```
+
+Partial failures should remain diagnosable/retryable.
+
+---
+
+# Version UX
+
+Published versions are immutable SemVer releases.
+
+The UI should make this explicit.
+
+Example:
+
+```text
+Version 1.4.2
+    Published
+    Commit abc123...
+    Immutable
+```
+
+A modified working tree after publication represents new development.
+
+It does not modify `1.4.2`.
+
+---
+
+# Yank / Ban UX
+
+Yank and Ban should be visibly distinct from deletion.
+
+A user inspecting an old release should still understand:
+
+```text
+what it was
+
+which source produced it
+
+why it is unavailable/restricted
+
+whether an alternative exists
+```
+
+Historical identity should not disappear.
+
+---
+
+# First-Party Client Experience
+
+The SDK may expose a dedicated `Client` development surface.
+
+It may show:
+
+```text
+source status
+
+build
+
+test
+
+local deployment
+
+Steam deployment where authorized
+
+operation output
+
+current backing source
+```
+
+This is a stable first-party facility surface.
+
+It need not mirror the exact underlying repository structure.
+
+---
+
+# Platform Server Experience
+
+Likewise, Platform Server may have a dedicated development/operations surface.
+
+It may show:
+
+```text
+services
+
+Source Repos
+
+health
+
+build/test
+
+local deployment
+
+VPS deployment
+
+logs
+
+service status
+
+operation recipes
+```
+
+Selection may allow testing/deploying meaningful subscopes where legal.
+
+---
+
+# Platform Service UX
+
+Individual services such as:
+
+```text
+Registry
+Identity
+Diagnostics
+Docs
+Homepage
+```
+
+should remain inspectable as meaningful units.
+
+Platform Server whole-operation semantics should coexist with service-level detail.
+
+---
+
+# Examples Experience
+
+Official Examples should be easy to acquire and browse.
+
+They should teach/prove:
+
+```text
+Project kinds
+
+composition
+
+dependencies
+
+Cargo realization
+
+build/test workflows
+
+architecture contracts
+```
+
+The stable Examples facility should survive source-topology changes.
+
+---
+
+# Progressive Transparency
+
+A useful default progression:
+
+## Player
+
+Primarily:
+
+```text
+Apps
+Play
+Discovery
+Install
+Settings
+```
+
+## Composer
+
+Additionally:
+
+```text
+Content
+packs
+source
+dependencies
 composition
 build
-test
-run
-diagnostics
 publication
+```
+
+## Content Developer
+
+Additionally:
+
+```text
+Superworkspace
+Source Repo Containers
+Source Repos
+Projects
+implementation source
+Git
+Cargo
+toolchain
+tests
+diagnostics
+```
+
+## Ecosystem Developer
+
+Additionally:
+
+```text
+Client
+Platform Server
+Examples
+first-party source
+services
 deployment
+Registry
+toolchain internals
+provider integrations
 ```
 
-A mature Launcher can later be realized largely as a simpler projection of the same desktop/Core architecture.
-
-This reduces the risk of building a Launcher architecture which later resists becoming a real development environment.
-
 ---
 
-# SDK Visual Experience
+# Terminology in the UI
 
-The existing Figma-derived Vapor SDK GUI prototype is the visual ancestor of the intended SDK.
-
-Its fake data and obsolete semantic assumptions are not normative.
-
-Its visual character should nevertheless be preserved where practical.
-
-Especially valuable qualities include:
-
-* JetBrains/RustRover-like professional density.
-* Dark neutral surfaces.
-* Subtle borders and separators.
-* Tight but readable spacing.
-* Small restrained corner radii.
-* Compact toolbars.
-* Clear tree-selection treatment.
-* Semantic green/warning/red status.
-* Monospace identity/tool output where useful.
-* Central editor/work area.
-* Left-side Explorer.
-* Right-side contextual Inspector.
-* Bottom Problems/Build/tool windows.
-* Integrated graph visualization.
-
-The final implementation should extract these qualities into a real Vapor design system rather than treating the generated prototype component as permanent architecture.
-
----
-
-# SDK Interaction Experience
-
-The SDK should exploit GUI-native interaction.
-
-It may use:
-
-* tree navigation;
-* tabs;
-* multi-selection;
-* graph selection;
-* Inspector actions;
-* context menus;
-* dialogs;
-* drag/drop where semantically meaningful;
-* rich errors and recovery controls.
-
-These interactions construct the same typed Vapor Core operations exposed by CLI/automation.
-
-A click is not a different semantic implementation.
-
----
-
-# Open, Focused, and Selected
-
-The SDK must distinguish:
+Prefer exact current terms:
 
 ```text
-Open
-    participates in the working set
+Source Repo Container
 
-Focused
-    contributes durable default targeting intent
+Source Repo
 
-Selected
-    transient current GUI target
+Project
+
+Context
+
+Selection
+
+Vapor App
+
+Packagepack
+
+Platform Server
 ```
 
-Multiple Workspaces/Projects/Content objects may be Open.
+Avoid resurfacing legacy terms such as:
 
-Multiple may be Focused.
+```text
+Vapor Root
 
-An immediate multi-selection may target one operation without rewriting durable Focus.
+Server Root
 
-This makes large development environments practical without forcing one artificial globally active Project.
+generic Ecosystem object
+
+generic Source object
+
+Focused Project set
+
+Implicit Superworkspace
+
+Structural Address
+```
 
 ---
 
-# Broken-State Experience
+# “Source” in User-Facing Copy
 
-Development objects should not disappear merely because their local realization is unhealthy.
+The generic word **source** remains useful in prose.
 
-A previously Open Workspace may remain visible as:
-
-```text
-Vapor-Examples
-    Missing local realization
-```
-
-with actions such as:
+Example:
 
 ```text
-Locate
-Reacquire
-Repair
-Close
-Forget
+Source is not available locally.
 ```
 
-This preserves the user's mental workspace and makes failures discoverable.
+But when the UI refers to a modeled topology object, it should say which one:
+
+```text
+Source Repo Container
+
+Source Repo
+
+Project
+```
+
+instead of exposing an ambiguous object called merely `Source`.
 
 ---
 
-# Operation Experience
+# “Workspace” in User-Facing Copy
 
-Operations should be enabled according to semantic target compatibility.
+`Workspace` may still be used where the **Vapor Workspace** development perspective is useful.
+
+But the structural tree must not show:
+
+```text
+Source Repo
+    └── Workspace
+```
+
+because those are the same object.
+
+---
+
+# First-Time Developer Experience
+
+When upgrading to Composer/Content Developer, Vapor should explain the new model progressively.
+
+Do not immediately require the user to understand every layer.
+
+A possible progression:
+
+```text
+Choose/Create something to develop
+
+→ Vapor shows where it belongs
+
+→ introduce Project
+
+→ introduce Source Repo when repository behavior matters
+
+→ introduce Container when acquisition/organization matters
+
+→ expose Authority when global identity/provider ownership matters
+```
+
+The canonical model remains precise even if UI teaching is progressive.
+
+---
+
+# Create Experience
+
+Creation should make parent structure explicit.
+
+Example:
+
+```text
+Create Game
+```
+
+If required Source Repo does not exist, Vapor should explain that rather than silently invent it.
+
+GUI may offer a guided sequence:
+
+```text
+This Game requires a Source Repo.
+
+Create:
+    GHF-Studios/My-Stuff/Game
+```
+
+then perform the separate explicit operation if the user chooses it.
+
+The underlying model remains:
+
+```text
+Container creation
+≠ Source Repo creation
+≠ Project creation
+```
+
+---
+
+# Acquire Experience
+
+A user normally acquires a Source Repo Container.
+
+Example GUI:
+
+```text
+Acquire GHF-Studios/Loo-Cast
+
+Contains:
+    Game
+    Engine
+    ...
+```
+
+The canonical Superworkspace destination is automatic.
+
+No arbitrary destination chooser is needed for ordinary acquisition.
+
+---
+
+# Independent Source Repo Acquisition UX
+
+If a Source Repo is explicitly independently acquirable, the UI may expose that.
+
+Otherwise:
+
+```text
+Acquire Source Repo
+```
+
+should explain that the Repo belongs to a Container and offer:
+
+```text
+Acquire GHF-Studios/Foo
+```
+
+instead.
+
+---
+
+# Superworkspace Configuration UX
+
+The Superworkspace root may be configurable.
+
+This should be one environment-level setting.
+
+It should not appear as a destination field on every create/acquire dialog.
+
+Changing it should be treated as a deliberate relocation/configuration operation.
+
+---
+
+# Recovery UX
+
+Vapor should distinguish:
+
+```text
+Steam product missing
+
+Vapor User Data missing/stale
+
+registered source missing
+
+Git topology unhealthy
+
+derived state missing
+
+unique authored source potentially lost
+```
+
+Different problems require different recovery actions.
+
+A single generic:
+
+```text
+Repair Everything
+```
+
+should not conceal destructive uncertainty.
+
+---
+
+# Safety Before Convenience
+
+Where Vapor cannot prove a corrective action is safe, it should say so.
 
 For example:
 
 ```text
-three selected Projects
-+ operation accepts Many<Project>
-→ enabled
+Possible Git reconciliation:
+    git submodule update --init -- Registry
+
+This modifies local Git checkout state.
 ```
 
-while:
+Transparency is preferable to false confidence.
+
+---
+
+# Derived-State UX
+
+Derived state may support convenient:
 
 ```text
-three selected Projects
-+ operation requires ExactlyOne<Project>
-→ ambiguity / target choice required
+Regenerate
+Repair
+Refresh
+Reindex
 ```
 
-The GUI should explain disabled operations rather than hiding the underlying rule.
+operations.
 
-The CLI reports the same semantic problem textually.
+Those operations should be safe because the state is reconstructible.
 
----
-
-## Vapor CLI
-
-The Vapor CLI is the command-line and automation-oriented projection of Vapor Core.
-
-Its primary users include:
-
-* Content Developers.
-* Ecosystem Developers.
-* automation.
-* coding agents.
-* advanced users.
-
-The CLI should be excellent at:
-
-* canonical identities;
-* unambiguous shorthand selectors;
-* deterministic operation targeting;
-* machine-readable output;
-* explicit failure semantics;
-* scripting;
-* automation.
-
-The CLI does not need to imitate every graphical SDK interaction.
-
-Likewise, SDK UX must not be degraded merely because a graphical interaction has no elegant one-line shell equivalent.
-
-The governing principle is:
-
-> **GUI and CLI share capabilities and semantics, not interaction mechanics.**
-
-Both should ultimately resolve exact targets and invoke the same Vapor Core operations.
+The same language should not be applied indiscriminately to authored source.
 
 ---
 
-# Steam Entry Points
+# Destructive Operations
 
-The Steam App should expose three conceptual entry points:
+Operations which may delete or overwrite user-authored state should:
 
-* **Play Loo Cast**
-* **Start Vapor**
-* **Start Installer**
+```text
+identify exactly what is affected
 
-## Play Loo Cast
+show whether remote recovery exists
 
-This directly launches the default first-party Vapor App.
+show whether local-only work exists
 
-The default composition should already exist after Steam installation.
+refuse where safety cannot be established
 
-No source acquisition or local compilation should be required.
+require explicit intent where necessary
+```
 
-## Start Vapor
-
-This launches the Vapor Launcher.
-
-## Start Installer
-
-This launches the Vapor Installer for capability establishment, removal, repair, and environment configuration.
+Vapor should not optimize UX by hiding the difference between cache and source.
 
 ---
 
-# Default Composition
+# Static Composition Experience
 
-The default first-party Packagepack is:
+A Vapor App is one statically resolved complete composition.
 
-> **Loo Cast Packagepack**
+Changing effective composition normally requires rebuilding.
 
-It currently resolves to at least:
+This does not mean every unchanged dependency physically recompiles.
 
-* Spacetime Engine.
-* Loo Cast Game.
+Cargo/Vapor caching and incremental compilation optimize implementation work.
 
-The default built composition should be shipped directly through the Steam depot.
+The semantic invariant is:
 
-The purchased Steam App must therefore not depend on Steam Workshop merely to become playable.
-
-Steam Workshop is used for additional built published compositions, not for bootstrapping the default Steam purchase.
-
----
-
-# Vapor Content
-
-Vapor currently models nine primary content artifact types.
-
-## Complete Composition
-
-* Packagepack.
-
-## Reusable Pack Fragments
-
-* Enginepack.
-* Gamepack.
-* Modpack.
-
-## Behavioral Content
-
-* Engine.
-* Game.
-* Engine Mod.
-* Game Mod.
-* Extension Mod.
-
-A Packagepack represents exactly one complete composition.
-
-An Enginepack, Gamepack, or Modpack represents a reusable composition fragment.
-
-The effective Engine declares the composition's main binary.
-
-The Game does not declare the main binary.
+```text
+one runnable Vapor App
+=
+one resolved composition
+```
 
 ---
 
-# Static Build Model
+# Runtime Dynamicity
 
-Vapor Apps are built as complete static compositions.
+Static composition does not forbid dynamic runtime systems.
 
-Changing the effective Packagepack composition requires rebuilding the resulting Vapor App.
+An Engine/Game may deliberately provide runtime extension/capability systems.
 
-The logical build scope is the complete composition.
+The distinction is:
 
-This does not require wastefully recompiling all unchanged source.
+```text
+static composition
+    determines what runtime exists
 
-Vapor and Cargo should make use of:
-
-* Incremental compilation.
-* Dependency caches.
-* Build caches.
-* Reusable intermediates.
-
-The important invariant is:
-
-> **The runnable Vapor App represents one statically resolved composition.**
-
-Normal launch does not dynamically assemble the composition from independently built Mods.
-
-Runtime systems may still deliberately support structured dynamic behavior inside that already-built composition.
+runtime dynamicity
+    behavior intentionally supported inside that runtime
+```
 
 ---
 
-# Progressive Disclosure
+# Experience Guarantees
 
-Vapor should expose complexity because the user's capability gives that complexity meaning.
-
-A Player should primarily see:
-
-* Vapor Apps.
-* Play.
-* Discovery.
-* Installation.
-* Settings.
-
-A Composer should additionally see:
-
-* Vapor Content.
-* Packs.
-* Source.
-* Composition.
-* Builds.
-* Publication.
-
-A Content Developer should additionally see:
-
-* Projects.
-* Programming/configuration.
-* SDK.
-* Diagnostics.
-* Build/test internals.
-
-An Ecosystem Developer should additionally see:
-
-* Vapor's own repositories.
-* Infrastructure.
-* Internal deployment and integration.
-
-This progression should feel substantial.
-
----
-
-# High-Level Experience Guarantees
-
-* A Player does not require Git.
-* A Player does not require Rust/Cargo.
-* A Player does not build compositions.
-* The default Loo Cast composition ships in the Steam depot.
-* Third-party Player-facing distribution uses built complete compositions.
-* A Packagepack represents one complete composition.
-* The effective Engine declares the composition's main binary.
-* Vapor Apps are statically resolved complete compositions.
-* Composer capability is required for pack authoring.
-* Content Developer capability is required for behavioral-content authoring.
-* Capability levels are cumulative.
-* Local capability and remote authorization are distinct.
-* Capability establishment belongs primarily to the Installer.
-* Ordinary capability use belongs primarily to the Launcher.
-* Vapor should automate incidental infrastructure while retaining advanced transparency.
-* Vapor must not silently destroy user-authored source.
-
-Detailed operational invariants belong in the **Vapor Ecosystem Operational Model**.
+* Player use begins with a conventional Steam-ready product.
+* Player Role requires neither Git nor Rust/Cargo.
+* The default Loo Cast Vapor App ships through the Steam depot.
+* Players primarily discover complete Vapor Apps.
+* Composer exposes composition rather than implementation machinery.
+* Content Developer exposes meaningful source/development machinery.
+* Ecosystem Developer exposes Vapor itself through concrete first-party facilities.
+* Root Authority is authority, not an installed Role.
+* Local Role and remote authorization remain distinct.
+* There is one canonical local Superworkspace.
+* The Superworkspace is distinct from Steam App Instance and Vapor User Data.
+* Source Repo equals Vapor Workspace.
+* Project is the canonical Vapor development unit beneath Source Repo.
+* Content identity is the Content Project identity.
+* Persistent Context is optional resolution convenience.
+* Context does not imply operation scope.
+* CWD does not silently become Vapor Context.
+* Explicit Selection defines per-operation narrowing.
+* GUI tree selection may become Operation Selection without becoming persistent Context.
+* There is no canonical durable Open/Focused object-set targeting model.
+* No explicit Selection means natural complete operation scope.
+* Ambiguity is never guessed.
+* Diagnostics should explain safe disambiguation.
+* Git remains visible and usable.
+* Dirty Git state is not automatically broken state.
+* Missing authored submodule checkout is Git reconciliation, not generic Repair.
+* Repair is for safely derivable Vapor-owned state.
+* A failed rebuild does not destroy a previous valid Vapor App.
+* App selection, development Context, and Operation Selection are distinct.
+* First-party Client/Platform Server/Examples facilities may remain stable while source topology evolves.
+* GUI and CLI share Core semantics without requiring identical interaction mechanics.
+* Coding agents can operate without hidden GUI state.
+* Vapor automates incidental infrastructure while preserving advanced transparency.
 
 ---
 
-# Related Models
+# Open Experience Questions
 
-This document intentionally does not attempt to encode every workflow or state permutation.
+The following remain intentionally open:
 
-Use:
-
-* **Vapor Ecosystem Operational Model** for situations, conditions, contexts, transitions, lifecycle projections, state interaction, local-state ownership, and operational invariants.
-* **Vapor Development Experience Model** for Git, repositories, Superworkspaces, Workspaces, Projects, Composer development, Content Development, SDK/IDE integration, and build/run/test iteration.
-* **Vapor Publishing and Distribution Model** for Git-backed source publication, Registry linkage, built Vapor App publication, Steam Workshop, Player acquisition, versioning, and publishing lifecycle.
-* **Ecosystem Model Glossary** for compact canonical term definitions.
+* Exact Launcher information architecture.
+* Exact SDK information architecture.
+* Exact initial onboarding for each Role.
+* Exact persistent Context interaction in GUI.
+* Exact visual affordance for changing Context versus transient Selection.
+* Exact multi-selection presentation for hierarchical operation scopes.
+* Exact guided create-parent UX.
+* Exact Superworkspace relocation UI.
+* Exact Git reconciliation UI and confirmation policy.
+* Exact structured diagnostics presentation.
+* Exact operation-progress/cancellation UX.
+* Exact coding-agent integration UX.
+* Exact test/run composition-selection UX.
+* Exact Player version-selection/update UX.
+* Exact publication wizard/staging UX.
+* Exact Platform Server deployment/health UX.
+* Exact treatment of provider authentication/account connections.
+* Exact visual design-system implementation derived from the historical SDK prototype.
+* Exact role of embedded terminal/shell functionality inside SDK.

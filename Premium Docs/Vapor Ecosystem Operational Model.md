@@ -1,1195 +1,3082 @@
-
 > [!info]
-> This document defines the operational model underlying the Vapor Ecosystem.
+> This document defines the cross-cutting operational state model of the Vapor ecosystem.
 >
-> It deliberately avoids representing Vapor as one giant serialized list of every valid workflow permutation.
+> Here, **ecosystem** means Vapor as a descriptive whole: its Client, Platform, source, Content, Apps, tooling, providers, publication systems, and related state.
 >
-> Instead, Vapor is modeled as a **multidimensional situation space** composed from state dimensions, conditions, contexts, actions, transitions, and invariants.
+> It does **not** define a generic modeled `Ecosystem` object with one universal lifecycle or public `vapor ecosystem ...` command family.
 >
-> Lifecycles are projections over that larger operational model rather than independent exhaustive stories.
+> Vapor operations belong to concrete semantic subjects such as:
+>
+> * Vapor Client;
+> * Vapor Platform Server;
+> * Source Repo Container;
+> * Source Repo;
+> * Project;
+> * Packagepack / Vapor App;
+> * Installation;
+> * Toolchain;
+> * publication;
+> * derived-state maintenance.
+>
+> Canonical Context and Selection semantics are defined by the **Vapor Context, Identity, Session And Selection Model**.
+>
+> Exact CLI grammar is defined by the **Vapor CLI Model**.
+>
+> Source development is defined by the **Vapor Development Experience Model**.
+>
+> Publication is defined by the **Vapor Publishing And Distribution Model**.
 
 ---
 
 # Purpose
 
-A naive lifecycle specification tends to become a combinatorial enumeration:
+Vapor contains many independently meaningful dimensions of state.
 
-> Player + installed + selected + online + build current + authenticated...
+A naive lifecycle model would attempt to enumerate combinations such as:
 
-followed by:
+```text id="86lca1"
+Composer
++
+toolchain installed
++
+source dirty
++
+Packagepack valid
++
+build stale
++
+old Vapor App installed
++
+App selected
++
+GitHub unauthenticated
++
+Steam available
+```
 
-> Composer + installed + selected + online + build current + authenticated...
+and then invent another named lifecycle state for every meaningful combination.
 
-followed by every other meaningful permutation.
+That does not scale.
 
-That is neither readable nor useful.
+Instead Vapor models:
 
-Vapor instead models the relevant dimensions independently and specifies how actions interact with those dimensions.
+```text id="dw6v3v"
+Operational Situation
+    =
+    relevant conditions across independent state dimensions
+```
 
-A complete current situation is therefore conceptually:
+Operations then read and modify only the dimensions they legitimately own.
 
-> **Situation = combination of operational conditions across multiple state dimensions**
+This allows Vapor to represent combinations such as:
 
-A named user-facing or system-facing context is:
+```text id="hlpyll"
+source dirty
 
-> **Context = meaningful predicate over a Situation**
+new build failed
 
-An operation is:
+previous Vapor App still installed
 
-> **Action = guarded transition affecting a defined subset of the Situation**
+previous Vapor App still runnable
 
-An invariant is:
+GitHub offline
 
-> **Invariant = relationship that must remain true across Situations and Actions**
+Steam online
+```
 
-A lifecycle is:
+without inventing a special monolithic state name.
 
-> **Lifecycle = projection of relevant Actions and state changes onto one area of concern**
+---
 
-This gives Vapor the equivalent of a multidimensional flowchart without requiring a node for every possible cross-product of conditions.
+# Core Principle
 
-See [Vapor Operational State Model](./Diagrams/Vapor%20Operational%20State%20Model.puml).
+> **Operations change the smallest meaningful set of state dimensions and preserve unrelated valid state.**
+
+For example:
+
+```text id="q0nyrk"
+build fails
+```
+
+may change:
+
+```text id="0hs3iy"
+build-attempt result
+diagnostics
+```
+
+without changing:
+
+```text id="ctq7fm"
+source
+installed previous Vapor App
+selected/default Vapor App
+provider authentication
+persistent Context
+```
+
+unless the requested operation explicitly owns one of those dimensions.
+
+---
+
+# Ecosystem Is Not an Operation Subject
+
+The phrase:
+
+```text id="ik73yl"
+Vapor ecosystem
+```
+
+may describe the overall system.
+
+It is not itself a useful universal operational object.
+
+There is no coherent generic lifecycle:
+
+```text id="psq40q"
+ecosystem create
+ecosystem acquire
+ecosystem build
+ecosystem test
+ecosystem publish
+ecosystem deploy
+```
+
+because those verbs refer to different semantic subjects.
+
+Instead:
+
+```text id="7yup1r"
+source-repo-container acquire
+    source topology
+
+client build
+    Vapor Client
+
+platform-server deploy vps
+    Platform Server
+
+test <Project>
+    existing Project
+
+publish <Content Project>
+    publication
+
+installation repair
+    derived/local Installation state
+```
+
+Operations should belong to the thing they actually operate on.
 
 ---
 
 # Core Operational Concepts
 
-## State Dimension
+## Operational Situation
 
-A **State Dimension** describes one independently meaningful aspect of the current system situation.
+An **Operational Situation** is the complete set of state relevant to a particular moment.
 
-Examples include:
-
-* Installed capability.
-* Toolchain readiness.
-* Source availability.
-* Source cleanliness.
-* Composition resolution.
-* Build currency.
-* Vapor App installation.
-* Selection.
-* Runtime.
-* Authentication.
-* Network/provider availability.
-* Publication state.
-
-Dimensions are not required to be mathematically independent.
-
-Some intentionally interact.
-
-The purpose of separating them is to model those interactions explicitly rather than burying them in giant composite workflow states.
-
----
-
-## Condition
-
-A **Condition** is one fact that can hold within a state dimension or across several dimensions.
-
-Examples:
-
-* Composer capability is installed.
-* Git is available.
-* Packagepack source exists locally.
-* Repository has uncommitted changes.
-* Composition resolves successfully.
-* A built Vapor App exists.
-* The built Vapor App corresponds to the current source.
-* A Vapor App is installed.
-* A Vapor App is selected.
-* Runtime is currently stopped.
-* GitHub authentication is available.
-* Steam is reachable.
-
-Conditions may be:
-
-* Mutually exclusive.
-* Independent.
-* Derived.
-* Temporarily unknown.
-* Provider-specific.
-
----
-
-## Situation
-
-A **Situation** is the complete relevant operational state at a particular moment.
-
-Vapor does not need to assign a unique named type to every possible Situation.
+It does not need one serialized enum variant.
 
 For example:
 
-> Composer capability installed
->
-> * source present
-> * source dirty
-> * composition valid
-> * build stale
-> * previously built Vapor App installed
-> * that Vapor App selected
-> * runtime stopped
-> * GitHub unauthenticated
+```text id="t6liyt"
+Role:
+    Content Developer
 
-is one perfectly meaningful Situation.
+toolchain:
+    ready
 
-There is no need to create a bespoke state named:
+source:
+    available
 
-> `DirtyStaleSelectedOfflineComposerState`.
+Git:
+    dirty
 
----
+Packagepack resolution:
+    valid
 
-## Context
+newest build attempt:
+    failed
 
-A **Context** is a useful named interpretation of a Situation.
+previous Vapor App:
+    installed + runnable
 
-A Context is defined by the conditions relevant to some class of action or UX.
+App selection:
+    previous Vapor App selected
 
-Examples might include:
+GitHub:
+    unavailable
+```
 
-* **Playable**
-* **Composable**
-* **Editable**
-* **Buildable**
-* **Locally Runnable**
-* **Publishable Source**
-* **Publishable Vapor App**
-* **Repair Required**
-* **Runtime Active**
-
-A Context intentionally ignores irrelevant dimensions.
-
-For example, local buildability need not depend on GitHub authentication unless the build itself requires a provider-specific remote operation.
+is one valid Operational Situation.
 
 ---
 
-## Action
+# State Dimension
 
-An **Action** represents something the user or system can attempt to do.
+A **State Dimension** is one independently meaningful aspect of Vapor's operational state.
 
-An Action should conceptually define:
+Examples include:
 
-* Required preconditions.
-* Which state dimensions it may read.
-* Which dimensions it may change.
-* Its meaningful success results.
-* Its meaningful failure results.
-* Which unrelated state it must preserve.
+```text id="zlydf1"
+installed Role
+toolchain readiness
+source availability
+Git state
+derived-state health
+Packagepack resolution
+build state
+Vapor App installation
+Vapor App selection
+runtime
+authentication
+authorization
+provider availability
+publication
+deployment
+```
+
+Dimensions may interact.
+
+They are separated so those interactions can be modeled explicitly.
+
+---
+
+# Condition
+
+A **Condition** is one fact within or across state dimensions.
 
 Examples:
 
-* Upgrade capability.
-* Acquire source.
-* Modify pack.
-* Resolve composition.
-* Build.
-* Install Vapor App.
-* Select Vapor App.
-* Launch.
-* Stop.
-* Publish source.
-* Publish built composition.
-* Authenticate provider.
-* Repair toolchain.
-* Remove Vapor App.
+```text id="bp2fzv"
+Content Developer Role is installed
+
+Source Repo Container is locally available
+
+working tree contains uncommitted changes
+
+Packagepack resolves successfully
+
+Linux build is current
+
+Vapor App version 1.4.2 is installed
+
+GitHub authentication is unavailable
+
+Registry is reachable
+
+published Content version is Yanked
+```
+
+A Condition may be:
+
+```text id="fqoe50"
+observed
+derived
+temporarily unknown
+provider-specific
+operation-specific
+```
 
 ---
 
-## Transition
+# Readiness Predicate
 
-A **Transition** is the resulting state change produced by an Action.
-
-Transitions should be modeled only where meaningful state changes.
-
-Failure does not require inventing an entirely separate parallel lifecycle.
-
-A failed Action simply produces whatever failure-related state is meaningful while preserving state that the operation did not legitimately change.
-
----
-
-## Invariant
-
-An **Invariant** constrains the operational model.
+A **Readiness Predicate** is a useful derived question over an Operational Situation.
 
 Examples:
 
-* Player capability cannot require a local Rust toolchain.
-* A successful source edit may invalidate build currency.
-* Authentication state must not silently alter source.
-* A failed rebuild must not automatically destroy the previously installed working Vapor App.
-* Selecting one Vapor App should not mutate unrelated Git source state.
-* Removing Composer capability must not silently delete authored source.
+```text id="0g9vf3"
+Player-Ready?
+Editable?
+Buildable?
+Locally Runnable?
+Source-Publishable?
+Built-Publishable?
+Deployable to VPS?
+Repairable?
+```
+
+This term deliberately replaces the older operational use of **Context**.
+
+In current Vapor terminology:
+
+> **Context means identity/path-resolution context.**
+
+It must not simultaneously mean:
+
+> “a named combination of readiness conditions.”
+
+---
+
+# Operation
+
+An **Operation** is a modeled Vapor action against a semantic subject.
+
+An Operation should define or resolve:
+
+```text id="uvjlvh"
+subject
+
+natural complete scope
+
+optional explicit Selection
+
+parameters / variant
+
+preconditions
+
+state dimensions read
+
+state dimensions changed
+
+state which must be preserved
+
+success result
+
+failure result
+
+diagnostics
+```
+
+Examples:
+
+```text id="zph4gr"
+client test
+
+platform-server deploy vps
+
+source-repo-container acquire ...
+
+test <Project>
+
+publish <Content Project>
+
+installation repair
+```
+
+---
+
+# Operation Subject
+
+An **Operation Subject** is the thing the operation is fundamentally about.
+
+Examples:
+
+```text id="73gvam"
+Vapor Client
+Vapor Platform Server
+one Source Repo Container
+one Source Repo
+one Project
+one Packagepack
+one Vapor App
+the local Installation
+the managed toolchain
+```
+
+The subject determines the operation's natural complete scope.
+
+---
+
+# Operation Selection
+
+**Operation Selection** explicitly narrows or specifies topology beneath an Operation Subject where the operation supports it.
+
+Example:
+
+```text id="l00bb8"
+subject:
+    Vapor Platform Server
+
+operation:
+    test
+
+selection:
+    Registry
+```
+
+This is distinct from both:
+
+```text id="ezjmmo"
+persistent Vapor Context
+```
+
+and:
+
+```text id="qdwx9a"
+selected/default Vapor App
+```
+
+All three use the intuitive idea of “selection/location,” but they belong to different domains and must not be conflated.
+
+---
+
+# Transition
+
+A **Transition** is the meaningful state change caused by an Operation.
+
+Example:
+
+```text id="12xagg"
+build state:
+    Stale
+    ↓ successful build
+    Current
+```
+
+A failed operation may produce a different transition:
+
+```text id="z854v2"
+latest build attempt:
+    Failed
+
+diagnostics:
+    Available
+```
+
+while preserving a previous installed valid Vapor App.
+
+---
+
+# Invariant
+
+An **Invariant** is a relationship which must remain true across operational states and transitions.
+
+Examples:
+
+* Player operation does not require Rust/Cargo.
+* Context does not silently narrow operation scope.
+* Provider authentication changes do not silently modify source.
+* A failed rebuild does not automatically destroy a previous working Vapor App.
+* Role downgrade does not silently delete authored source.
+* Repair does not silently reacquire authored source.
+* Dirty Git source is not automatically invalid.
+* A published version cannot later refer to different source.
+
+---
+
+# Operation Recipe
+
+An **Operation Recipe** is lightweight authored configuration describing how an operation is realized.
+
+It may define:
+
+```text id="wmp1p6"
+required topology
+supported Selection scopes
+steps
+dependencies between steps
+parallelism
+build commands
+validation
+artifact relationships
+deployment actions
+health checks
+small explicit script/process calls
+```
+
+Operation recipes are not arbitrary plugin applications.
+
+Vapor Core remains responsible for the semantic operation framework and safe primitives.
+
+---
+
+# Operation Variant
+
+An **Operation Variant** is a semantically distinct form of an operation.
+
+For example:
+
+```text id="a3yr6p"
+platform-server deploy local
+
+platform-server deploy vps
+```
+
+may have different:
+
+```text id="7rl2mm"
+preconditions
+authorization requirements
+supported Selection
+deployment topology
+validation
+failure semantics
+```
+
+Operation legality therefore cannot be reduced to verb alone.
 
 ---
 
 # State Dimension Inventory
 
-The following dimensions form the current initial operational inventory.
+The following dimensions form the current operational model.
 
-This inventory should grow when concrete workflows reveal missing dimensions.
+The inventory may grow when real implementation pressure reveals missing state.
 
-It should not grow merely to encode incidental implementation details.
-
----
-
-## Capability State
-
-Relevant conditions include:
-
-* Player.
-* Composer.
-* Content Developer.
-* Ecosystem Developer.
-* Root Authority.
-
-The hierarchy is cumulative.
-
-Capability changes are Installer-owned operations.
+It should not grow merely to mirror incidental internal variables.
 
 ---
 
-## Toolchain State
+# Installed Role State
+
+The installed Vapor Role is one of:
+
+```text id="4yb0cv"
+Player
+Composer
+Content Developer
+Ecosystem Developer
+```
+
+Roles are cumulative capability levels.
+
+Conceptually:
+
+```text id="8807k9"
+Player
+⊂ Composer
+⊂ Content Developer
+⊂ Ecosystem Developer
+```
+
+Role determines what local workflows/tooling Vapor equips the environment to perform.
+
+---
+
+# Root Authority Is Not Role State
+
+**Root Authority is not part of the Role ladder.**
+
+It is external/trusted authority.
+
+Therefore this is wrong:
+
+```text id="htl03u"
+Player
+→ Composer
+→ Content Developer
+→ Ecosystem Developer
+→ Root Authority
+```
+
+The correct model is:
+
+```text id="twn5ek"
+local Role:
+    Ecosystem Developer
+
+possibly independently:
+
+authority:
+    Root Authority
+```
+
+A developer can be fully equipped for local first-party development without possessing protected official authority.
+
+---
+
+# Toolchain State
 
 Relevant conditions may include:
 
-* Required tool absent.
-* Required tool detected.
-* Required tool configured.
-* Toolchain ready.
-* Toolchain degraded.
-* Repair required.
+```text id="m4f1vl"
+not required for current Role
 
-Different capability levels require different tool subsets.
+required but absent
 
-Player capability should not require Composer/Developer tools.
+installing
 
----
+present but unconfigured
 
-## Source Availability State
+ready
 
-For a given source artifact or repository context:
+degraded
 
-* Absent.
-* Available locally.
-* Availability unknown/unresolved.
+incompatible
 
-Source may be acquired from Vapor-compatible Git repositories.
+repairable
+```
 
-This dimension is primarily relevant at Composer capability and above.
+Player operation must not require developer tooling.
 
----
+Composer/Developer roles may require progressively richer tooling.
 
-## Source Modification State
-
-For Git-managed source:
-
-* Clean.
-* Modified/uncommitted.
-* Locally committed but unpushed.
-* Synchronized with relevant remote.
-* Conflict/repair required.
-
-These states may require further refinement later.
-
-The central invariant is that local-only source state can exist and must be protected.
+Root/Ecosystem development should use the Vapor-managed pinned/vendored toolchain where required by policy.
 
 ---
 
-## Composition Resolution State
+# Superworkspace Configuration State
 
-For a Packagepack:
+The canonical Superworkspace may be:
 
-* Unresolved.
-* Resolving.
-* Resolved/valid.
-* Invalid.
-* Resolution failed.
+```text id="md1buj"
+configured + reachable
 
-A valid resolution identifies exactly one effective Engine and exactly one effective Game plus the effective Mods.
+configured + missing/unreachable
 
----
+not yet configured
 
-## Build State
+migration/reconciliation required
+```
 
-For a Packagepack/target:
+There is only one canonical local Superworkspace.
 
-* Missing.
-* Building.
-* Current.
-* Stale.
-* Failed.
+This dimension concerns local environment configuration.
 
-A source or composition change may transition a previously Current build to Stale.
-
-A failed rebuild should not imply that an older valid installed Vapor App ceases to exist.
+It is not a Vapor identity dimension.
 
 ---
 
-## Vapor App Installation State
+# Source Availability State
 
-For a built/published Vapor App:
+For a registered Vapor source identity:
 
-* Not locally installed.
-* Installing.
-* Installed.
-* Removal in progress.
-* Installation invalid/repair required.
+```text id="vcbrvc"
+not locally available
 
-Installation is distinct from build currency.
+locally available
 
-A stale source tree may coexist with a previously installed runnable Vapor App.
+partially unavailable because authored Git topology is incomplete
 
----
+availability unknown
 
-## Selection State
+provider unavailable
+```
 
-At the Steam App Instance level:
+The exact meaning depends on topology layer.
 
-* No meaningful selected composition.
-* Vapor App Composition selected.
+For example:
 
-Selection identifies the current/default composition used by Launcher/direct-play convenience.
+```text id="rbagfj"
+Source Repo Container absent
+    acquisition concern
 
-Selection should remain independent from unrelated source modification state.
+Container present but declared Source Repo checkout missing
+    Git reconciliation concern
+```
 
----
-
-## Runtime State
-
-For a Vapor App:
-
-* Stopped.
-* Starting.
-* Running.
-* Stopping.
-* Failed to start/crashed.
-
-The detailed Engine/Game internal runtime lifecycle belongs elsewhere.
-
-This dimension only models the Vapor-level execution relationship.
+These should not be collapsed.
 
 ---
 
-## Authentication / Authorization State
+# Source Topology Health
 
-Authentication is provider-specific.
+A locally present Container/Repo may have topology state such as:
 
-Relevant conditions may exist independently for:
+```text id="9xg581"
+healthy
 
-* Steam.
-* Vapor services.
-* GitHub.
-* Other Git hosts.
-* Future signing/identity providers.
+declared Source Repo checkout missing
 
-Possible coarse conditions include:
+unexpected submodule state
 
-* Not authenticated.
-* Authenticated.
-* Authenticated but unauthorized for requested resource.
-* Authorization available.
+manifest/topology disagreement
 
-Local capability does not depend on all provider authentication being present.
+Registry disagreement
+
+incompatible metadata
+
+unknown / requires diagnosis
+```
+
+Topology health is separate from ordinary Git cleanliness.
 
 ---
 
-## External Availability State
+# Git Modification State
 
-Relevant external systems may independently be:
+Real Git state may include:
 
-* Available.
-* Unavailable.
-* Degraded.
-* Unknown.
+```text id="933ju3"
+clean
+
+modified / uncommitted
+
+committed locally
+
+unpushed commits
+
+ahead / behind
+
+detached HEAD
+
+submodule differs from gitlink
+
+merge conflict
+
+other Git error
+```
+
+These are not a linear Vapor lifecycle.
+
+Several may coexist.
+
+For example:
+
+```text id="4fx8r4"
+detached HEAD
++
+modified
++
+unpushed
+```
+
+may be a legitimate development state.
+
+---
+
+# Git State Is Not Vapor Health
+
+The following do not inherently mean Vapor is broken:
+
+```text id="qnby4p"
+dirty working tree
+detached submodule HEAD
+Source Repo ahead of parent gitlink
+local unpushed branch
+```
+
+Vapor must distinguish:
+
+```text id="w56pc4"
+unusual or unsynchronized Git state
+```
+
+from:
+
+```text id="46rpyv"
+invalid Vapor topology
+```
+
+---
+
+# Derived-State Health
+
+Derived Vapor state may independently be:
+
+```text id="h56u55"
+healthy
+
+missing
+
+stale
+
+inconsistent
+
+repairable
+
+currently regenerating
+```
+
+Examples include:
+
+```text id="ulqjwc"
+indexes
+generated glue
+IDE integration
+operation realization
+path caches
+diagnostic indexes
+generated Cargo/Vapor projections
+```
+
+Derived-state failure does not automatically imply authored source failure.
+
+---
+
+# Persistent Context State
+
+Persistent Vapor **Context** is identity-resolution state.
+
+It may be:
+
+```text id="ggus9q"
+unset
+
+set to an exact Vapor path
+
+set but target currently unavailable
+
+requiring migration from an old canonical identity
+```
+
+Context affects resolution.
+
+It does not define operation scope.
+
+---
+
+# Transient Context
+
+An operation may supply an explicit transient Context override.
+
+This is per-operation input rather than a broad ecosystem lifecycle.
+
+It must not modify persistent Context unless explicitly requested.
+
+---
+
+# Context Does Not Change Operational Scope
+
+Suppose:
+
+```text id="bo7wkz"
+persistent Context:
+    GHF-Studios/Vapor-Platform-Server/Registry
+```
+
+Then:
+
+```text id="n8vdlc"
+platform-server deploy vps
+```
+
+still targets the natural complete Platform Server operation.
+
+The Context must not secretly narrow deployment to Registry.
+
+Only explicit Operation Selection may request that.
+
+---
+
+# Packagepack Resolution State
+
+A Packagepack may be:
+
+```text id="90xjz8"
+unresolved
+
+resolving
+
+resolved valid
+
+invalid authored composition
+
+dependency conflict
+
+required version unavailable
+
+resolution failed because provider/Registry unavailable
+
+resolved historically from frozen published graph
+```
+
+A valid complete resolution contains exactly:
+
+```text id="a55jpn"
+one effective Engine
+one effective Game
+```
+
+plus the selected compatible/supporting Content.
+
+---
+
+# Resolution Constraint State vs Exact Resolution
+
+For published/development composition it is useful to distinguish:
+
+```text id="k2fxf3"
+authored dependency constraints
+```
+
+from:
+
+```text id="z6b95f"
+exact resolved version graph
+```
+
+A published Packagepack's historical exact resolved graph does not change merely because newer dependency versions appear.
+
+---
+
+# Build State
+
+Build state is scoped by meaningful build subject/target.
+
+Possible conditions include:
+
+```text id="8ut3me"
+missing
+
+queued
+
+building
+
+current
+
+stale
+
+failed latest attempt
+
+cancelled
+
+artifact available
+
+artifact validation failed
+```
+
+A build state should identify what it is relative to:
+
+```text id="99b0dy"
+subject
+source/resolution inputs
+target
+build configuration
+```
+
+---
+
+# Current vs Stale
+
+A build is **Current** when it corresponds to the currently relevant semantic inputs.
+
+A build becomes **Stale** when those inputs change.
+
+For example:
+
+```text id="5vt59e"
+build = Current
+    ↓ relevant source edit
+build = Stale
+```
+
+Stale does not mean unusable.
+
+It means:
+
+> does not correspond to the current relevant source/composition state.
+
+---
+
+# Build Failure vs Existing Artifact
+
+A new failed build attempt may coexist with an older valid artifact.
+
+For example:
+
+```text id="xyxx45"
+source:
+    modified
+
+latest build:
+    failed
+
+previous Vapor App:
+    installed
+
+previous Vapor App:
+    runnable
+```
+
+This is a normal operational situation.
+
+---
+
+# Vapor App Installation State
+
+For a particular Vapor App identity/version/target:
+
+```text id="t6byss"
+not installed
+
+acquiring
+
+installing
+
+installed
+
+removing
+
+installation degraded
+
+installation invalid
+
+repairable
+```
+
+Installation is independent of source availability and build currency.
+
+---
+
+# Vapor App Selection State
+
+The Steam App Instance may have one selected/default Vapor App Composition for normal Play/direct-launch convenience.
+
+Possible conditions:
+
+```text id="goj17n"
+no valid selection
+
+selected installed Vapor App
+
+selected App missing/unavailable
+
+selection requires migration/reconciliation
+```
+
+This is **Vapor App Selection**.
+
+It is not Operation Selection.
+
+---
+
+# Operation Selection Is Transient Intent
+
+Operation Selection normally belongs to one invocation/action.
+
+For example:
+
+```text id="mhr48i"
+platform-server test --select "Registry"
+```
+
+The selected Source Repo subtree is relevant to that operation.
+
+It does not become the Steam App Instance's selected Vapor App.
+
+It does not become persistent Context.
+
+---
+
+# Runtime State
+
+For a Vapor App/runtime:
+
+```text id="nbcul3"
+stopped
+
+starting
+
+running
+
+stopping
+
+crashed
+
+failed to start
+```
+
+Detailed Engine/Game internal runtime state belongs to the App architecture.
+
+This dimension only describes Vapor-level runtime lifecycle.
+
+---
+
+# Authentication State
+
+Authentication should be modeled per identity/provider.
 
 Examples:
 
-* Steam.
-* Steam Workshop.
-* Vapor Registry.
-* GitHub.
-* Other Git hosts.
+```text id="drjjzb"
+Steam
+Vapor Platform
+GitHub
+future Git providers
+future signing infrastructure
+```
 
-An outage in one provider should not unnecessarily invalidate unrelated local operations.
+Possible conditions:
 
----
+```text id="f7t91q"
+not authenticated
 
-## Publication State
+authenticated
 
-Source and built publication are distinct dimensions or subdimensions.
+credentials expired
 
-Source-side states may include:
+authentication unavailable
+```
 
-* Unpublished.
-* Published.
-* Local changes since publication.
-* Publication update pending.
-* Publication failed.
+Authentication answers:
 
-Built-distribution states may include:
+> Who are you?
 
-* No built publication.
-* Build ready for publication.
-* Published.
-* Built publication update pending.
-* Publication failed.
+It does not itself answer:
 
-The Publishing and Distribution Model defines these more precisely.
+> Are you allowed to do this?
 
 ---
 
-# Important Derived Contexts
+# Authorization State
 
-The following contexts are more useful to UX and operation gating than giant serialized workflow states.
+Authorization is target/action specific.
 
-They are conceptual predicates and may later receive more formal definitions.
+Examples:
 
----
+```text id="5a1sbh"
+may push this Git repository
 
-## Player-Ready
+may create repository under this Authority/provider
 
-A Steam App Instance is **Player-Ready** when:
+may publish this Content ID
 
-* Player capability is healthy.
-* Required base Steam/Vapor runtime state exists.
-* The selected/default Vapor App is locally runnable.
+may deploy Client to Steam
 
-It does not require:
+may deploy Platform Server to production VPS
 
-* Git.
-* Rust.
-* Cargo.
-* GitHub authentication.
+may change first-party Registry trust
+```
 
----
+Authorization cannot be represented adequately as one global:
 
-## Composable
-
-A source context is **Composable** when:
-
-* Composer capability exists.
-* Required composition source is locally available or can be acquired.
-* Required tooling is healthy.
-* The user has a writable composition-authoring context.
-
-Remote provider authentication is required only if the operation being attempted needs a remote provider.
+```text id="xmyra0"
+authorized = true
+```
 
 ---
 
-## Buildable
+# External Availability State
 
-A Packagepack is **Buildable** when:
+External systems may independently be:
 
-* Composer-or-higher capability is available.
-* Required toolchain state is ready.
-* Required source is available.
-* The composition resolves validly for the requested build.
-* No unresolved condition prevents compilation.
+```text id="1wkl5z"
+available
+degraded
+unavailable
+unknown
+```
 
-Buildable does not mean the source is clean or published.
+Examples:
 
-Local dirty source should generally remain buildable.
+```text id="736yk0"
+Steam
+Steam Workshop
+Vapor Registry
+GitHub
+other Git provider
+Vapor Platform services
+production VPS
+```
+
+One outage should affect only operations which actually require that external system.
 
 ---
 
-## Locally Runnable
+# Source Publication State
+
+For one Content Project/version:
+
+```text id="qc4ujc"
+local/unpublished
+
+version validation ready
+
+source commit not remotely available
+
+publication pending
+
+published immutable version
+
+publication partially complete
+
+Yanked
+
+Banned
+
+publication reconciliation required
+```
+
+Exact publication semantics belong to the Publishing model.
+
+---
+
+# Built Publication State
+
+For one Packagepack version/target:
+
+```text id="7ls4gt"
+no built artifact
+
+build available
+
+artifact validated
+
+distribution pending
+
+distributed
+
+distribution linkage incomplete
+
+distribution unavailable
+
+Yanked/Banned by policy where applicable
+```
+
+Source publication and built distribution are separate dimensions.
+
+---
+
+# Deployment State
+
+First-party facilities may have deployment state.
+
+For example, Platform Server:
+
+```text id="0jh2ll"
+local:
+    absent / deployed / degraded
+
+vps:
+    unknown / healthy / deploying / degraded / failed
+```
+
+Client Steam deployment may have a different state model.
+
+Deployment state is facility/target-specific.
+
+There is no universal ecosystem deployment state.
+
+---
+
+# Operation Progress State
+
+Long-running operations may expose:
+
+```text id="phlze5"
+queued
+preparing
+running
+waiting on external system
+validating
+succeeded
+failed
+cancelled
+```
+
+This is operation-instance state.
+
+It should not be confused with the permanent state of the target itself.
+
+For example:
+
+```text id="jhs0mz"
+build operation = failed
+```
+
+does not imply:
+
+```text id="9v6csp"
+previous installed App = invalid
+```
+
+---
+
+# Important Readiness Predicates
+
+These predicates are useful for UX and operation gating.
+
+They are derived questions over state.
+
+They are not identity Context.
+
+---
+
+# Player-Ready
+
+A local Vapor environment is **Player-Ready** when:
+
+```text id="d24jgf"
+Player capability is healthy
+
+and
+
+required Vapor Client/runtime state exists
+
+and
+
+the selected/default Vapor App is locally runnable
+```
+
+Player-Ready does not require:
+
+```text id="2zvn30"
+Git
+Rust
+Cargo
+GitHub authentication
+canonical Superworkspace
+developer source
+```
+
+---
+
+# Source-Developable
+
+A source target is **Source-Developable** when:
+
+```text id="c52eao"
+installed Role permits the intended authoring
+
+required source is locally available
+
+source is writable
+
+required local tooling is ready
+
+no unresolved topology condition blocks the requested operation
+```
+
+Dirty source may remain Source-Developable.
+
+---
+
+# Composable
+
+A Packagepack source target is **Composable** when:
+
+```text id="4eifem"
+Composer-or-higher Role exists
+
+Packagepack source is available
+
+required source topology/tooling is usable
+
+the user may edit the composition
+```
+
+Remote authentication is only necessary when the requested operation needs a remote system.
+
+---
+
+# Editable
+
+A Content Project is **Editable** when:
+
+```text id="ujlcg6"
+installed Role permits authoring its kind
+
+source is locally available
+
+source is writable
+```
+
+Examples:
+
+```text id="zrhezb"
+Composer:
+    Packagepack editable
+
+Composer:
+    Engine implementation not editable
+
+Content Developer:
+    Engine implementation editable
+```
+
+---
+
+# Buildable
+
+A subject is **Buildable** when its build operation's actual preconditions are satisfied.
+
+For a Packagepack this may include:
+
+```text id="yk740n"
+appropriate Role
+
+toolchain ready
+
+required source available
+
+composition resolution valid
+
+required target supported
+
+no blocking build invariant
+```
+
+Buildable does not mean:
+
+```text id="23eu6p"
+source clean
+source published
+GitHub authenticated
+```
+
+unless the specific build operation actually requires those conditions.
+
+---
+
+# Testable
+
+A subject is **Testable** when its test operation can legally execute in the requested scope.
+
+This may depend on:
+
+```text id="1agcbc"
+subject
+Selection
+required source
+toolchain
+test composition
+operation recipe
+external service dependencies
+```
+
+It is not one universal property of all Projects.
+
+---
+
+# Locally Runnable
 
 A Vapor App is **Locally Runnable** when:
 
-* A valid built artifact exists locally.
-* It is appropriately installed/registered.
-* Runtime prerequisites are satisfied.
+```text id="42spw3"
+valid runnable artifact exists locally
 
-The corresponding source may be:
+App is appropriately installed/registered
 
-* Clean.
-* Dirty.
-* Missing.
-* Newer than the installed build.
+runtime prerequisites are satisfied
+```
 
-A locally runnable installed build is therefore distinct from "current relative to source."
+Its source may simultaneously be:
+
+```text id="wulhap"
+clean
+dirty
+missing
+newer
+older
+```
 
 ---
 
-## Editable
+# Source-Publishable
 
-A Vapor Content artifact is **Editable** when:
+A Content Project/version is **Source-Publishable** when:
 
-* The installed capability permits authoring that artifact type.
-* Appropriate source is locally available.
-* The source context is writable.
+```text id="yaivz5"
+installed Role permits authoring
+
+canonical Content ID exists
+
+new SemVer is valid
+
+source validation succeeds
+
+exact source commit is available
+
+provider linkage exists
+
+required publication authorization exists
+
+required external systems are reachable
+```
+
+Published-version immutability rules still apply.
+
+---
+
+# Built-Publishable
+
+A Packagepack version/target is **Built-Publishable** when:
+
+```text id="n9puua"
+source version is valid/published according to policy
+
+exact composition resolution is valid
+
+required target build succeeds
+
+artifact validates
+
+distribution authority exists
+
+distribution backend is available
+```
+
+This does not collapse source publication and built distribution into one state dimension.
+
+---
+
+# Locally Deployable
+
+A first-party subject may be **Locally Deployable** when the specific local deployment operation's preconditions hold.
 
 For example:
 
-* Composer can edit Packagepacks.
-* Composer cannot edit Engine behavior.
-* Content Developer can edit Engine behavior.
+```text id="06lm95"
+platform-server deploy local
+```
+
+may accept Source Repo-scoped Selection that production deployment does not.
+
+Readiness is operation-specific.
 
 ---
 
-## Source-Publishable
+# Production Deployable
 
-A source artifact is **Source-Publishable** when:
+A subject may be **Production Deployable** only when all production-specific requirements are satisfied.
 
-* The user's capability permits authoring it.
-* Required source state exists.
-* Required identity/ownership authorization exists.
-* Required source validation succeeds.
-* Required remote provider access exists.
+For example:
 
-Exact version/release requirements remain part of the Publishing and Distribution Model.
+```text id="ej00xi"
+platform-server deploy vps
+```
+
+may require:
+
+```text id="lmownc"
+complete Platform Server scope
+
+build/test validation
+
+remote access
+
+production authorization
+
+deployment recipe readiness
+
+required external systems available
+```
+
+This is not equivalent to local Buildable/Testable.
 
 ---
 
-## Built-Publishable
+# Repairable
 
-A Packagepack realization is **Built-Publishable** when:
-
-* A valid complete Packagepack exists.
-* Required target build(s) exist.
-* Required publication validation succeeds.
-* Required Workshop/Vapor authorization exists.
-
-This does not imply source publication and built publication are the same operation.
-
----
-
-# Major Actions and Their Operational Effects
-
-## Establish Capability
+A state is **Repairable** when Vapor can safely reconstruct the affected state from known authoritative inputs.
 
 Examples:
 
-* Player → Composer.
-* Composer → Content Developer.
+```text id="n08fcd"
+generated indexes missing
+IDE integration stale
+derived operation state missing
+generated glue stale
+```
 
-Owned primarily by the Vapor Installer.
+Not automatically Repairable:
+
+```text id="jqs9uq"
+deleted unique authored source
+dirty Git conflict
+unpushed commit loss
+unknown branch intent
+missing registered Container
+```
+
+Those belong to acquisition, Git recovery, or manual diagnosis as appropriate.
+
+---
+
+# Major Operations and State Effects
+
+The following sections illustrate important cross-dimensional behavior.
+
+They do not define one generic `Ecosystem` command lifecycle.
+
+---
+
+# Establish Role Capability
+
+Examples:
+
+```text id="o4fb3k"
+Player → Composer
+
+Composer → Content Developer
+
+Content Developer → Ecosystem Developer
+```
+
+Primarily Installer-owned.
 
 May change:
 
-* Installed tooling.
-* Capability state.
-* Toolchain state.
-* Launcher-visible functionality.
+```text id="x2fq81"
+installed Role
+installed tooling
+managed toolchain state
+available Client surfaces
+```
 
 Must preserve:
 
-* Existing user source.
-* Existing saves.
-* Existing installed Vapor Apps unless explicitly incompatible.
-* Unrelated provider authentication where possible.
+```text id="unr54t"
+authored source
+user gameplay state
+installed Vapor Apps where compatible
+unrelated provider state
+```
 
 ---
 
-## Downgrade Capability
+# Downgrade Role Capability
 
-May remove capability-specific tooling or disable capability-specific surfaces.
+A downgrade may:
 
-Must not silently treat authored source as disposable.
+```text id="uvqwzi"
+remove/disable higher-level tooling
+remove higher-capability UI
+change Role metadata
+```
 
-A downgrade from Content Developer to Player does not conceptually mean:
+It must not silently:
 
-> Delete every Git repository the user authored.
+```text id="qbj34d"
+delete Superworkspace
+delete Git source
+drop commits
+remove authored Projects
+erase user saves
+```
 
 ---
 
-## Acquire Source
+# Configure / Relocate Superworkspace
+
+A deliberate Superworkspace configuration operation may change:
+
+```text id="nr0cnb"
+configured canonical source root
+derived path indexes
+IDE integration
+```
+
+It must not change canonical Vapor identities.
+
+Relocation should preserve authored Git state.
+
+---
+
+# Acquire Source Repo Container
 
 Reads:
 
-* Vapor identity/Registry information.
-* Git source linkage.
-* Existing local repository state.
+```text id="fbl7lo"
+canonical Container identity
+Registry
+provider linkage
+local canonical Superworkspace state
+existing local path/state
+```
 
 May change:
 
-* Source availability.
-* Git checkout state.
-* Local dependency state.
+```text id="hifvqv"
+source availability
+Git checkout state
+submodule initialization
+local discovery/index state
+```
 
-Should not mutate unrelated installed Vapor Apps.
+Must not alter unrelated installed Vapor Apps.
 
 ---
 
-## Modify Source
+# Acquire Source Repo
+
+Independent Source Repo acquisition is permitted only where modeled.
+
+It reads the same relevant identity/provider policy and must respect the parent Container/acquisition rules.
+
+Technical Git clone capability is not enough.
+
+---
+
+# Create Source Repo Container
 
 May change:
 
-* Source modification state.
-* Composition validity.
-* Build currency.
+```text id="0z773z"
+Registry identity/topology
+provider repository state
+local canonical source realization
+Container metadata
+```
 
-For example:
+It does not implicitly create:
 
-> Current build
->
-> * relevant source edit
-    >   → Stale build
-
-It should not automatically destroy the old built Vapor App.
+```text id="um6mbt"
+Source Repo
+Project
+Cargo package
+```
 
 ---
 
-## Resolve Packagepack
+# Create Source Repo
+
+May change:
+
+```text id="7pe55f"
+Registry Source Repo topology
+provider repository state
+parent .gitmodules / gitlink
+Workspace metadata
+local source realization
+```
+
+This is both Vapor topology and Git-authored topology.
+
+---
+
+# Create Typed Project
+
+Example:
+
+```text id="265go3"
+game create ...
+```
+
+May change:
+
+```text id="mlf7cw"
+Project topology
+Project metadata
+Project source
+Cargo realization
+```
+
+It must not silently create missing parent Containers or Source Repos.
+
+---
+
+# Modify Source
+
+May change:
+
+```text id="qr7zyt"
+Git modification state
+Cargo graph
+Packagepack resolution validity
+build currency
+diagnostics
+```
+
+It does not automatically:
+
+```text id="na6mjf"
+install a new Vapor App
+remove old Vapor App
+publish
+change App selection
+change Context
+```
+
+---
+
+# Reconcile Git Topology
+
+A Git reconciliation operation/possible procedure may change:
+
+```text id="b87tuo"
+submodule checkout state
+Git working state
+```
+
+It is distinct from:
+
+```text id="i67tui"
+acquisition
+
+Repair
+```
+
+Potentially state-changing Git actions require appropriate caution.
+
+---
+
+# Diagnose
+
+Diagnosis reads state.
+
+It may inspect:
+
+```text id="97pdwo"
+Vapor identity/topology
+Registry linkage
+provider state
+Git
+Cargo
+toolchain
+derived state
+build state
+publication
+deployment
+```
+
+Diagnosis should not silently perform destructive corrections.
+
+---
+
+# Repair
+
+Repair may change only safely derivable Vapor-owned state.
+
+Examples:
+
+```text id="2m4uxi"
+indexes
+generated glue
+IDE integration
+operation realization
+derived caches
+```
+
+Repair must not silently:
+
+```text id="cag7by"
+clone missing Container
+reset Git
+restore authored source
+change branch
+discard local changes
+```
+
+---
+
+# Resolve Packagepack
 
 Reads:
 
-* Packagepack source.
-* Dependencies.
-* Compatibility constraints.
-* Available source identities.
+```text id="lhj27w"
+Packagepack source
+dependency constraints
+Registry/version information
+compatibility rules
+available/published versions
+```
 
 May change:
 
-* Composition resolution state.
+```text id="8th51v"
+current resolution state
+derived exact graph
+diagnostics
+```
 
-Successful resolution determines the effective composition.
+Published historical Packagepack resolutions remain frozen.
 
 ---
 
-## Build Packagepack
+# Build
 
-Requires a Buildable context.
+Build semantics depend on the subject.
+
+Examples:
+
+```text id="0af461"
+build Packagepack
+build Project
+client build
+platform-server build
+```
 
 May change:
 
-* Build state.
-* Build outputs.
-* Build caches.
-* Diagnostics.
+```text id="2eidc1"
+build state
+build artifacts
+caches
+generated realization
+diagnostics
+```
 
-On success:
-
-> Missing/Stale/Failed
-> → Current
-
-On failure:
-
-> build attempt fails
-
-while preserving:
-
-* Source.
-* Previously installed Vapor App.
-* Selection.
-* Unrelated provider authentication.
-
-unless a separate explicit operation legitimately changes those.
+It must preserve unrelated valid state.
 
 ---
 
-## Install/Register Vapor App
+# Test
+
+Test semantics also depend on the subject/recipe.
+
+Possible state effects include:
+
+```text id="vg87wn"
+test-run state
+diagnostics
+generated test artifacts
+temporary runtime state
+```
+
+Test should not mutate persistent source unless the operation explicitly owns generated derived files and does so deterministically.
+
+---
+
+# Install Vapor App
 
 May operate on:
 
-* Locally built Vapor App.
-* Workshop-acquired Vapor App.
-* Depot-shipped default Vapor App.
+```text id="nch4qf"
+depot-shipped artifact
+Workshop-acquired artifact
+local build
+```
 
-Changes:
+May change:
 
-* Vapor App installation state.
-* Vapor-managed installation metadata.
+```text id="uwnu1o"
+Vapor App installation state
+local App metadata
+```
 
-Does not inherently change:
-
-* Source.
-* Capability.
-* Git authentication.
-
----
-
-## Select Vapor App Composition
-
-Requires a selectable installed composition.
-
-Changes:
-
-* Selection state.
-
-Should preserve:
-
-* Source.
-* Build state.
-* Capability.
-* Provider authentication.
-* Other installed Vapor Apps.
+It does not inherently change source.
 
 ---
 
-## Launch Vapor App
-
-Requires a Locally Runnable context.
+# Select Default Vapor App
 
 Changes:
 
-* Runtime state.
+```text id="jiqcbj"
+Steam App Instance Vapor App selection
+```
+
+May need to clear/migrate selection if the selected App is removed.
+
+Must not modify Git source or persistent development Context.
+
+---
+
+# Launch Vapor App
+
+Requires Locally Runnable state.
+
+Changes:
+
+```text id="l08o22"
+runtime state
+runtime diagnostics/logs
+runtime-generated user state as appropriate
+```
 
 Normal Player launch must not require:
 
-* Source resolution.
-* Git acquisition.
-* Local compilation.
+```text id="6fgcu5"
+source acquisition
+Cargo
+local compilation
+Git
+```
 
 ---
 
-## Stop Vapor App
+# Stop Vapor App
 
-Changes:
-
-* Runtime state.
+Changes runtime state.
 
 Preserves:
 
-* Installation.
-* Selection.
-* Build/source state.
+```text id="u9dw28"
+installation
+source
+build artifacts
+selected/default App
+```
 
-Appropriate runtime-generated user state may be persisted separately.
+except for explicitly persisted runtime-generated data.
 
 ---
 
-## Remove Vapor App
+# Remove Vapor App
 
 Changes:
 
-* Installation state.
-* Potentially selection if the removed App was selected.
+```text id="e009af"
+App installation
+possibly default App selection
+local App metadata
+```
 
-Must not silently remove canonical source merely because the corresponding built App is removed.
-
----
-
-## Authenticate Provider
-
-Changes provider-specific authentication/authorization state.
-
-Must not silently mutate:
-
-* Source.
-* Build.
-* Installation.
-* Selection.
-
-Authentication may unlock previously unavailable remote Actions.
+Must not remove authored Project source merely because the built App is removed.
 
 ---
 
-## Publish Source
+# Authenticate Provider
 
-Defined in detail by the Publishing and Distribution Model.
+Changes provider-specific credentials/session state.
+
+May enable previously blocked remote operations.
+
+Must not silently change:
+
+```text id="k63s4p"
+source
+build
+installation
+Context
+App selection
+```
+
+---
+
+# Authorize Protected Operation
+
+Authorization may be checked before operations such as:
+
+```text id="sq7c1h"
+push official source
+create provider repo under protected Authority
+publish protected Content ID
+deploy Client to Steam
+deploy Platform Server VPS
+modify first-party Registry trust
+```
+
+Authorization checks should not alter local Role.
+
+---
+
+# Publish Content Version
 
 May change:
 
-* Source publication state.
-* Remote Git state.
-* Registry linkage.
+```text id="3ae0f7"
+remote Git/provider state
+immutable Registry version state
+provider release state
+publication metadata
+```
 
-Should not inherently publish a built Workshop artifact unless the larger publication operation explicitly includes that stage.
+A published version becomes bound to one exact commit.
+
+Failure after partial external success must be recoverable without rewriting historical source.
 
 ---
 
-## Publish Built Vapor App
+# Publish Packagepack Vapor App
 
-Defined in detail by the Publishing and Distribution Model.
+In addition to source publication, may change:
 
-May change:
+```text id="yh5o92"
+resolved historical composition record
+built target artifacts
+Steam Workshop distribution
+Registry built-publication linkage
+```
 
-* Workshop publication state.
-* Registry built-publication linkage.
+Only complete Packagepack-derived Apps may enter Player-facing built distribution.
 
-Requires a complete Packagepack-derived build.
+---
+
+# Deploy Vapor Client
+
+A Client deployment operation may have variants such as:
+
+```text id="12rtdg"
+local
+steam
+```
+
+Its state effects belong to Client deployment.
+
+It is not a generic ecosystem deployment.
+
+---
+
+# Deploy Platform Server
+
+Platform Server deployment may include:
+
+```text id="g995k3"
+local
+
+vps
+```
+
+The operation recipe defines:
+
+```text id="02w28l"
+required scope
+services
+artifacts
+remote changes
+health checks
+verification
+```
+
+A production deployment may reject partial Selection even when local deployment supports it.
 
 ---
 
 # Interaction Rules
 
-The usefulness of the multidimensional model comes primarily from explicit interaction rules.
+The multidimensional model becomes useful through explicit interaction rules.
 
 ---
 
-## Source Change → Build Currency
+# Source Change → Build Currency
 
-A relevant source or composition change may invalidate the currency of an existing build.
+A relevant source change may produce:
+
+```text id="cxowc6"
+Build:
+    Current
+    ↓
+    Stale
+```
+
+It does not automatically remove the old built artifact.
+
+---
+
+# Dependency Change → Resolution Currency
+
+Changing Packagepack dependency constraints may invalidate a previous development resolution.
 
 Conceptually:
 
-> Build = Current
->
-> * relevant source change
-    >   → Build = Stale
+```text id="n42l4x"
+development resolution:
+    current
+    ↓ dependency edit
+    stale / requires re-resolution
+```
 
-The installed old Vapor App may remain runnable.
-
----
-
-## Failed Build ≠ Destroyed Previous Build
-
-If rebuilding fails:
-
-* New build state may be Failed.
-* Diagnostics become available.
-* Previously installed valid Vapor App should remain unaffected unless explicitly replaced.
-
-This allows:
-
-> dirty/new source + failed new build + still-runnable previous Vapor App
-
-without inventing a special composite state.
+Historical published exact resolutions remain unchanged.
 
 ---
 
-## Authentication ≠ Local Capability
+# Failed Build ≠ Destroyed Previous App
 
-GitHub logout must not remove Content Developer capability.
+If a new build fails:
 
-Steam Workshop unavailability must not prevent editing local source.
+```text id="fy7ck2"
+latest build attempt:
+    Failed
+```
 
-Registry unavailability should not unnecessarily prevent already-resolved local runtime execution.
+while:
 
----
+```text id="gqs716"
+previous installed Vapor App:
+    Installed + Runnable
+```
 
-## Selection ≠ Source Mutation
+may remain true.
 
-Selecting another Vapor App should not mutate Git repositories.
-
-Changing a Git branch should not implicitly change the current/default Vapor App unless an explicit composition/build/install/select operation follows.
-
----
-
-## Capability Downgrade ≠ Source Destruction
-
-Capability controls what operations Vapor exposes.
-
-It does not redefine authored repositories as disposable.
+This is a foundational preservation invariant.
 
 ---
 
-## Runtime ≠ Composition Assembly
+# Authentication ≠ Local Capability
 
-Starting a Vapor App operates on an already built composition.
+Examples:
 
-The runtime does not normally become an implicit Composer.
+```text id="pabkqk"
+GitHub logout
+    ≠ remove Content Developer Role
+
+Registry outage
+    ≠ make existing local source disappear
+
+Workshop outage
+    ≠ prevent local source editing
+
+Steam Workshop outage
+    ≠ invalidate previously installed Vapor App
+```
+
+Only operations actually requiring the provider should be blocked.
+
+---
+
+# Authorization ≠ Role
+
+An Ecosystem Developer may be able to:
+
+```text id="5s8ns3"
+build Platform Server locally
+test Client locally
+```
+
+while being denied:
+
+```text id="nd8b9v"
+production VPS deployment
+official Steam deployment
+Root-authority Registry operation
+```
+
+That is expected.
+
+---
+
+# Context ≠ Operation Selection
+
+Persistent Context:
+
+```text id="df8fva"
+helps resolve names
+```
+
+Explicit Operation Selection:
+
+```text id="q8bpgo"
+changes requested operation scope
+```
+
+One must never silently substitute for the other.
+
+---
+
+# Operation Selection ≠ App Selection
+
+Example:
+
+```text id="55tkon"
+platform-server test --select Registry
+```
+
+does not change which Vapor App the Launcher plays by default.
+
+These are unrelated state domains.
+
+---
+
+# App Selection ≠ Source Mutation
+
+Selecting another Vapor App must not:
+
+```text id="6ynfud"
+checkout a Git branch
+modify Packagepack source
+rewrite dependencies
+change development Context
+```
+
+unless an explicitly separate user operation requests such behavior.
+
+---
+
+# Git Change ≠ App Selection
+
+Changing:
+
+```text id="ri7f8z"
+branch
+commit
+working tree
+```
+
+does not implicitly switch the selected/default installed Vapor App.
+
+A build/install/select operation must occur explicitly.
+
+---
+
+# Role Downgrade ≠ Source Destruction
+
+Capability controls operations/tooling.
+
+It does not determine whether user-authored source is disposable.
+
+---
+
+# Runtime ≠ Composition Assembly
+
+Launching an App operates on a built installed App.
+
+Normal runtime startup is not an implicit Composer/build pipeline.
+
+---
+
+# Missing Container ≠ Repair
+
+If registered Container source is absent:
+
+```text id="8w7z59"
+acquire
+```
+
+is the relevant operation.
+
+Do not classify the absence as generic derived-state Repair.
+
+---
+
+# Missing Submodule Checkout ≠ Acquisition
+
+If an already-acquired Container declares a Source Repo submodule whose checkout is missing:
+
+```text id="vbvmbw"
+Git reconciliation
+```
+
+is the relevant domain.
+
+Do not pretend it is independent source acquisition.
+
+---
+
+# Dirty Git ≠ Broken Vapor
+
+Dirty/unsynchronized source should remain:
+
+```text id="pwu4mn"
+editable
+often buildable
+often testable
+```
+
+unless the specific operation has a real reason to require clean source.
+
+For example, publication may impose stricter source-state requirements than local testing.
+
+---
+
+# Published Version ≠ Current Source
+
+After publication:
+
+```text id="9sv9to"
+published version:
+    immutable historical commit
+
+current development source:
+    may continue changing
+```
+
+The two states coexist naturally.
+
+---
+
+# Yank ≠ Delete
+
+A Yank changes resolution/discovery policy.
+
+It does not erase:
+
+```text id="qqb8un"
+version identity
+source commit binding
+historical dependency graph
+```
+
+---
+
+# Deployment Failure ≠ Source Failure
+
+A failed production deployment may leave:
+
+```text id="8rt5zp"
+source:
+    healthy
+
+build:
+    healthy
+
+local deployment:
+    healthy
+
+production deployment:
+    failed/degraded
+```
+
+Different operational dimensions must remain separate.
 
 ---
 
 # Failure Modeling
 
-Failures should be modeled as operation results affecting only relevant dimensions.
+Failures should affect only the state genuinely touched by the failed operation.
 
-Vapor should avoid duplicating the full state space into:
+For example, a build failure may produce:
 
-* success lifecycle,
-* failure lifecycle,
-* failure-then-success lifecycle,
-* nested failure lifecycle,
-* and every combination thereof.
+```text id="87pwpp"
+build attempt:
+    failed
 
-For example, a build attempt can:
+diagnostics:
+    available
+```
 
-> Read current source/composition state
-> → attempt build
-> → succeed or fail
+while preserving:
 
-A failure may produce:
+```text id="700nug"
+source:
+    dirty but intact
 
-* Build = Failed.
-* Diagnostics = Available.
+installed App:
+    installed
 
-while leaving:
+App selection:
+    selected
 
-* Source = Dirty.
-* Installed App = Installed.
-* Selection = Selected.
-* Runtime = Stopped.
+runtime:
+    stopped
 
-unchanged.
+Context:
+    unchanged
+```
 
-This makes failure compositional.
+This principle applies to:
 
-The same principle should apply to:
+```text id="oi8l7b"
+Git operations
+downloads
+source acquisition
+build
+publication
+deployment
+toolchain repair
+Registry access
+Workshop access
+```
 
-* Git operations.
-* Downloads.
-* Publication.
-* Toolchain repair.
-* Registry access.
-* Steam Workshop access.
+---
+
+# Partial External Failure
+
+Operations spanning external systems may enter partial states.
+
+Examples:
+
+```text id="wwxwkg"
+Git push succeeded
+Registry publication failed
+
+Workshop upload succeeded
+Registry linkage failed
+
+VPS artifact transfer succeeded
+service restart failed
+```
+
+Vapor should preserve enough operation/provenance state to:
+
+```text id="z2xq7u"
+diagnose
+retry
+reconcile
+verify
+```
+
+without blindly repeating destructive steps.
+
+---
+
+# Operation Idempotence
+
+Where practical, derived/reconciliation operations should be idempotent.
+
+Examples:
+
+```text id="6tjbfp"
+repair indexes
+regenerate IDE integration
+reconcile generated operation realization
+verify existing publication linkage
+```
+
+Repeated execution should converge on the same intended state.
+
+Authored-state-changing operations may require stronger explicit confirmation/guards.
 
 ---
 
 # Lifecycle Projections
 
-A lifecycle is a useful projection over the larger Situation model.
+A lifecycle is a projection over relevant dimensions.
 
 It is not the complete state of Vapor.
 
 ---
 
-## Steam App Instance Lifecycle
+# Steam App Instance Lifecycle
 
 Conceptually:
 
-> Steam install
-> → usable Player environment
-> → optional capability upgrades
-> → normal operation
-> → update/repair/move
-> → optional capability downgrade
-> → uninstall
+```text id="zwu9e1"
+Steam install
+→ Player-ready Client
+→ optional Role upgrades
+→ ordinary operation
+→ Steam update/verify/move
+→ optional Role downgrade
+→ uninstall/reinstall
+```
 
-This lifecycle concerns the product instance itself.
+This lifecycle concerns Steam/depot-owned product state.
+
+It does not own the Superworkspace lifecycle.
 
 ---
 
-## Capability Lifecycle
+# Vapor User Data Lifecycle
 
 Conceptually:
 
-> Player
-> → Composer
-> → Content Developer
-> → Ecosystem Developer
-> → Root Authority
+```text id="8q37zr"
+created/configured
+→ evolves with local Vapor use
+→ repaired/regenerated partly as needed
+→ survives ordinary Steam replacement where appropriate
+→ may be explicitly reset/removed
+```
 
-Downgrades may move in the opposite direction.
-
-The exact meaning of Root Authority establishment may differ from ordinary local tooling upgrades.
+Individual User Data fields have different recoverability.
 
 ---
 
-## Source Lifecycle
+# Superworkspace Lifecycle
 
 Conceptually:
 
-> Absent
-> → acquired/created
-> → clean
-> → modified
-> → committed
-> → synchronized/published
+```text id="0cf65g"
+configure canonical Superworkspace
+→ create/acquire source
+→ develop
+→ optionally relocate root
+→ continue development
+```
 
-These conditions need not form one strictly linear chain.
-
-For example, a repository may be committed locally but not pushed.
+Ordinary Steam uninstall does not define the end of this lifecycle.
 
 ---
 
-## Composition Lifecycle
+# Role Lifecycle
 
 Conceptually:
 
-> Packagepack source
-> → unresolved
-> → resolved valid/invalid
-> → source changes
-> → requires re-resolution
+```text id="38qwvb"
+Player
+↔ Composer
+↔ Content Developer
+↔ Ecosystem Developer
+```
 
-Resolution is a logical composition concern, not itself a build.
+Tooling may be installed/removed accordingly.
+
+Authored source persists independently.
+
+Root Authority is not a state in this lifecycle.
 
 ---
 
-## Build Lifecycle
+# Source Repo Container Lifecycle
 
 Conceptually:
 
-> Missing
-> → Current
-> → Stale
-> → Current
+```text id="k587db"
+not registered
+→ created/registered
 
-with failures possible from build attempts without requiring a second parallel lifecycle.
+registered but not local
+→ acquired
 
-The initial projection is shown in [Vapor Operational State Model](./Diagrams/Vapor%20Operational%20State%20Model.puml).
+local
+→ developed / topology changed deliberately
+
+possibly archived/deprecated according to policy
+```
+
+Creation, acquisition, Git development, and publication are distinct operations.
 
 ---
 
-## Installation Lifecycle
+# Source Repo Lifecycle
 
 Conceptually:
 
-> Not installed
-> → installing
-> → installed
-> → removed
+```text id="wth3ru"
+created beneath Container
+→ registered
+→ authored submodule relationship
+→ developed
+→ possibly independently published/used according to contained Projects
+```
 
-Installation may occur from:
-
-* Steam depot.
-* Steam Workshop.
-* Local build output.
+Independent acquisition is optional policy, not a universal lifecycle step.
 
 ---
 
-## Selection Lifecycle
+# Project Development Lifecycle
 
 Conceptually:
 
-> Candidate installed Vapor Apps
-> → one selected/default composition
+```text id="xs82e3"
+typed create
+→ author
+→ build/test
+→ revise
+→ optionally publish versions
+```
 
-Selection is a Steam App Instance convenience/context concern.
-
-It is not content ownership or source identity.
+A Project may remain permanently local/unpublished.
 
 ---
 
-## Runtime Lifecycle
+# Git Lifecycle
+
+Git state does not form one clean linear Vapor chain.
+
+Common transitions may include:
+
+```text id="rwa335"
+clean
+→ modified
+→ committed
+→ pushed
+```
+
+but branches, rebases, detached HEADs, merges, conflicts, and local-only work make Git intrinsically richer.
+
+Vapor should expose Git rather than invent a fake simplified replacement model.
+
+---
+
+# Packagepack Development Resolution Lifecycle
 
 Conceptually:
 
-> Stopped
-> → Starting
-> → Running
-> → Stopping
-> → Stopped
+```text id="egmr3f"
+authored constraints
+→ unresolved
+→ resolved
+→ source/dependency edit
+→ stale/unresolved again
+```
 
-with failure/crash conditions represented separately where relevant.
-
----
-
-## Publication Lifecycle
-
-Publication spans multiple external systems and therefore has its own dedicated model.
-
-See:
-
-[Vapor Publishing and Distribution Model](./Vapor%20Publishing%20and%20Distribution%20Model.md)
+Published historical resolved graphs are frozen separately.
 
 ---
 
-# Local State and Ownership
+# Build Lifecycle
 
-Operational behavior must distinguish state by ownership and recoverability.
+Conceptually:
+
+```text id="r6sdoy"
+Missing
+→ Building
+→ Current
+→ Stale
+→ Building
+→ Current
+```
+
+with failures/cancellation represented as operation outcomes rather than alternate universes.
 
 ---
 
-## Steam-Managed State
+# Vapor App Installation Lifecycle
+
+Conceptually:
+
+```text id="j1lurf"
+not installed
+→ acquiring/installing
+→ installed
+→ optionally removed
+```
+
+Source may or may not exist locally throughout this lifecycle.
+
+---
+
+# Vapor App Selection Lifecycle
+
+Conceptually:
+
+```text id="d6hyck"
+installed candidate Apps
+→ choose selected/default App
+→ change selection
+→ reconcile if selected App removed/unavailable
+```
+
+This is Player/Launcher convenience state.
+
+---
+
+# Runtime Lifecycle
+
+Conceptually:
+
+```text id="ocj8ig"
+Stopped
+→ Starting
+→ Running
+→ Stopping
+→ Stopped
+```
+
+Crash/failure conditions are represented where relevant.
+
+---
+
+# Content Publication Lifecycle
+
+Conceptually:
+
+```text id="pnubnx"
+local development
+→ validate new SemVer
+→ publish immutable source version
+→ future development continues
+→ publish later version
+```
+
+Historical versions remain immutable.
+
+---
+
+# Packagepack Built Distribution Lifecycle
+
+Conceptually:
+
+```text id="nd0cv3"
+published Packagepack version
+→ exact composition resolution
+→ target build
+→ artifact validation
+→ distribution
+→ installed by Players
+```
+
+Partial publication states are explicitly recoverable.
+
+---
+
+# First-Party Deployment Lifecycle
+
+There is no one universal deployment lifecycle.
 
 Examples:
 
-* Depot-shipped Vapor binaries.
-* Default built composition.
-* Steam-owned installation metadata.
+```text id="1t7vml"
+Client Steam deployment lifecycle
 
-Steam is the installation authority.
+Platform Server local deployment lifecycle
 
----
+Platform Server VPS deployment lifecycle
+```
 
-## Vapor-Managed Product State
-
-Examples:
-
-* Capability metadata.
-* Selected composition.
-* Installed Vapor App records.
-* Registry caches.
-* Launcher settings.
-* Tool detection/configuration metadata.
-
-Much of this should be repairable or reconstructible.
+Each is owned by its facility/recipe.
 
 ---
 
-## User Gameplay State
+# Local State Ownership
 
-Examples:
-
-* Saves.
-* Quicksaves.
-* User settings.
-* Keybinds.
-
-This is user-valued persistent state.
+Operational safety depends on knowing who owns which state.
 
 ---
 
-## Git-Managed Authored State
+# Steam-Managed State
 
 Examples:
 
-* Container Repos.
-* Vapor Workspaces.
-* Pack source.
-* Behavioral source.
-* Commits.
-* Branches.
-* Uncommitted changes.
+```text id="sehoze"
+depot binaries
+bootstrap files
+default shipped Vapor App
+Steam installation metadata
+```
 
-Local-only authored state may not be recoverable from any remote source.
+Steam is authoritative for depot replacement.
+
+---
+
+# Vapor User Data
+
+Examples:
+
+```text id="la3egi"
+Role state
+configured Superworkspace root
+persistent Context
+local indexes
+managed toolchain state
+IDE integration
+App selection
+local App metadata
+derived operation state
+```
+
+Some User Data is durable preference/state.
+
+Some is safely regeneratable.
+
+Ownership must be known per field.
+
+---
+
+# Authored Superworkspace State
+
+Examples:
+
+```text id="oeef5l"
+Source Repo Containers
+Source Repos
+Projects
+source code
+Vapor manifests
+Cargo manifests
+scripts
+tests
+Git commits
+branches
+uncommitted changes
+```
+
+This is authored development state.
 
 Vapor must treat it conservatively.
 
 ---
 
-## Build/Cache State
+# User Gameplay / Runtime State
 
 Examples:
 
-* Cargo target directories.
-* Downloaded dependencies.
-* Incremental build state.
-* Generated intermediates.
-* Packaging temporaries.
+```text id="5ufcd0"
+saves
+settings
+keybinds
+App-generated persistent data
+```
 
-This state is generally regenerable.
+This is user-valued state and must have explicit ownership/lifetime rules.
 
----
-
-## Installed Vapor Apps
-
-Installed Vapor Apps are not canonical source but are first-class local runnable products.
-
-They may often be reacquired or rebuilt.
-
-Removal should nevertheless be explicit.
+It is not developer source.
 
 ---
 
-## Authentication State
+# Build and Cache State
 
-Authentication and credentials must remain distinct from ordinary content, build, and cache state.
+Examples:
 
-The exact secure-storage mechanism belongs to lower-level implementation design.
+```text id="9etdnc"
+Cargo target outputs
+download caches
+incremental build data
+generated intermediates
+packaging temporary files
+```
+
+This is generally regeneratable.
 
 ---
 
-# Operational Invariants
+# Installed Vapor Apps
 
+Installed Apps are built runnable local products.
+
+They are not canonical source.
+
+They may often be reacquired/rebuilt.
+
+Removal should still be explicit.
+
+---
+
+# Authentication State
+
+Credentials/session state belongs to the relevant secure identity/provider mechanism.
+
+It must not be mixed casually into authored Content or build outputs.
+
+---
+
+# Diagnostics State
+
+Diagnostics may include:
+
+```text id="7n88av"
+current findings
+operation logs
+historical operation results
+health checks
+provider errors
+build/test output
+```
+
+Some may be ephemeral.
+
+Some may be useful durable User Data.
+
+The exact retention model remains open.
+
+---
+
+# Operation Legality
+
+An operation's legality may depend on:
+
+```text id="5d4kcp"
+subject
+operation
+variant
+Selection
+Role
+authority
+source topology
+Git state
+toolchain state
+external availability
+authored recipe/configuration
+```
+
+There is no need to force all of this into one generic:
+
+```text id="1vtofx"
+operational state enum
+```
+
+---
+
+# Specific Legality Diagnostics
+
+When an operation is rejected, Vapor should explain the actual invariant.
+
+Example:
+
+```text id="5jtgnb"
+error: Platform Server VPS deployment requires the complete
+       Platform Server deployment scope
+
+selected:
+    Source Repo `Registry`
+
+help:
+    vapor platform-server deploy vps
+
+note:
+    Source Repo-scoped deployment is supported by `deploy local`
+```
+
+This is better than:
+
+```text id="k7njg2"
+error: operation unavailable in current state
+```
+
+---
+
+# Unknown State
+
+Vapor should permit:
+
+```text id="4csk6w"
+unknown
+unverified
+unreachable
+```
+
+where reality cannot currently be observed.
+
+For example, Registry outage may make remote publication state unknown.
+
+Unknown is better than guessing.
+
+---
+
+# External Modification
+
+Vapor must expect source and local state to change outside Vapor.
+
+Examples:
+
+```text id="4rg09a"
+Git CLI modifies repository
+
+RustRover modifies source/Cargo manifests
+
+Steam updates files
+
+user moves filesystem data
+
+provider changes remotely
+```
+
+Diagnosis/reconciliation should compare authoritative state rather than assuming all changes were initiated through Vapor.
+
+---
+
+# Operational Observability
+
+For meaningful operations Vapor should expose enough information to answer:
+
+```text id="7yn8rp"
+what subject is being operated on?
+
+what exact canonical object(s) were resolved?
+
+what explicit Selection is active?
+
+what Context was used for resolution?
+
+what precondition failed?
+
+which external system is involved?
+
+which state changed?
+
+which state was intentionally preserved?
+
+what safe recovery/retry options exist?
+```
+
+This is part of the developer/user experience, not merely debug logging.
+
+---
+
+# Core Operational Invariants
+
+* “Ecosystem” describes Vapor as a whole; it is not one generic public operation subject.
+* Concrete operations belong to concrete semantic owners.
+* Operational state is multidimensional rather than one giant serialized lifecycle.
+* Context means identity/path resolution, not a readiness predicate.
+* Readiness Predicates are derived questions over Operational Situations.
+* Operation Subject establishes natural complete scope.
+* Explicit Operation Selection changes requested operation scope where legal.
+* Persistent Context does not silently change operation scope.
+* Operation Selection is distinct from selected/default Vapor App.
+* Root Authority is distinct from installed Role.
 * Player operation does not require Git.
 * Player operation does not require Rust/Cargo.
 * Player launch does not require source.
-* Player launch does not perform composition builds.
-* A valid Packagepack resolves to exactly one effective Engine.
-* A valid Packagepack resolves to exactly one effective Game.
-* The effective Engine declares the main binary.
-* A Vapor App is one complete statically resolved composition.
-* Relevant composition/source changes may stale a build.
-* A stale source/build relationship does not automatically invalidate an older installed Vapor App.
-* A failed rebuild must not silently destroy the previous valid installed App.
-* Selecting a Vapor App must not silently mutate Git source.
-* Provider authentication changes must not silently alter local source/build/install state.
-* Capability downgrade must not silently delete authored source.
-* Build/cache cleanup must distinguish regenerable state from user-authored state.
-* Runtime launch must operate on an already built composition.
-* External-provider outages should interfere only with operations that actually require those providers.
-* User-authored local Git state must be protected from destructive automation.
+* Player launch does not build compositions.
+* The canonical Superworkspace is independent from the Steam App Instance lifecycle.
+* Source Repo Container absence is an acquisition concern.
+* Missing declared Source Repo checkout is a Git reconciliation concern.
+* Derived-state failure is Repair territory only when safe regeneration is possible.
+* Dirty Git state is not automatically broken Vapor state.
+* Relevant source/resolution changes may make builds stale.
+* A stale build may remain runnable.
+* A failed rebuild must not automatically destroy a previous valid Vapor App.
+* Provider authentication must not silently alter source/build/install state.
+* Authorization is target/action-specific and distinct from Role.
+* Role downgrade must not silently delete authored source.
+* App selection must not mutate source.
+* Git branch/source changes must not silently change selected installed App.
+* Runtime launch operates on a built runnable App rather than implicitly composing/building.
+* External outages interfere only with operations which require those systems.
+* Published Content versions are immutable historical state.
+* Historical published Packagepack resolutions do not change when newer dependencies appear.
+* Deployment is facility/target-specific rather than a universal ecosystem lifecycle.
+* Failures change only state dimensions legitimately owned by the failed operation.
+* Partial external success must be diagnosable and reconcilable.
+* Unique authored local state must be protected from destructive automation.
+* Vapor should represent unknown external state as unknown rather than guessing.
 
 ---
 
 # Open Operational Questions
 
-The current model still needs deeper work in several areas:
+The following remain intentionally open:
 
 * Exact complete state-dimension inventory.
-* Exact formal definition of each named Context.
-* Whether Contexts should become first-class runtime/domain-model objects or remain derived concepts.
-* Exact concurrency/locking semantics when multiple Actions overlap.
-* How long-running Actions expose progress and cancellation.
-* How partial install/download states are represented.
-* How operation history and diagnostics are modeled.
-* How externally modified Git/Steam/filesystem state is reconciled.
-* How selected Vapor App Composition identity relates to installed build identity over time.
-* How updates and version changes affect Build/Installation/Selection dimensions.
-* How publication rollback interacts with local source/build state.
-* Whether a future formal state-machine representation should be generated from shared model definitions rather than maintained separately.
-
-These should be resolved as concrete workflow implementation approaches.
+* Exact machine representation of Operational Situations.
+* Which Readiness Predicates deserve first-class Core APIs versus remaining derived UI concepts.
+* Exact operation-progress/cancellation model.
+* Exact operation-history persistence.
+* Exact concurrency/locking semantics between overlapping operations.
+* Exact conflict behavior when two operations request overlapping topology.
+* Exact representation of partially completed acquisitions/installations.
+* Exact reconciliation behavior after externally modified filesystem/Git state.
+* Exact durable diagnostics/log retention model.
+* Exact Vapor App selection behavior when selected versions become unavailable/Yanked/Banned.
+* Exact Player update interaction with installed/selected App state.
+* Exact first-party deployment-state representation.
+* Exact publication/deployment retry and reconciliation transaction model.
+* Whether a formal generated state/operation diagram should be produced from shared Core definitions once implementation stabilizes.

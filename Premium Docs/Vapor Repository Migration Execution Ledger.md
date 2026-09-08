@@ -1,49 +1,97 @@
 > [!info]
 > This document is the live execution ledger for the repository/topology migration defined by **Vapor Repository Topology And Migration Model**.
 >
-> The topology model defines what the target architecture means.
+> The topology model defines the target architecture and migration semantics.
 >
-> This ledger records how the current repositories reach that architecture without losing source, deployment state, or working rewrite behavior.
+> This ledger records how the real repositories reach that architecture without losing source, deployment state, working rewrite behavior, provider linkage, or recoverability.
 >
 > Update this document as migration waves are completed.
 >
-> Do not treat unchecked later-wave items as permission to perform them opportunistically during an earlier wave.
+> An unchecked later-wave item is not permission to perform it opportunistically during an earlier wave.
 
 ---
 
 # Governing Rule
 
-The repository migration proceeds by independently recoverable waves.
+The migration proceeds through independently recoverable waves.
 
 The primary rule is:
 
-> **Change one class of identity/topology at a time, restore a known-good system, then continue.**
+> **Change one class of state, restore a known-good Vapor system, then continue.**
 
-In particular:
+The following are distinct operations:
 
 ```text
-GitHub repository rename
+provider repository rename
 ≠
-local checkout rename
+Registry provider-linkage update
 ≠
-manifest-schema migration
+Registry identity-model migration
 ≠
-Workspace identity migration
+canonical Vapor identity migration
 ≠
-Client source consolidation
+local Superworkspace path migration
 ≠
-code cleanroom refactor
+manifest/schema migration
+≠
+public CLI migration
+≠
+Source Repo consolidation
+≠
+cleanroom source refactor
 ```
 
-These operations may ultimately belong to one architectural migration.
+They may belong to one architectural migration.
 
-They must not be executed as one blind transformation.
+They must not become one giant transformation.
 
 ---
 
-# Target Summary
+# Target Identity Summary
 
-The primary provider-side rename is:
+Current first-party Container identities:
+
+```text
+GHF-Studios/Vapor-Root
+GHF-Studios/Vapor-Server-Root
+```
+
+Target canonical identities:
+
+```text
+GHF-Studios/Vapor-Client
+GHF-Studios/Vapor-Platform-Server
+```
+
+Target provider repository names:
+
+```text
+github.com/GHF-Studios/Vapor-Client
+github.com/GHF-Studios/Vapor-Platform-Server
+```
+
+Future reserved concept:
+
+```text
+GHF-Studios/Vapor-App-Server
+```
+
+`Vapor-App-Server` must not be created merely to complete the topology.
+
+---
+
+# Canonical Identity Reminder
+
+The target hierarchy is:
+
+```text
+Authority
+└── Source Repo Container
+    └── Source Repo
+        └── Project
+```
+
+Therefore changing:
 
 ```text
 GHF-Studios/Vapor-Root
@@ -51,27 +99,60 @@ GHF-Studios/Vapor-Root
 GHF-Studios/Vapor-Client
 ```
 
-and:
+is not merely renaming one directory.
+
+It migrates the canonical identity prefix of every descendant:
 
 ```text
-GHF-Studios/Vapor-Server-Root
+GHF-Studios/Vapor-Root/Vapor
 →
-GHF-Studios/Vapor-Platform-Server
+GHF-Studios/Vapor-Client/Vapor
 ```
 
-The future name:
+and likewise any Projects beneath that Source Repo.
 
-```text
-GHF-Studios/Vapor-App-Server
-```
-
-is reserved but **must not be created during this migration** merely to complete the topology.
+The same applies to the Platform Server Container.
 
 ---
 
-# Current Client Container Membership
+# Provider Name, Vapor Identity, and Local Path Are Separate
 
-Before migration, `Vapor-Root` directly contains:
+Migration must track three states independently.
+
+Example Client migration:
+
+```text
+provider repository:
+    GHF-Studios/Vapor-Root
+    →
+    GHF-Studios/Vapor-Client
+
+canonical Vapor identity:
+    GHF-Studios/Vapor-Root
+    →
+    GHF-Studios/Vapor-Client
+
+canonical local path:
+    <legacy-superworkspace>/Vapor-Root
+    →
+    <Superworkspace>/GHF-Studios/Vapor-Client
+```
+
+These do not need to change simultaneously.
+
+That separation is the basis for the migration waves below.
+
+---
+
+# Current Client Source Inventory
+
+Historical Client Source Repo Container:
+
+```text
+Vapor-Root
+```
+
+Historically authored Source Repos include:
 
 ```text
 Vapor
@@ -108,13 +189,30 @@ Vapor-Shell
     REINTERPRET / CONSOLIDATE → Vapor → ARCHIVE
 ```
 
-No child repository is consolidated during Wave 1.
+This list is architectural intent.
+
+Before execution, actual membership must be verified from:
+
+```text
+.gitmodules
+git submodule status
+Registry state
+provider repositories
+```
+
+Do not manufacture a missing repository merely because an old document listed it.
 
 ---
 
-# Current Platform Container Membership
+# Current Platform Source Inventory
 
-Before migration, `Vapor-Server-Root` directly contains:
+Historical Platform Source Repo Container:
+
+```text
+Vapor-Server-Root
+```
+
+Historically authored service Source Repos include:
 
 ```text
 Vapor-Homepage-Server
@@ -124,87 +222,169 @@ Vapor-Diagnostics-Server
 Vapor-Registry-Server
 ```
 
-These service Workspaces remain active during the Container Repo migration.
+These remain meaningful independent service Source Repos unless implementation evidence shows otherwise.
 
-Target disposition:
+Historical:
 
 ```text
-Vapor-Homepage-Server
-    KEEP
-
-Vapor-Docs-Server
-    KEEP
-
-Vapor-Identity-Server
-    KEEP
-
-Vapor-Diagnostics-Server
-    KEEP
-
-Vapor-Registry-Server
-    KEEP
+Vapor-Registry
 ```
 
-The independent `Vapor-Registry` repository remains under separate REVIEW.
+remains separate archaeology / responsibility-review work.
 
 ---
 
-# Wave 0 — Baseline And Freeze
+# Migration Status Vocabulary
+
+Use:
+
+```text
+ACTIVE
+BLOCKED
+READY
+NOT STARTED
+COMPLETE
+DEFERRED
+```
+
+A wave is `COMPLETE` only after its completion gate is satisfied.
+
+---
+
+# Wave 0 — Normative Model and Baseline
 
 Status:
 
 ```text
-IN PROGRESS
+ACTIVE
 ```
 
 Purpose:
 
-> Establish enough evidence that every later migration wave can be checked against a known-good pre-migration state.
+> Establish the architecture and evidence required to make later migration waves recoverable.
 
-## Repository baseline
+This wave includes both:
 
-Before provider renaming:
+```text
+normative documentation convergence
++
+real repository/runtime baseline
+```
 
-* [ ] `Vapor-Root` working tree is intentionally clean or all intentional changes are committed/pushed.
-* [ ] `Vapor-Server-Root` working tree is intentionally clean or all intentional changes are committed/pushed.
-* [ ] `Vapor` working tree is intentionally clean or all intentional changes are committed/pushed.
-* [ ] Current Client Container Repo commit SHA is recorded.
-* [ ] Current Platform Container Repo commit SHA is recorded.
-* [ ] Current `Vapor` rewrite commit SHA is recorded.
-* [ ] Current Client submodule revisions are recorded.
-* [ ] Current Platform submodule revisions are recorded.
-* [ ] No child repository rename is mixed into this baseline.
+---
 
-Useful local evidence:
+# Wave 0A — Normative Documentation
+
+Before provider or identity migration, the following models must agree on the new source hierarchy and migration semantics:
+
+```text
+Glossary - Ecosystem Model.md
+
+Vapor Context, Identity, Session And Selection Model.md
+
+Vapor CLI Model.md
+
+Vapor Development Experience Model.md
+
+Vapor Repository Topology And Migration Model.md
+
+Vapor Repository Migration Execution Ledger.md
+```
+
+Relevant later docs must be reconciled before they become execution authorities.
+
+Current documentation migration must eliminate obsolete normative assumptions such as:
+
+```text
+multiple ordinary Superworkspaces
+Workspace semantic identity independent of Container
+Structural Address as separate canonical hierarchy
+multiple canonical local realizations
+CWD-based Vapor targeting
+generic ecosystem CLI object
+generic source CLI namespace
+```
+
+---
+
+# Wave 0B — Repository Source Safety Inventory
+
+Before any provider rename:
+
+* [ ] Client Container working tree inspected.
+* [ ] Platform Container working tree inspected.
+* [ ] `Vapor` Source Repo working tree inspected.
+* [ ] Every active Client Source Repo inspected.
+* [ ] Every active Platform Source Repo inspected.
+* [ ] Dirty working trees identified.
+* [ ] Local unpushed commits identified.
+* [ ] Detached development states identified.
+* [ ] Submodule gitlinks recorded.
+* [ ] Important branches/remotes recorded.
+* [ ] No unique local work is assumed recoverable merely because a remote repository exists.
+
+Useful evidence:
 
 ```bash
 git status
 git rev-parse HEAD
+git branch -vv
+git remote -v
 git submodule status --recursive
 ```
 
-## Vapor baseline
+---
 
-Record that the current rewrite still proves the known-good chain:
+# Source-State Classification
+
+Each active repository should be classifiable as one of:
 
 ```text
-installed Vapor
-→ canonical Steam App Instance
-→ managed Cargo/toolchain
-→ Vapor Project resolution
-→ source-built Vapor
-→ local ecosystem operation/deployment
+clean + remotely recoverable
+
+committed + pushed
+
+committed but unpushed
+
+dirty / uncommitted
+
+intentional detached state
+
+archaeological / replaceable
+
+unknown — investigate before migration
 ```
 
-At minimum preserve evidence that the currently relied-upon commands still work before migration.
+`unknown` blocks destructive or topology-changing migration.
 
-The exact smoke commands may evolve with the CLI.
+---
 
-The important point is that the same semantic capabilities must survive Wave 1.
+# Wave 0C — Client Known-Good Baseline
 
-## Platform baseline
+Preserve evidence for the currently working Client/self-hosting chain.
 
-Record the currently known-good Platform state, including where applicable:
+At minimum, the baseline should prove the capabilities currently relied upon, such as:
+
+```text
+Steam App Instance discovery
+→ managed Vapor toolchain
+→ canonical/current source discovery
+→ Vapor Project resolution
+→ managed Cargo
+→ Vapor build/test
+→ local first-party operation/deployment
+→ deployed Vapor execution
+```
+
+Historical CLI spelling may still include old commands.
+
+The baseline records semantic capability, not permanent command syntax.
+
+---
+
+# Wave 0D — Platform Known-Good Baseline
+
+Preserve evidence for the current Platform environment, where applicable:
 
 ```text
 Homepage
@@ -212,27 +392,57 @@ Docs
 Identity
 Diagnostics
 Registry
+
 reverse proxy
 service manager
-deployment poll/update mechanism
+deployment mechanism
 health checks
 state backup/restore
 ```
 
-Provider rename must not silently invalidate production deployment automation.
+Record which provider repository URLs and local paths deployment currently depends on.
 
-## Documentation baseline
+---
 
-The following models should exist and be committed before Wave 1:
+# Wave 0E — Registry Baseline
+
+Record current Registry behavior and persistence before migrating its identity model.
+
+At minimum inventory:
 
 ```text
-Vapor Client, Platform And App Runtime Model.md
-Vapor Context, Identity, Session And Selection Model.md
-Vapor Repository Topology And Migration Model.md
-Vapor Repository Migration Execution Ledger.md
+current schema
+current registered first-party identities
+current provider linkage
+current official seed/bootstrap data
+current production persistence path
+current API contracts
+current migration mechanism
+current recovery/backup behavior
 ```
 
-The existing Premium Docs remain in the Client Container Repo throughout the first migration waves.
+The existing Registry currently embodies older topology concepts.
+
+Do not destroy evidence of how the working recovery flow currently functions.
+
+---
+
+# Wave 0F — Superworkspace Baseline
+
+Record:
+
+```text
+current configured/assumed local source root
+current Client Container path
+current Platform Container path
+current direct-workspace/source assumptions
+current RustRover integration paths
+current Vapor user-data references
+```
+
+The target one-Superworkspace model may require physical migration later.
+
+Wave 0 merely records current reality.
 
 ---
 
@@ -241,32 +451,484 @@ The existing Premium Docs remain in the Client Container Repo throughout the fir
 Wave 0 is complete when:
 
 ```text
-critical repositories committed/pushed
+normative migration model coherent
 +
-baseline revisions known
+critical Git state known
 +
-Client self-hosting workflow known-good
+unique authored source protected
 +
-Platform deployment state known
+Client known-good baseline recorded
 +
-migration models committed
+Platform known-good baseline recorded
++
+Registry baseline recorded
++
+current local source topology recorded
 ```
 
 Only then begin Wave 1.
 
 ---
 
-# Wave 1 — Provider / Container Repo Rename
+# Wave 1 — Provider Repository Renames
 
 Status:
 
 ```text
-DEFERRED
+BLOCKED BY WAVE 0
 ```
 
 Purpose:
 
-> Rename only the two top-level Container Repos at the Git provider.
+> Change only the names of the two top-level GitHub repositories and reconcile provider linkage.
+
+Perform:
+
+```text
+GitHub:
+GHF-Studios/Vapor-Root
+→
+GHF-Studios/Vapor-Client
+```
+
+and:
+
+```text
+GitHub:
+GHF-Studios/Vapor-Server-Root
+→
+GHF-Studios/Vapor-Platform-Server
+```
+
+---
+
+# Wave 1 Non-Goals
+
+Do not yet:
+
+```text
+change canonical Vapor Container identities
+
+move local checkouts
+
+introduce Authority directories
+
+rename child Source Repo provider repositories
+
+rename Projects
+
+consolidate Source Repos
+
+rewrite the Registry hierarchy
+
+perform broad manifest-schema migration
+
+perform broad CLI migration
+
+move Premium Docs
+
+create Vapor-App-Server
+
+perform cleanroom source refactors
+```
+
+---
+
+# Wave 1 Intermediate State
+
+This is valid:
+
+```text
+Vapor canonical identity:
+    GHF-Studios/Vapor-Root
+
+provider repository:
+    github.com/GHF-Studios/Vapor-Client
+```
+
+and:
+
+```text
+Vapor canonical identity:
+    GHF-Studios/Vapor-Server-Root
+
+provider repository:
+    github.com/GHF-Studios/Vapor-Platform-Server
+```
+
+This temporary mismatch is intentional.
+
+It proves that Vapor identity and provider repository identity are distinct.
+
+---
+
+# Wave 1 — Local Git Remote Reconciliation
+
+After provider rename:
+
+Client:
+
+```bash
+git remote set-url origin https://github.com/GHF-Studios/Vapor-Client.git
+```
+
+Platform:
+
+```bash
+git remote set-url origin https://github.com/GHF-Studios/Vapor-Platform-Server.git
+```
+
+Then inspect:
+
+```bash
+git remote -v
+git fetch
+git status
+git submodule status --recursive
+```
+
+Do not change child submodule URLs merely because their parent repository changed name.
+
+---
+
+# Wave 1 — Registry Provider Linkage
+
+Update Registry/provider information whose meaning is:
+
+> Which provider repository backs this existing Vapor identity?
+
+For the temporary migration state:
+
+```text
+GHF-Studios/Vapor-Root
+    provider → GHF-Studios/Vapor-Client
+
+GHF-Studios/Vapor-Server-Root
+    provider → GHF-Studios/Vapor-Platform-Server
+```
+
+This must not yet silently rewrite canonical Vapor identity.
+
+---
+
+# Wave 1 — Other Provider References
+
+Inspect and reconcile references whose semantic meaning is provider location:
+
+```text
+Git remotes
+GitHub Actions references
+deployment clone/fetch URLs
+poll/update configuration
+provider API configuration
+automation
+documentation links required operationally
+```
+
+Do not globally replace old names in fields which actually represent Vapor identity.
+
+---
+
+# Wave 1 — GitHub Redirects
+
+GitHub rename redirects may keep old provider URLs temporarily working.
+
+This is not completion.
+
+A provider reference is reconciled when active authored configuration points to the intended new provider name directly.
+
+---
+
+# Wave 1 — Client Verification
+
+After provider rename:
+
+* [ ] Client Container fetches from new provider URL.
+* [ ] Child Source Repo/submodule topology remains intact.
+* [ ] `Vapor` checkout remains intact.
+* [ ] Unique local source is unchanged.
+* [ ] Steam App discovery still works.
+* [ ] Managed toolchain still works.
+* [ ] Managed Cargo still works.
+* [ ] Vapor can still build/test itself.
+* [ ] Existing local deployment capability still works.
+* [ ] Deployed Vapor still runs.
+* [ ] No physical source move was required solely because provider name changed.
+
+---
+
+# Wave 1 — Platform Verification
+
+After provider rename:
+
+* [ ] Platform Container fetches from new provider URL.
+* [ ] Service submodules remain intact.
+* [ ] Registry service still works.
+* [ ] Identity service still works.
+* [ ] Diagnostics service still works.
+* [ ] Documentation service still works.
+* [ ] Homepage still works where applicable.
+* [ ] Deployment automation uses reconciled provider URLs.
+* [ ] Production data remains untouched.
+* [ ] State backup/restore remains valid.
+* [ ] No Source Repo was recreated merely due to parent provider rename.
+
+---
+
+# Wave 1 Completion Gate
+
+Wave 1 is complete when:
+
+```text
+provider repositories renamed
++
+local remotes reconciled
++
+Registry provider linkage reconciled
++
+Client known-good behavior restored
++
+Platform known-good behavior restored
++
+canonical Vapor identities still intentionally old
++
+local paths still intentionally unchanged
+```
+
+Only then begin Wave 2.
+
+---
+
+# Wave 2 — Registry Identity Model Readiness
+
+Status:
+
+```text
+BLOCKED BY WAVE 1
+```
+
+Purpose:
+
+> Make Vapor capable of representing the target canonical source identity model before changing existing identities.
+
+The Registry/Core must support:
+
+```text
+Authority
+→ Source Repo Container
+→ Source Repo
+→ Project
+```
+
+---
+
+# Wave 2 — Authority Model
+
+At minimum:
+
+```text
+GHF-Studios
+```
+
+must exist as a Vapor Authority identity independent of:
+
+```text
+GitHub organization GHF-Studios
+```
+
+The Registry must be able to associate the two through provider linkage.
+
+---
+
+# Wave 2 — Source Repo Container Model
+
+The Registry must distinguish:
+
+```text
+Source Repo Container
+```
+
+from:
+
+```text
+Source Repo
+```
+
+without using one generic repository layer.
+
+Required first-party Containers include the current identities and migration targets.
+
+---
+
+# Wave 2 — Source Repo Model
+
+Source Repo must be represented as:
+
+```text
+one Git repository
+=
+one Vapor Workspace
+```
+
+It belongs beneath one Source Repo Container in canonical identity.
+
+The Registry should know relevant acquisition policy such as:
+
+```text
+Container-acquired by default
+independently acquirable where explicitly permitted
+```
+
+---
+
+# Wave 2 — Project Model
+
+Project must be represented beneath Source Repo.
+
+For Content Projects, Project kind may include:
+
+```text
+Game
+Engine
+Library
+Packagepack
+Enginepack
+Gamepack
+Modpack
+Engine Mod
+Game Mod
+Extension Mod
+```
+
+Content kind is not an additional identity layer.
+
+---
+
+# Wave 2 — Trust and Facility Model
+
+The Registry must be able to represent trusted first-party state sufficiently for migration.
+
+At minimum preserve the distinction between:
+
+```text
+standard source
+first-party source
+```
+
+and support stable facility bindings such as:
+
+```text
+client
+platform-server
+examples
+```
+
+where implemented.
+
+Third-party source must not be able to self-declare first-party trust.
+
+---
+
+# Wave 2 — Identity Migration Support
+
+Before Wave 3, Vapor must be capable of recording:
+
+```text
+old canonical identity
+→
+new canonical identity
+```
+
+for at least the Container migrations and exact descendants.
+
+Required prefix migrations:
+
+```text
+GHF-Studios/Vapor-Root
+→
+GHF-Studios/Vapor-Client
+```
+
+and:
+
+```text
+GHF-Studios/Vapor-Server-Root
+→
+GHF-Studios/Vapor-Platform-Server
+```
+
+---
+
+# Wave 2 — Migration Safety
+
+The migration mechanism must not depend on fuzzy name matching.
+
+Allowed:
+
+```text
+exact old Container identity
++
+known descendants
++
+exact prefix transformation
+```
+
+Not allowed:
+
+```text
+"this repository looks like Vapor-Client,
+so it is probably the same thing"
+```
+
+---
+
+# Wave 2 Verification
+
+* [ ] Authority modeled independently from provider organization.
+* [ ] Source Repo Container modeled.
+* [ ] Source Repo modeled.
+* [ ] Project modeled.
+* [ ] Source Repo = Vapor Workspace reflected consistently.
+* [ ] Provider linkage independent from Vapor identity.
+* [ ] First-party trust survives model transition.
+* [ ] Facility bindings can survive topology migration.
+* [ ] Old→new exact identity migration can be represented.
+* [ ] Current working recovery/acquisition behavior remains possible or has a proven equivalent.
+* [ ] Existing Registry production data can be migrated without blind recreation.
+
+---
+
+# Wave 2 Completion Gate
+
+Wave 2 is complete when Vapor can represent both:
+
+```text
+current canonical identities
+```
+
+and:
+
+```text
+target canonical identities
+```
+
+plus the exact migration between them.
+
+Only then begin Wave 3.
+
+---
+
+# Wave 3 — Canonical Vapor Identity Migration
+
+Status:
+
+```text
+BLOCKED BY WAVE 2
+```
+
+Purpose:
+
+> Change canonical first-party Container identities and deterministically migrate their descendants.
 
 Perform:
 
@@ -284,355 +946,517 @@ GHF-Studios/Vapor-Server-Root
 GHF-Studios/Vapor-Platform-Server
 ```
 
-Do not during this operation:
+---
+
+# Wave 3 — Descendant Migration
+
+For every known Source Repo beneath Client:
 
 ```text
-rename child repositories
-rename local checkout directories
-change Workspace semantic identities
-change Project names
-change manifest schemas
-consolidate repositories
-move Premium Docs
-create Vapor-App-Server
-perform cleanroom refactors
+GHF-Studios/Vapor-Root/<Source-Repo>
+→
+GHF-Studios/Vapor-Client/<Source-Repo>
 ```
 
----
-
-# Wave 1 — Local Checkout Policy
-
-The local checkout directories should **not initially be renamed**.
-
-Immediately after the GitHub rename it is valid to have:
+For every known Project beneath those Source Repos:
 
 ```text
-local directory:
-    .../Vapor-Root/
-
-remote:
-    https://github.com/GHF-Studios/Vapor-Client
+GHF-Studios/Vapor-Root/<Source-Repo>/<Project>
+→
+GHF-Studios/Vapor-Client/<Source-Repo>/<Project>
 ```
 
-and:
+Equivalent prefix migration applies to Platform Server.
+
+---
+
+# Wave 3 — Preserve Provider Repositories
+
+Child provider repository names do not need to change merely because their Vapor identity prefix changes.
+
+Example:
 
 ```text
-local directory:
-    .../Vapor-Server-Root/
-
-remote:
-    https://github.com/GHF-Studios/Vapor-Platform-Server
+provider repository:
+    github.com/GHF-Studios/Vapor
 ```
 
-This temporary mismatch is deliberate.
+may remain exactly the same.
 
-It preserves:
-
-* RustRover paths;
-* current Superworkspace assumptions;
-* scripts containing local paths;
-* remembered development state;
-* manual shell habits;
-* known-good self-hosting behavior.
-
-Local checkout naming is a **Local Realization migration** and occurs separately.
+Its canonical Vapor Source Repo identity changes because its parent Container identity changed.
 
 ---
 
-# Wave 1 — Remote Reconciliation
+# Wave 3 — Update Canonical References
 
-After the provider rename, update the two Container Repo local remotes explicitly.
-
-Client Container Repo:
-
-```bash
-git remote set-url origin https://github.com/GHF-Studios/Vapor-Client.git
-```
-
-Platform Container Repo:
-
-```bash
-git remote set-url origin https://github.com/GHF-Studios/Vapor-Platform-Server.git
-```
-
-Then verify:
-
-```bash
-git remote -v
-git fetch
-git status
-git submodule status --recursive
-```
-
-Child submodule URLs do not change merely because their parent Container Repo was renamed.
-
-Do not rewrite child `.gitmodules` entries unless a child repository itself changes.
-
----
-
-# Wave 1 — Provider References
-
-Provider-level references to the renamed Container Repos must be reconciled during Wave 1 where they are operationally required.
-
-Examples include:
+Inspect and migrate authored/model state which deliberately stores canonical Vapor identities:
 
 ```text
-Git remotes
-GitHub Actions references
-deployment polling/clone URLs
-provider configuration
-external automation which names the Container Repo
-documentation links needed to operate the migration
+Registry rows/records
+parent-child topology
+first-party facility bindings
+trusted policy
+authored manifests
+dependency/source references where relevant
+operation recipes
+remembered Context
+local Vapor state
+generated indexes
+IDE projections
+tests/fixtures
+diagnostics expectations
 ```
 
-This differs from Wave 2.
-
-Wave 1 changes references whose meaning is:
-
-> Which GitHub repository should I contact?
-
-Wave 2 changes authored Vapor vocabulary/schema whose meaning is:
-
-> What semantic concept does this field model?
+Classify each occurrence before modification.
 
 ---
 
-# Wave 1 — GitHub Redirect Policy
+# Wave 3 — Old Identity Compatibility
 
-GitHub rename redirects may temporarily preserve old URLs.
+Old identities may remain recognized temporarily as migrated identities.
 
-They are a migration aid.
-
-They are not the target architecture.
-
-Therefore:
+Conceptually:
 
 ```text
-old provider URL works because redirect exists
+GHF-Studios/Vapor-Root
+    migrated-to GHF-Studios/Vapor-Client
 ```
 
-does not count as final reconciliation.
+This is compatibility/migration state.
 
-Authored active configuration should eventually point directly to the new repository name.
-
----
-
-# Wave 1 — Client Verification
-
-After the Client Container Repo rename:
-
-* [ ] Local Client Container Repo can fetch from the new provider URL.
-* [ ] Existing child submodules remain intact.
-* [ ] Existing `Vapor` checkout remains intact.
-* [ ] Installed Vapor still discovers the Steam App Instance.
-* [ ] Managed Cargo/toolchain operation still works.
-* [ ] Vapor can still resolve the relevant Project context.
-* [ ] Vapor can still build/test itself through the managed toolchain.
-* [ ] Local ecosystem deployment still works where it worked before.
-* [ ] Deployed Vapor still runs.
-* [ ] No source had to move physically merely to satisfy the provider rename.
-
-A failure here blocks Wave 2.
+It must not mean that both names remain equally canonical forever.
 
 ---
 
-# Wave 1 — Platform Verification
+# Wave 3 — Client Verification
 
-After the Platform Container Repo rename:
-
-* [ ] Local Platform Container Repo can fetch from the new provider URL.
-* [ ] All five service submodules remain intact.
-* [ ] Homepage source remains buildable/deployable.
-* [ ] Docs service source remains buildable/deployable.
-* [ ] Identity source remains buildable/deployable.
-* [ ] Diagnostics source remains buildable/deployable.
-* [ ] Registry Server source remains buildable/deployable.
-* [ ] Deployment automation no longer relies on an obsolete provider URL except through a deliberately temporary compatibility path.
-* [ ] Existing state/storage locations remain untouched.
-* [ ] Existing production data is not migrated merely because the repository was renamed.
-
-A failure here blocks Wave 2.
+* [ ] New Client Container identity resolves.
+* [ ] Old Client identity resolves through explicit migration compatibility where intended.
+* [ ] Client Source Repos resolve under new prefix.
+* [ ] Projects resolve under new prefix.
+* [ ] `client` first-party facility resolves to target identity.
+* [ ] Acquisition logic can resolve the renamed Client source.
+* [ ] Managed build/test still works.
+* [ ] No Git history was recreated.
+* [ ] No local checkout had to move merely because canonical identity changed.
 
 ---
 
-# Wave 1 Completion Gate
+# Wave 3 — Platform Verification
 
-Wave 1 is complete only when:
+* [ ] New Platform Server Container identity resolves.
+* [ ] Platform service Source Repos resolve beneath it.
+* [ ] Projects resolve beneath service Source Repos.
+* [ ] `platform-server` facility resolves correctly.
+* [ ] Platform build/test still works.
+* [ ] Deployment identity resolution still works.
+* [ ] Production persistence is unchanged.
+* [ ] No service Git repository was recreated.
+
+---
+
+# Wave 3 Completion Gate
+
+Wave 3 is complete when:
 
 ```text
-provider repos renamed
+new canonical identities authoritative
 +
-local remotes point directly at new names
+descendants migrated
 +
-Client self-hosting still works
+old identities explicitly transitional
 +
-Platform source/deployment still works
+provider linkage remains correct
 +
-child repository topology unchanged
+Client working
++
+Platform working
++
+source still physically safe
 ```
 
-At this point the ecosystem may temporarily contain old `Root` terminology in machine-readable manifests.
-
-That is expected.
-
-It is Wave 2 work.
+Only then begin Wave 4.
 
 ---
 
-# Wave 2 — Machine Vocabulary And Schema Migration
+# Wave 4 — Canonical Superworkspace Layout
 
 Status:
 
 ```text
-NOT STARTED
+BLOCKED BY WAVE 3
 ```
 
 Purpose:
 
-> Replace old product/domain vocabulary with Client/Platform terminology without confusing it with ordinary filesystem-root concepts or Root Authority.
+> Normalize local source realization beneath the one canonical Superworkspace.
 
-Known current migration targets include:
-
-```text
-App-Source.vapor.toml
-    [root]
-    name = "vapor-root"
-    repository = ".../Vapor-Root"
-
-App.vapor.toml
-    [root]
-    name = "vapor-root"
-
-server-root.toml
-    [server_root]
-    name = "Vapor Server Root"
-
-repository / documentation terminology
-    Vapor Root Workspace
-    Vapor Root Project
-    Vapor Server Root Workspace
-    Vapor Server Root Project
-```
-
-These changes require deliberate schema design.
-
-Do not transform:
+Target:
 
 ```text
-root
-```
-
-globally.
-
-Legitimate remaining meanings include:
-
-```text
-filesystem root
-Installation root
-source root
-state root
-document root
-Root Authority
+<Superworkspace>/
+└── GHF-Studios/
+    ├── Vapor-Client/
+    └── Vapor-Platform-Server/
 ```
 
 ---
 
-# Wave 2 — Current Vapor Workspace Naming
+# Wave 4 — Authority Directory
 
-The current active `Vapor/Workspace.vapor.toml` contains conceptually:
+The target local topology includes:
 
 ```text
-Workspace:
-    vapor
-
-Project:
-    vapor
+GHF-Studios/
 ```
 
-This is now a known naming-pressure point.
+because Authority is a canonical identity segment and different Authorities may own identically named Containers.
 
-The Workspace and Project names must not be changed merely as part of the Container Repo provider rename.
+Example:
 
-Wave 2 or the following identity/project-model implementation pass must decide meaningful canonical casing/naming.
+```text
+GHF-Studios/Foo
+Other-Author/Foo
+```
 
-The desired invariant is:
-
-> A Project receives a meaningful name within its Workspace namespace rather than duplicating the Workspace name by accident.
+must not collide locally.
 
 ---
 
-# Wave 2 — Identity / Address Implementation
+# Wave 4 — Local Move Safety
 
-Wave 2 should begin representing:
+Before moving any Container directory:
 
-```text
-Semantic Identity
-≠
-Structural Address
-≠
-Local Realization
-```
-
-at least enough that future Container Repo/local-checkout migration does not rely on raw paths as identity.
-
-Conceptual example:
-
-```text
-Workspace identity:
-    GHF-Studios/Vapor
-
-Structural address:
-    GHF-Studios/Vapor-Client/Vapor
-
-Local realization:
-    /home/.../Vapor
-```
-
-The implementation need not support every future selector/session feature before migration continues.
-
-It must stop encoding the old assumption that current physical/Container placement *is* the durable object identity.
+* [ ] inspect parent Container Git state;
+* [ ] inspect Source Repo/submodule state;
+* [ ] preserve dirty source;
+* [ ] preserve local branches;
+* [ ] preserve detached development state;
+* [ ] preserve remotes;
+* [ ] preserve unpushed commits;
+* [ ] stop processes holding critical old paths where necessary;
+* [ ] record RustRover/current IDE integration state;
+* [ ] record Vapor user-data path references.
 
 ---
 
-# Wave 3 — Client Repository Consolidation
+# Wave 4 — Physical Migration
+
+Conceptually:
+
+```text
+legacy source root/
+├── Vapor-Root/
+└── Vapor-Server-Root/
+```
+
+becomes:
+
+```text
+<Superworkspace>/
+└── GHF-Studios/
+    ├── Vapor-Client/
+    └── Vapor-Platform-Server/
+```
+
+Exact source commands depend on the real current filesystem state.
+
+Do not prescribe destructive shell moves without inspecting that state.
+
+---
+
+# Wave 4 — Derived-State Reconciliation
+
+After physical movement, regenerate/reconcile derived state:
+
+```text
+Vapor indexes
+generated operation state
+managed path caches
+RustRover integration
+other IDE integration
+diagnostic indexes
+generated manifests/projections
+```
+
+This is legitimate Repair/reconciliation work.
+
+Authored source itself must not be regenerated merely because its path changed.
+
+---
+
+# Wave 4 — Context Reconciliation
+
+Persistent Context referring to old identities/paths should migrate to new canonical identities.
+
+Context migration should use exact identity mappings.
+
+It should not infer objects from directory names.
+
+---
+
+# Wave 4 — Canonical Superworkspace Verification
+
+* [ ] Vapor knows exactly one canonical Superworkspace root.
+* [ ] Superworkspace has no identity.
+* [ ] Authority directory exists in canonical local topology.
+* [ ] Client Container located beneath `GHF-Studios`.
+* [ ] Platform Container located beneath `GHF-Studios`.
+* [ ] Source Repo submodules intact.
+* [ ] Dirty/local Git state preserved.
+* [ ] Vapor source discovery works without arbitrary recursion.
+* [ ] RustRover integration reconciled.
+* [ ] managed Cargo works.
+* [ ] Client build/test works.
+* [ ] Platform build/test works.
+
+---
+
+# Wave 4 Completion Gate
+
+Wave 4 is complete when the canonical local realization model is operational and no workflow relies on the old physical root as semantic identity.
+
+---
+
+# Wave 5 — Machine Vocabulary and Public CLI Migration
 
 Status:
 
 ```text
-NOT STARTED
+BLOCKED BY WAVE 4
 ```
 
-Recommended order:
+Purpose:
 
-```text
-Vapor-Entrypoint
-→ Vapor-Installer
-→ Vapor-Launcher
-→ Vapor-SDK
-→ Vapor-Shell
-```
+> Converge active machine-readable vocabulary and public CLI on the new model.
 
-Each repository is migrated independently.
-
-For every repository:
-
-```text
-inventory behavior/design
-→ classify valid vs obsolete semantics
-→ migrate/reimplement useful pieces into Vapor
-→ clean/document against current architecture
-→ test replacement
-→ remove submodule from Vapor-Client
-→ archive historical repository
-```
-
-Do not preserve an obsolete repository boundary merely to preserve Git history.
-
-The archived repository already preserves its history.
+This wave may be divided into independently provable subwaves.
 
 ---
 
-# Wave 3A — Vapor-Entrypoint
+# Wave 5A — Manifest Vocabulary
+
+Inspect historical terms such as:
+
+```text
+root
+vapor-root
+server-root
+ecosystem
+source
+Workspace identity
+Structural Address
+```
+
+Each occurrence must be classified.
+
+Keep valid meanings:
+
+```text
+filesystem root
+Installation root
+Superworkspace root
+Root Authority
+```
+
+Migrate obsolete product/source meanings.
+
+Do not perform blind string replacement.
+
+---
+
+# Wave 5B — Source Terminology
+
+Public/model terminology should converge on:
+
+```text
+Source Repo Container
+Source Repo
+Project
+```
+
+Retire bare generic `source` where it ambiguously means one of several layers.
+
+Machine code may retain transitional internal names temporarily where rewriting them immediately would increase risk.
+
+Public semantics should converge first.
+
+---
+
+# Wave 5C — Ecosystem CLI Retirement
+
+Historical:
+
+```text
+vapor ecosystem ...
+```
+
+must no longer represent one generic public object/lifecycle.
+
+Operations move to concrete owners:
+
+```text
+client ...
+platform-server ...
+examples ...
+
+source-repo-container ...
+source-repo ...
+
+generic Project operations
+```
+
+Compatibility aliases may exist temporarily.
+
+They require explicit retirement criteria.
+
+---
+
+# Wave 5D — Context and Selection CLI
+
+Implement/converge on the CLI model:
+
+```text
+persistent Context
+transient --context
+explicit --select
+```
+
+with the fundamental invariant:
+
+```text
+Context
+    supplies missing left-side path
+
+operation subject
+    establishes natural scope
+
+Selection
+    supplies/narrows right-side topology
+```
+
+No CWD semantic targeting.
+
+No hidden generic `--all`.
+
+---
+
+# Wave 5E — Creation CLI
+
+Converge on explicit parent-layer creation:
+
+```text
+source-repo-container create
+
+source-repo create
+
+game create
+engine create
+library create
+...
+```
+
+Typed Project creation must not silently create missing Containers or Source Repos.
+
+---
+
+# Wave 5F — Diagnostics
+
+Before considering the CLI migration complete, prove high-quality diagnostics for:
+
+```text
+missing Container
+Container registered but not acquired
+missing Source Repo
+ambiguous Project
+illegal operation scope
+missing authority
+missing provider access
+missing Git submodule checkout
+dirty Git state
+```
+
+Diagnostics should provide safe exact resolution paths where known.
+
+---
+
+# Wave 5 Completion Gate
+
+Wave 5 is complete when:
+
+```text
+active machine vocabulary reflects new topology
++
+public CLI no longer depends on generic ecosystem/source abstractions
++
+Context/Selection semantics implemented coherently
++
+typed creation follows explicit parent hierarchy
++
+diagnostics teach the new model
+```
+
+---
+
+# Wave 6 — Client Source Repo Consolidation
+
+Status:
+
+```text
+BLOCKED BY WAVE 5
+```
+
+Purpose:
+
+> Remove historical Client Source Repo boundaries which no longer own meaningful independent semantics.
+
+Recommended conceptual order:
+
+```text
+Vapor-Entrypoint
+→
+Vapor-Installer
+→
+Vapor-Launcher
+→
+Vapor-SDK
+→
+Vapor-Shell
+```
+
+This order remains guidance, not an excuse to ignore actual implementation dependencies.
+
+---
+
+# Wave 6 General Per-Repository Procedure
+
+For each historical Source Repo:
+
+```text
+inventory
+→
+understand current mechanism
+→
+classify useful vs obsolete semantics
+→
+identify new owner
+→
+cleanly reimplement/transplant valid behavior
+→
+prove replacement
+→
+remove authored submodule membership
+→
+update Registry/topology
+→
+archive historical repository
+```
+
+Do not blindly copy obsolete architecture.
+
+---
+
+# Wave 6A — Vapor-Entrypoint
 
 Target:
 
@@ -640,24 +1464,18 @@ Target:
 CONSOLIDATE → Vapor
 ```
 
-Desired end state:
+Completion requirements:
 
-```text
-Entrypoint remains a tiny executable/platform adapter
-Core owns shared semantics
-```
-
-Completion:
-
-* [ ] Useful Entrypoint behavior exists in `Vapor`.
-* [ ] Target binary builds.
-* [ ] Steam/client startup path still works.
-* [ ] `Vapor-Entrypoint` submodule removed from `Vapor-Client`.
-* [ ] Old repository archived.
+* [ ] useful Entrypoint behavior exists in current Client source;
+* [ ] executable/platform adapter remains where appropriate;
+* [ ] shared semantics live in Vapor Core;
+* [ ] Steam startup path works;
+* [ ] submodule membership removed only after proof;
+* [ ] historical repository archived.
 
 ---
 
-# Wave 3B — Vapor-Installer
+# Wave 6B — Vapor-Installer
 
 Target:
 
@@ -671,19 +1489,18 @@ Product boundary remains:
 Vapor Installer
 ```
 
-Source boundary does not need to.
+Completion requirements:
 
-Completion:
-
-* [ ] Installer capability semantics use shared Vapor Core.
-* [ ] Dedicated `vapor-installer` binary remains available.
-* [ ] Install/uninstall/Role provisioning behavior works.
-* [ ] Global Vapor command exposure integration remains repairable/removable.
-* [ ] Old repository archived only after replacement proof.
+* [ ] Installer operations use current shared semantics;
+* [ ] dedicated executable remains where intended;
+* [ ] Role/tooling provisioning works;
+* [ ] downgrade/uninstall safety works;
+* [ ] authored source is preserved;
+* [ ] historical Source Repo removed only after proof.
 
 ---
 
-# Wave 3C — Vapor-Launcher
+# Wave 6C — Vapor-Launcher
 
 Target:
 
@@ -691,18 +1508,17 @@ Target:
 CONSOLIDATE → Vapor
 ```
 
-The standalone Launcher Core must not remain a competing semantic authority.
+Completion requirements:
 
-Completion:
-
-* [ ] Launcher semantics are provided through shared Core.
-* [ ] Launcher Mode exists or has a clear replacement path inside the desktop application architecture.
-* [ ] Old Launcher-specific reusable UI work has been preserved where useful.
-* [ ] Old repository archived after replacement proof.
+* [ ] Launcher product/mode remains represented;
+* [ ] no independent Launcher semantic Core remains;
+* [ ] useful UI/platform implementation preserved;
+* [ ] shared semantics come from current Vapor Core;
+* [ ] historical Source Repo archived after replacement.
 
 ---
 
-# Wave 3D — Vapor-SDK
+# Wave 6D — Vapor-SDK
 
 Target:
 
@@ -712,7 +1528,7 @@ CONSOLIDATE → Vapor
 
 Special preservation requirement:
 
-> The Figma-derived GUI is a visual design ancestor and must not be lost.
+> The Figma-derived SDK GUI and visual-product ancestry must not be lost.
 
 Inventory explicitly:
 
@@ -720,6 +1536,7 @@ Inventory explicitly:
 vapor_sdk_gui
 vapor_sdk_core
 vapor_sdk_cli
+other frontend/design material
 ```
 
 Classify:
@@ -728,24 +1545,28 @@ Classify:
 visual/frontend implementation
     preserve/adapt
 
-SDK-specific duplicate business semantics
-    migrate only if still valid
+still-valid feature behavior
+    reimplement against current Core
 
-obsolete assumptions
-    archive/document rather than reproduce
+duplicate semantic model
+    do not preserve as competing authority
+
+obsolete architecture
+    archive
 ```
 
-Completion:
+Completion requirements:
 
-* [ ] Visual source/prototype safely preserved.
-* [ ] Useful Tauri/web integration preserved or intentionally superseded.
-* [ ] No second SDK Core competes with Vapor Core.
-* [ ] Launcher↔SDK transformation architecture has one semantic backend.
-* [ ] Old repository archived only after the useful material is migrated.
+* [ ] visual ancestry preserved;
+* [ ] useful frontend implementation preserved or deliberately replaced;
+* [ ] no second SDK Core;
+* [ ] no second SDK CLI;
+* [ ] Launcher↔SDK experience uses one semantic backend;
+* [ ] historical Source Repo archived only after proof.
 
 ---
 
-# Wave 3E — Vapor-Shell
+# Wave 6E — Vapor-Shell
 
 Target:
 
@@ -753,46 +1574,71 @@ Target:
 REINTERPRET / CONSOLIDATE → Vapor
 ```
 
-The historical Shell currently represents an earlier universal command architecture.
-
-It must not compete with the current `vapor` CLI.
-
 Preserve useful:
 
 ```text
 interactive shell UX
-session ideas
 terminal integration
-workflow lessons
-documentation
+history/navigation lessons
+workflow concepts
 ```
 
-Future model:
+Do not preserve a second canonical `vapor` CLI.
+
+Future Shell model:
 
 ```text
-Vapor Shell
-=
 interactive frontend
 +
-Development Session
-+
 Vapor Core operations
++
+frontend-local session/navigation state
 ```
-
-Completion:
-
-* [ ] No competing canonical CLI implementation remains.
-* [ ] Useful interactive/session concepts preserved.
-* [ ] Old repository archived.
 
 ---
 
-# Wave 4 — Registry Authority Resolution
+# Wave 6 — Client Consolidation Target
+
+Expected active Client Container membership after consolidation:
+
+```text
+Vapor-Client/
+├── Vapor/
+└── Vapor-Examples/
+```
+
+subject to later explicit Examples topology design.
+
+Archived repositories remain remotely available for history.
+
+---
+
+# Wave 6 Completion Gate
+
+Wave 6 is complete when:
+
+```text
+Vapor owns current Client implementation
++
+historical app Source Repos no longer compete semantically
++
+useful implementation/design preserved
++
+archaeology remains available remotely
++
+Client still builds/tests/deploys
++
+Examples remain functional
+```
+
+---
+
+# Wave 7 — Registry Archaeology Resolution
 
 Status:
 
 ```text
-NOT STARTED
+BLOCKED BY REQUIRED PRIOR MODEL WORK
 ```
 
 Conflict:
@@ -803,48 +1649,117 @@ vs
 Vapor-Registry-Server
 ```
 
-Current architecture must choose one authoritative ownership model.
-
-Before changing either repository, define ownership for:
-
-```text
-Vapor semantic identities
-provider/resource linkage
-official namespace policy
-Steam product metadata
-publishing grants
-bootstrap data
-runtime Registry state
-```
-
-There must not remain two independently canonical Registries.
+There must be one canonical Registry authority.
 
 ---
 
-# Wave 5 — Documentation Source Extraction
+# Wave 7 Required Ownership Decision
+
+Define exactly which active system owns:
+
+```text
+Authority identity
+Source Repo Container identity
+Source Repo identity
+Project identity
+Content/version identity
+provider linkage
+first-party trust
+facility bindings
+publication state
+yank/ban state
+namespace policy
+bootstrap/seed data
+runtime Registry persistence
+```
+
+---
+
+# Wave 7 Outcomes
+
+Possible:
+
+```text
+Vapor-Registry
+    ARCHIVE
+```
+
+or:
+
+```text
+Vapor-Registry
+    REPURPOSE + RENAME
+```
+
+for a narrowly defined non-competing function such as static bootstrap/policy data.
+
+Not allowed:
+
+```text
+two independently canonical Registries
+```
+
+---
+
+# Wave 7 Completion Gate
+
+* [ ] one canonical Registry authority;
+* [ ] historical repository disposition explicit;
+* [ ] no overlapping truth ownership;
+* [ ] production Registry recovery remains proven.
+
+---
+
+# Wave 8 — Documentation Source Reconsideration
 
 Status:
 
 ```text
-NOT STARTED
+DEFERRED
 ```
 
-After the topology stabilizes, reconsider:
+Only after Client/Platform topology has stabilized, reconsider:
 
 ```text
 Premium Docs
-→ Vapor-Documentation
+→
+Vapor-Documentation
 ```
 
-`Vapor-Documentation` would own authored ecosystem documentation.
+The question is not:
 
-`Vapor-Docs-Server` would remain the Platform service which publishes/serves documentation.
+> Would a docs repository look cleaner?
 
-Do not perform this migration while the Premium Docs are still actively serving as the repository-migration authority.
+The question is:
+
+> Does authored ecosystem documentation now have a sufficiently independent source responsibility to justify a Source Repo or Container identity?
+
+If yes, design and migrate it explicitly.
+
+If no, leave it where it coherently belongs.
 
 ---
 
-# Wave 6 — Source Cleanroom / Docsification
+# Documentation vs Docs Service
+
+Keep distinct:
+
+```text
+authored normative documentation
+```
+
+and:
+
+```text
+Vapor-Docs-Server
+    service which publishes/serves documentation
+```
+
+One does not require the other to share a Source Repo.
+
+---
+
+# Wave 9 — Source Cleanroom / Docsification
 
 Status:
 
@@ -852,141 +1767,416 @@ Status:
 NOT STARTED
 ```
 
-This is a major architecture-hardening task.
+Purpose:
 
-The rule is not:
+> Harden active source only after repository ownership is stable.
 
-```text
-add comments to existing files
-```
-
-The rule is:
+For each active file/module:
 
 ```text
-understand responsibility
+understand
 → compare with normative architecture
-→ rename/refactor/restructure
-→ document useful contracts/context
-→ strengthen invariants/tests
-→ remove dead archaeology
-→ replace whole file when appropriate
+→ simplify
+→ rename
+→ restructure
+→ strengthen ownership
+→ strengthen types/invariants/tests
+→ document useful contracts
+→ remove stale archaeology
+→ replace whole file where appropriate
 ```
 
-Full-file replacement is preferred for substantial refactors, including large files.
-
-Documentation should explain:
-
-```text
-conceptual role
-ownership
-non-ownership
-invariants
-context
-usage
-failure semantics
-relationships to other subsystems
-```
-
-It should not repeat facts already obvious from good names/types.
+The goal is not to preserve implementation shape for its own sake.
 
 ---
 
-# Wave 6 — Documentation Layers
+# Cleanroom Rule
 
-The cleanroom pass should progressively support:
+Historical implementation is evidence.
+
+It is not automatically the desired implementation.
+
+Preferred approach:
 
 ```text
-good code structure
-    ↓
+inspect old mechanism
+→ understand why it worked
+→ identify still-valid invariants
+→ implement clean current version
+→ prove behavior
+→ fossilize obsolete source
+```
+
+---
+
+# Documentation Layers
+
+The cleanroom pass should support:
+
+```text
+clear code
+↓
 crate/module rustdoc
-    ↓
-public API rustdoc
-    ↓
+↓
+public API documentation
+↓
 normative model docs
-    ↓
+↓
 generated reference
-    ↓
-Vapor Books
+↓
+Vapor Books / approachable learning material
 ```
 
-Books are not authored against knowingly unstable architecture merely to create volume.
-
-They should increasingly teach architecture that has survived implementation pressure.
+Books should teach architecture which has survived implementation pressure.
 
 ---
 
-# Wave 7 — Return To Runtime Roadmap
+# Wave 10 — Return to Runtime Roadmap
 
-After the stabilization/migration work reaches the agreed stopping point:
+Status:
 
 ```text
-finish remaining Phase B adversarial Cargo proof
-    ↓
-Phase C — Minimal Bevy ECS Engine
-    ↓
-Wheel Game
-    ↓
-Engine/Game/Mod capability proof
-    ↓
-static realization pressure
+NOT STARTED
 ```
 
-This migration must ultimately reduce architectural friction rather than becoming an infinite prerequisite to runtime development.
+The migration is infrastructure work in service of Vapor/Loo Cast development.
+
+It must not become an infinite prerequisite.
+
+After the agreed stabilization point:
+
+```text
+remaining Cargo/realization proof
+→
+minimal Bevy ECS Engine
+→
+Wheel Game
+→
+Engine/Game/Mod capability proof
+→
+static realization pressure
+→
+larger Vapor/Spacetime/Loo Cast work
+```
+
+The exact runtime roadmap remains owned by the rewrite roadmap.
+
+---
+
+# Cross-Wave Rule — Do Not Reacquire Source as Repair
+
+Throughout every wave:
+
+```text
+missing entire registered Container
+    → acquisition/recovery
+
+missing declared submodule checkout
+    → Git reconciliation
+
+missing derived Vapor state
+    → Repair
+```
+
+Do not use `repair` as a magical source-restoration command.
+
+---
+
+# Cross-Wave Rule — Git Remains Git
+
+If migration encounters:
+
+```text
+dirty worktree
+detached HEAD
+unexpected gitlink
+local branch divergence
+unpushed commit
+missing submodule
+```
+
+diagnose it as Git state.
+
+Do not hide it behind vague Vapor corruption language.
+
+---
+
+# Cross-Wave Rule — Canonical Source Is Not Disposable
+
+At no point may migration conclude:
+
+```text
+remote source exists
+therefore local checkout can be deleted
+```
+
+without first proving that no unique local authored state would be lost.
+
+---
+
+# Cross-Wave Rule — Derived State Is Regeneratable
+
+Migration may freely prefer regeneration over preservation for truly derived state such as:
+
+```text
+indexes
+IDE integration
+generated operation realization
+caches
+generated glue
+derived source-discovery state
+```
+
+provided the regeneration path is proven.
+
+---
+
+# Cross-Wave Rule — Restore Known-Good After Every Wave
+
+Every migration wave should end with:
+
+```text
+diagnose
+→ prove source topology
+→ prove managed toolchain
+→ prove relevant build/test
+→ prove relevant deployment/runtime behavior
+→ record results
+```
+
+Do not stack broken migration waves.
+
+---
+
+# Cross-Wave Rule — Exact Evidence Beats Documentation
+
+If this ledger says:
+
+```text
+five Platform Source Repos
+```
+
+but actual `.gitmodules` or Registry state says otherwise:
+
+```text
+investigate actual state
+```
+
+Do not modify reality to match stale text.
+
+The order of authority for current execution evidence is approximately:
+
+```text
+Git/source state
+Registry state
+provider state
+deployment state
+current working binaries
+normative target model
+execution ledger inventory text
+```
+
+The target model defines where we are going.
+
+Current evidence defines where we actually are.
+
+---
+
+# First-Party Facility Verification
+
+As first-party bindings become available, prove:
+
+```text
+client
+    resolves intended Client facility
+
+platform-server
+    resolves intended Platform Server facility
+
+examples
+    resolves intended Examples facility
+```
+
+Their implementations may change during migration.
+
+Their stable facility semantics should remain coherent.
+
+---
+
+# Acquisition Verification
+
+After the target Registry/source model exists, prove both generic and bespoke acquisition paths.
+
+Generic:
+
+```text
+vapor source-repo-container acquire GHF-Studios/Vapor-Client
+
+vapor source-repo-container acquire GHF-Studios/Vapor-Platform-Server
+```
+
+Bespoke:
+
+```text
+vapor client acquire
+vapor platform-server acquire
+vapor examples acquire
+```
+
+They should share underlying modeled acquisition machinery where appropriate.
+
+---
+
+# Destructive-Recovery Proof
+
+The existing recovery milestone demonstrated the broad concept:
+
+```text
+working source/development environment
+→ replace recoverable source/application state
+→ Steam/Vapor reacquisition
+→ Registry/provider source recovery
+→ derived-state regeneration
+→ build/test
+```
+
+After the identity/topology migration, repeat an equivalent proof against the new source model.
+
+The new proof must distinguish:
+
+```text
+registered remotely recoverable source
+
+unique local authored work
+
+derived Vapor state
+```
+
+Unique local authored work must never be intentionally destroyed as part of the proof.
 
 ---
 
 # Current Live Status
 
-Update this block as work proceeds.
+Update this block as the actual work proceeds.
 
 ```text
-Wave 0 — Baseline And Freeze
+Wave 0 — Normative Model and Baseline
     ACTIVE
 
-Wave 1 — Provider / Container Repo Rename
+Wave 1 — Provider Repository Renames
     BLOCKED BY WAVE 0
 
-Wave 2 — Machine Vocabulary And Schema Migration
+Wave 2 — Registry Identity Model Readiness
     BLOCKED BY WAVE 1
 
-Wave 3 — Client Repository Consolidation
+Wave 3 — Canonical Vapor Identity Migration
     BLOCKED BY WAVE 2
 
-Wave 4 — Registry Authority Resolution
+Wave 4 — Canonical Superworkspace Layout
+    BLOCKED BY WAVE 3
+
+Wave 5 — Machine Vocabulary and Public CLI Migration
+    BLOCKED BY WAVE 4
+
+Wave 6 — Client Source Repo Consolidation
+    BLOCKED BY WAVE 5
+
+Wave 7 — Registry Archaeology Resolution
     NOT STARTED
 
-Wave 5 — Documentation Source Extraction
+Wave 8 — Documentation Source Reconsideration
+    DEFERRED
+
+Wave 9 — Source Cleanroom / Docsification
     NOT STARTED
 
-Wave 6 — Source Cleanroom / Docsification
-    NOT STARTED
-
-Wave 7 — Return To Runtime Roadmap
+Wave 10 — Return to Runtime Roadmap
     NOT STARTED
 ```
 
 ---
 
+# Immediate Wave-0 Documentation Checklist
+
+During the current documentation convergence pass:
+
+```text
+[ ] Context / Identity / Selection model
+[ ] CLI model
+[ ] Development Experience model
+[ ] Ecosystem Glossary
+[ ] Repository Topology and Migration model
+[ ] Repository Migration Execution Ledger
+[ ] Client / Platform / App Runtime model
+[ ] Publishing and Distribution model
+[ ] Ecosystem Operational model
+[ ] Ecosystem Experience model
+[ ] SDK Experience model
+[ ] Rewrite Bootstrap
+[ ] Rewrite Progress and Roadmap
+[ ] affected diagrams
+```
+
+A checked item means it has been reconciled with the current model, not merely reread.
+
+---
+
 # Migration Completion Principle
 
-The migration is not successful merely because everything has the new name.
+The migration is not successful merely because repository names look nicer.
 
 It is successful when:
 
 ```text
-names match responsibilities
+canonical identities match the intended hierarchy
+
 +
-repo boundaries match semantic/deployment boundaries
+
+provider linkage is explicit and independent
+
 +
-Core owns shared semantics
+
+one canonical Superworkspace realizes source predictably
+
 +
-source remains safe
+
+source boundaries match meaningful responsibilities
+
 +
-development state can be understood/recovered
+
+Vapor Core owns shared semantics
+
 +
-documentation explains the resulting architecture
+
+first-party facilities remain coherent
+
 +
-the known-good Vapor workflows still work
+
+Git state remains safe and understandable
+
 +
-future contributors/agents no longer need archaeology to understand it
+
+Registry owns one coherent identity model
+
++
+
+CLI exposes concrete Vapor concepts
+
++
+
+development state can be diagnosed and recovered
+
++
+
+documentation teaches one architecture
+
++
+
+known-good Client and Platform workflows still work
+
++
+
+future implementation no longer requires archaeology merely to know
+what the system means
 ```

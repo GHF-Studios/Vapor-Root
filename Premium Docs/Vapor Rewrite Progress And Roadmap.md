@@ -1,189 +1,589 @@
-# Vapor Rewrite Progress And Roadmap
-
 > [!info]
-> This document records the current implementation state of the Vapor rewrite and the next architecture-proving phases.
+> This document is the **living implementation roadmap** for the Vapor rewrite.
 >
-> It complements `Vapor Rewrite Bootstrap.md`.
+> It records:
 >
-> The Bootstrap document explains why the rewrite began and how Vertical Slice 0 was approached. This document tracks where the rewrite actually stands after implementation pressure refined the architecture.
+> * what has actually been architecture-proven;
+> * which implemented mechanisms remain valid but require migration into the current model;
+> * which conceptual checkpoints are complete;
+> * which infrastructure migrations come next;
+> * which runtime/composition phases follow after that;
+> * which larger product systems remain future work.
+>
+> **`Vapor Rewrite Bootstrap.md`** records the historical beginning and Vertical Slice 0.
+>
+> Focused Premium Docs own the normative architecture.
+>
+> This document owns implementation progress and sequencing.
+>
+> Repository/provider/identity migration execution is additionally governed by:
+>
+> * **`Vapor Repository Topology And Migration Model.md`**
+> * **`Vapor Repository Migration Execution Ledger.md`**
+
+---
+
+# How to Read This Roadmap
+
+The rewrite contains three kinds of state.
+
+## Proven
+
+A mechanism has been exercised against real Vapor source/workflows and has demonstrated the intended architectural property.
+
+```text
+PROVEN
+```
+
+does not necessarily mean:
+
+```text
+final API
+final names
+final source topology
+final UX
+production complete
+```
+
+It means the important mechanism works.
+
+---
+
+## Proven but Requiring Migration
+
+Some mechanisms are working but were built before the current identity/source/CLI model stabilized.
+
+These should be treated as:
+
+```text
+working implementation
++
+valuable proof
++
+migration input
+```
+
+rather than:
+
+```text
+throw away everything and start again
+```
+
+Examples include historical:
+
+```text
+vapor ecosystem ...
+source acquisition model
+old Superworkspace/source discovery
+old Development Session / Open / Focus model
+old Registry ecosystem records
+```
+
+Their semantics may need reinterpretation or replacement.
+
+Their proven underlying mechanisms remain valuable.
+
+---
+
+## Designed / Pending Implementation
+
+Some architecture is now sufficiently settled normatively but has not yet been fully realized in code.
+
+Examples include:
+
+```text
+Authority / Container / Repo / Project identity
+
+one canonical Superworkspace
+
+Context / Subject / Selection
+
+first-party facility bindings
+
+new source-repo-container / source-repo CLI
+
+canonical Registry source topology
+```
+
+These are implementation work rather than unresolved conceptual questions.
 
 ---
 
 # Current Position
 
-The Vapor rewrite has crossed its first major architectural boundary.
+The Vapor rewrite is well beyond its original bootstrap.
 
-Vapor can already:
-
-* model Vapor Content identities and kinds;
-* parse authored `Vapor.toml` manifests;
-* discover local Content recursively;
-* resolve SemVer dependency declarations;
-* detect missing dependencies and cycles;
-* derive a complete Packagepack composition;
-* generate a Cargo realization;
-* build that realization;
-* run the resulting statically composed Vapor App;
-* manage and use a pinned Rust toolchain;
-* build and test Vapor using that Vapor-managed toolchain;
-* use a Vapor-built Vapor binary to operate on Vapor itself;
-* model local Vapor Roles independently from external authorization;
-* expose the current core through a declarative Clap CLI;
-* resolve arbitrary local Content graphs independently of Packagepack realization.
-* model Library as first-class Vapor Content;
-* inspect Rust/Cargo package realization for Libraries;
-* verify Vapor semantic Library dependencies against Cargo realization;
-* repair safely missing Cargo dependency bindings through managed Cargo;
-* execute managed Cargo through the Installation-owned pinned toolchain;
-* resolve Cargo execution to an appropriate Vapor Project rather than requiring shell CWD;
-* locally deploy rewritten Vapor back into the canonical Steam App Instance;
-* distinguish local and Steam ecosystem deployment targets explicitly;
-* model structural identity, local realization, Development Session, Open/Focus/Selection, and frontend target resolution;
-* define the Launcher-integrated Vapor SDK as the primary graphical development surface.
-
-The current implementation is therefore no longer merely a prototype parser or conceptual model.
-
-> **Vapor already has an operational semantic dependency graph which can affect a real Rust/Cargo build and produce a runnable application.**
-
-The current architectural pressure is no longer whether Vapor composition, managed self-hosting, or basic Cargo supervision can work.
-
-Those mechanisms have now produced enough real UX/DX pressure to expose another missing architectural layer:
-
-> **How should canonical identity, local realizations, development sessions, selection, CLI automation, and the graphical Vapor SDK form one coherent development experience?**
-
-That design checkpoint is intentionally being resolved before deeper Bevy/static-extension realization continues.
-
-The broader runtime pressure remains:
-
-> **How should Vapor statically realize arbitrarily extensible Engine/Game/Mod ecosystems without stealing their runtime or API semantics?**
-
----
-
-# Proven Milestones
-
-## 1. Core Content Model
-
-Implemented:
-
-* immutable human-readable Vapor IDs;
-* SemVer Content versions;
-* `ContentVersionId`;
-* Content kinds;
-* Vapor dependency declarations;
-* local dependency bindings;
-* manifest parsing;
-* local Content discovery;
-* exact resolved Content nodes.
-
-The fundamental resolved identity remains:
+It can already operationally connect:
 
 ```text
-(Vapor ID, Version)
+Vapor semantic declarations
+        ↓
+dependency resolution
+        ↓
+composition
+        ↓
+Cargo/Rust realization
+        ↓
+managed build
+        ↓
+statically composed Vapor App
+        ↓
+execution
 ```
 
-Dependency binding names are local aliases.
+It can also use its own managed development environment to operate on Vapor itself.
 
-They are not semantic slots.
+Additional implementation pressure has proven:
+
+```text
+Library Content
+
+Cargo inspection
+
+Cargo dependency verification
+
+safe Cargo reconciliation
+
+managed Cargo execution
+
+Project-aware Cargo resolution
+
+pinned managed Rust
+
+self-build/test
+
+local deployment
+
+Steam-oriented deployment mechanisms
+
+Registry service/recovery concepts
+
+source reacquisition
+
+development-environment recovery
+
+minimal Bevy ECS runtime
+
+real Game extension semantics
+```
+
+The rewrite is therefore no longer primarily asking:
+
+> Can Vapor work?
+
+That has been answered strongly enough.
+
+The current question is:
+
+> **How do we migrate those working mechanisms into the source identity, development, CLI, Registry, and first-party facility architecture we now actually want?**
+
+After that migration pressure is resolved, the runtime frontier resumes at:
+
+> **How should an arbitrary resolved Vapor dependency graph derive effective Engine/Game constituency and a generic static Rust realization without Vapor stealing the participating ecosystem's runtime semantics?**
 
 ---
 
-## 2. Vertical Slice 0
+# Current Architectural Transition
+
+The implementation currently spans two architectural generations.
+
+## Proven older-generation mechanisms
+
+Examples include:
+
+```text
+historical ecosystem operations
+
+old source/bootstrap acquisition
+
+old Registry ecosystem model
+
+older local source/context representation
+
+early Cargo realization
+
+early self-hosting operations
+```
+
+## Current target model
+
+```text
+Superworkspace
+    no identity
+
+Authority
+    ↓
+Source Repo Container
+    ↓
+Source Repo / Vapor Workspace
+    ↓
+Project
+```
+
+with operation resolution:
+
+```text
+Context
+    → Operation Subject
+    → Selection
+```
+
+and first-party facilities such as:
+
+```text
+Client
+
+Platform Server
+
+Examples
+```
+
+The next infrastructure work is therefore primarily:
+
+> **migration and consolidation, not another conceptual restart.**
+
+---
+
+# Major Proven Milestones
+
+# 1 — Vertical Slice 0
+
+Status:
+
+```text
+PROVEN
+```
 
 The original architecture-proving composition works:
 
 ```text
 Terminal Engine
-+ Hello World Game
-+ Tiny Game Mod
-+ Hello World Packagepack
+
+Hello World Game
+
+Tiny Game Mod
+
+Hello World Packagepack
 ```
 
-Vapor can:
+Vapor proved:
 
 ```text
 discover
+→ parse
 → resolve
 → validate
-→ generate Cargo realization
+→ derive Cargo realization
 → build
 → run
 ```
 
-with visible Engine/Game/Mod participation.
+with visible participation from:
 
-The original slice remains intentionally small and should remain available as a known-good regression specimen while richer realization semantics are developed.
+```text
+Engine
+Game
+Game Mod
+```
+
+This remains an important regression specimen.
 
 ---
 
-## 3. Cargo Realization
+# 2 — Vapor Semantic Graph
 
-Vapor currently generates a small Cargo realization for a resolved Packagepack.
-
-This proved the critical architectural distinction:
+Status:
 
 ```text
-Vapor Content graph
+PROVEN
+```
+
+Vapor can model:
+
+```text
+Content identity
+
+Content kind
+
+SemVer requirements
+
+dependency declarations
+
+dependency bindings
+
+resolved Content nodes
+
+cycles
+
+missing dependencies
+```
+
+and construct a semantic dependency graph.
+
+The fundamental published resolved version concept remains:
+
+```text
+Vapor ID
++
+Version
+```
+
+although the canonical Vapor ID itself is now understood as the Project's hierarchical identity.
+
+---
+
+# 3 — Generic Content Resolution
+
+Status:
+
+```text
+PROVEN
+```
+
+Resolution is no longer fundamentally Packagepack-specific.
+
+Conceptually:
+
+```text
+authored Content Project
+        ↓
+generic dependency resolution
+        ↓
+resolved Content graph
+        ↓
+kind-specific validation
+```
+
+Packagepack then derives complete runnable composition semantics above that graph.
+
+This distinction should remain.
+
+---
+
+# 4 — Packagepack Composition
+
+Status:
+
+```text
+PROVEN AT INITIAL LEVEL
+```
+
+A Packagepack can derive a complete composition containing:
+
+```text
+effective Engine
+
+effective Game
+
+required selected Content
+```
+
+The original implementation was deliberately narrow.
+
+The newer dependency/target/constituency model now defines how this must generalize.
+
+---
+
+# 5 — Cargo Realization
+
+Status:
+
+```text
+PROVEN, CURRENT REALIZATION STILL NARROW
+```
+
+Vapor proved:
+
+```text
+Vapor semantic graph
 ≠
 Cargo package graph
 ```
 
 and:
 
-> **Vapor determines semantic composition; Cargo performs Rust package resolution/build execution for the physical realization Vapor asks it to build.**
+> **Vapor determines semantic composition; Cargo executes Rust package/build realization.**
 
-The current realization is still deliberately narrow.
+The original generated realization still contains Vertical-Slice-specific assumptions.
 
-It assumes one effective Engine, one effective Game, and the original minimal Mod arrangement.
-
-Generalizing this realization is still future work.
+Those assumptions remain scheduled for replacement rather than continued expansion.
 
 ---
 
-## 4. Managed Rust Toolchain
+# 6 — Library Content
 
-Vapor has a pinned Rust toolchain model.
-
-Current root metadata pins a specific Rust version and supports a Vapor-managed environment containing the relevant Cargo/Rust/Rust Analyzer tooling.
-
-The rewrite has proven:
+Status:
 
 ```text
-ambient bootstrap Cargo
-→ build Vapor
-→ Vapor-managed pinned Rust
-→ build/test Vapor
-→ managed-built Vapor operates Vapor
+PROVEN
 ```
 
-This is the first major self-hosting step.
+`Library` is now a first-class Vapor Content kind.
 
-The long-term installed location is the Vapor Steam App Instance rather than a repository-local toolchain.
-
-Repository-local state remains useful bootstrap/development scaffolding until the installed environment is fully realized.
-
----
-
-## 5. Workspace / Ecosystem Self-Hosting
-
-Vapor understands its own source workspace well enough to perform managed:
+A Vapor Library provides reusable implementation/API without inherent:
 
 ```text
-vapor ecosystem status
-vapor ecosystem build
-vapor ecosystem test
+Engine
+Game
+Mod
+pack
+runnable composition
 ```
 
-The broader direction is:
+semantics.
 
-> **Vapor should progressively absorb the manual machinery required to reproduce and develop itself.**
+A Library may expose:
 
-This principle applies beyond compilation to source acquisition, installation, deployment, provider integration, authorization, and publication.
+```text
+Rust types
+
+traits
+
+algorithms
+
+builders
+
+Components
+
+Resources
+
+Events
+
+SystemSets
+
+schemas
+
+shared extension contracts
+```
+
+and participates in Vapor identity/version/dependency/publication semantics.
 
 ---
 
-## 6. Role and Authorization Model
+# 7 — Cargo Inspection and Reconciliation
 
-The local Role model is cumulative:
+Status:
+
+```text
+PROVEN
+```
+
+Vapor has exercised a real semantic Library relationship against editable Cargo state.
+
+The proof demonstrated:
+
+```text
+semantic dependency exists
++
+correct Cargo binding exists
+→ Valid
+```
+
+and:
+
+```text
+semantic dependency exists
++
+Cargo binding missing
+→ Missing
+```
+
+and safe repair:
+
+```text
+Missing
+→ Vapor-managed Cargo reconciliation
+→ correct physical dependency added
+→ Valid
+```
+
+while deliberately conflicting developer-authored Cargo state produces:
+
+```text
+Conflict
+```
+
+and Vapor refuses unsafe overwrite.
+
+This established an important invariant:
+
+> **Vapor may safely construct missing physical realization state when the answer is unambiguous, but it must not overwrite conflicting developer intent merely because Vapor prefers another state.**
+
+Do not expand Cargo reconciliation speculatively.
+
+Let new authored-project pressure reveal the next required behavior.
+
+---
+
+# 8 — Managed Rust/Cargo Toolchain
+
+Status:
+
+```text
+PROVEN
+```
+
+Vapor can operate using a pinned managed Rust/Cargo environment.
+
+The rewrite proved a self-hosting chain approximately equivalent to:
+
+```text
+bootstrap Rust/Cargo
+    ↓
+build Vapor
+    ↓
+Vapor-managed pinned toolchain
+    ↓
+build/test Vapor
+    ↓
+managed-built Vapor operates Vapor
+```
+
+The currently pinned toolchain includes Rust `1.97.0`.
+
+The long-term physical storage arrangement belongs to the Client/User Data/toolchain model.
+
+The important proven property is:
+
+> **Vapor development can be controlled through a Vapor-managed toolchain instead of depending accidentally on ambient system Rust.**
+
+First-party/root development should push strongly toward the pinned/vendored managed environment.
+
+---
+
+# 9 — Managed Cargo Project Resolution
+
+Status:
+
+```text
+PROVEN
+```
+
+Managed Cargo invocation does not fundamentally require shell CWD to establish Vapor meaning.
+
+Vapor can resolve an appropriate modeled Project and execute Cargo in the corresponding physical Rust context.
+
+This implementation proof aligns strongly with the current rule:
+
+```text
+CWD
+≠
+Vapor Context
+```
+
+The exact implementation must now migrate to the canonical Project identity/source model.
+
+---
+
+# 10 — Role / Authorization Separation
+
+Status:
+
+```text
+PROVEN / NORMATIVELY STABLE
+```
+
+Installed Roles are:
 
 ```text
 Player
@@ -192,646 +592,227 @@ Player
 → Ecosystem Developer
 ```
 
-All of these are locally obtainable.
-
 Role answers:
 
-> What kinds of work is this installation equipped to perform?
+> What kinds of work is this local environment equipped to perform?
 
-Authorization separately answers:
+Authorization answers:
 
-> May this authenticated identity perform this particular operation on this particular external target?
+> May this identity perform this protected operation against this target?
+
+Therefore:
+
+```text
+Role
+≠
+Authority
+```
+
+Root Authority is not a locally promotable Role.
+
+---
+
+# 11 — Vapor Self-Hosting
+
+Status:
+
+```text
+PROVEN THROUGH HISTORICAL COMMAND SURFACE
+```
+
+Vapor can build/test/develop Vapor using Vapor-managed infrastructure.
+
+Historical working operations have included forms such as:
+
+```text
+vapor ecosystem build
+
+vapor ecosystem test
+```
+
+and the rewrite has progressed to a working semantic `vapor run` path.
+
+These commands are implementation milestones.
+
+The generic public `ecosystem` namespace is no longer the target CLI architecture.
+
+The underlying self-hosting capability must survive the CLI/source migration.
+
+---
+
+# 12 — Local Deployment
+
+Status:
+
+```text
+PROVEN AT ARCHITECTURE-PROVING LEVEL
+```
+
+Vapor can build active Vapor source and deploy resulting binaries into a realistic local Vapor/Steam installation context.
+
+This established the distinction:
+
+```text
+build
+    produce artifacts
+
+local deploy
+    realize an installation/deployment layout
+
+official deployment
+    deliver to protected external provider/target
+```
+
+The exact current implementation may still carry old `ecosystem` vocabulary.
+
+Do not discard the proven deployment machinery merely because the public subject changes to:
+
+```text
+Client
+```
+
+---
+
+# 13 — Steam Deployment Backend
+
+Status:
+
+```text
+INITIAL BACKEND PROVEN
+```
+
+Steam-oriented deployment mechanisms exist.
+
+A complete final production self-hosting proof remains future work.
+
+The intended first-party semantic owner is now:
+
+```text
+Client
+```
+
+rather than one generic ecosystem deploy operation.
+
+---
+
+# 14 — Registry Service
+
+Status:
+
+```text
+WORKING SERVICE / OLD IDENTITY MODEL
+```
+
+A real Registry service exists and has participated in Vapor recovery/acquisition work.
+
+The Registry has proven important mechanisms such as:
+
+```text
+Vapor-side lookup
+
+provider registration/linkage
+
+source discovery
+
+recovery bootstrap
+```
+
+Its current schema/API still reflects an older source/ecosystem model.
 
 Therefore:
 
 ```text
-Role ≠ Authority
+Registry mechanism
+    valuable/proven
+
+Registry canonical source schema
+    migration required
 ```
-
-`Root Authority` is an authority relationship, not a locally promotable Vapor Role.
-
-An Ecosystem Developer may locally acquire/fork/edit/build/test Vapor or server/root source without official GHF authorization.
-
-Protected actions such as official deployment or publication remain authorization-dependent.
 
 ---
 
-## 7. CLI Model
+# 15 — Source Recovery / Acquisition
 
-The Vapor CLI now uses declarative Clap parsing.
-
-The universal `vapor` binary and dedicated application binaries are projections over the same logical Vapor Core.
-
-Principle:
-
-> **Binaries do not own semantics. Vapor Core owns semantics. Binaries expose subsets of those semantics.**
-
-The CLI uses explicit domain nouns such as:
+Status:
 
 ```text
-installation
-role
-authority
-toolchain
-source
-ecosystem
-
-packagepack
-enginepack
-gamepack
-modpack
-
-engine
-game
-engine-mod
-game-mod
-extension-mod
+ARCHITECTURE-PROVEN UNDER OLD MODEL
 ```
 
-rather than floating generic commands.
-
-Several modeled commands intentionally exist before their underlying operation is implemented.
-
----
-
-## 8. Generic Content Resolution
-
-Resolution has now been separated from Packagepack composition.
-
-Conceptually:
+Vapor has proven a recovery path conceptually resembling:
 
 ```text
-authored Vapor Content
-        ↓
-generic dependency resolution
-        ↓
-ResolvedContentGraph
-        ↓
-kind-specific semantic validation
-        ↓
-optional Packagepack composition derivation
-        ↓
-physical realization
+working development environment
+→ replace recoverable application/source state
+→ Steam/Vapor reacquisition
+→ Registry/provider lookup
+→ source acquisition
+→ submodule initialization
+→ derived-state regeneration
+→ build/test
 ```
 
-This distinction is important.
+This demonstrated an important architectural property:
 
-The dependency resolver recursively follows authored dependencies regardless of Content kind.
+> **Vapor can recover registered remotely recoverable source and regenerate derived development state.**
 
-Packagepack-specific concepts such as an effective Engine and Game are derived above the generic graph rather than defining the graph itself.
-
-Pack resolution is now conceptually available for:
+The new model must re-prove this using:
 
 ```text
-Packagepack
-Enginepack
-Gamepack
-Modpack
+Authority
+
+Source Repo Container
+
+Source Repo
+
+Project
+
+one canonical Superworkspace
 ```
 
-while richer real-world example graphs still need to be authored.
+while preserving the stronger safety distinction:
+
+```text
+remotely recoverable source
+≠
+unique local authored work
+```
 
 ---
 
-# Architectural Conclusions Reached During the Current Slice
+# 16 — Minimal Bevy ECS Engine
 
-## Vapor Does Not Define Modding Semantics
+Status:
 
-A Vapor dependency edge means:
+```text
+PROVEN
+```
 
-> One Vapor artifact requires another Vapor artifact.
+The Terminal Engine now owns a real minimal Bevy ECS application.
 
-It does **not** inherently mean:
-
-> Vapor knows how the depender modifies or extends the dependency.
-
-The thing being extended must explicitly define its own extension semantics.
-
-This may involve:
-
-* Rust APIs;
-* traits;
-* builders;
-* registries;
-* callbacks;
-* ECS Components;
-* ECS Resources;
-* ECS Events;
-* ECS Systems;
-* ECS SystemSets;
-* schedules;
-* plugins;
-* generated registration structures;
-* data schemas;
-* or any combination appropriate to that ecosystem.
-
-Therefore:
-
-> **Vapor composes extension participants. The participants define what extension means.**
-
----
-
-# ECS Direction
-
-The architecture-proving example should now use a deliberately slim Bevy ECS stack.
-
-The intended baseline is approximately:
+The intended minimal Bevy baseline remains approximately:
 
 ```text
 bevy_app
 bevy_ecs
 ```
 
-without pulling in rendering, windows, assets, audio, or the full Bevy application stack unless implementation pressure requires them.
+without pulling the full Bevy application stack merely because Bevy is involved.
 
-For the toy Terminal Engine:
-
-```text
-Engine
-owns Bevy App / World / broad lifecycle
-
-Game
-adds Engine-compatible ECS behavior and its own extension surfaces
-
-Engine Mod
-adds Engine-compatible ECS behavior and may expose new capabilities
-
-Game Mod
-may consume Engine, Game, Engine-Mod, Library, or other explicit APIs
-
-Extension Mod
-may extend another Mod's explicitly published surface
-```
-
-However:
-
-> **Bevy Plugin is not currently a universal Vapor Content ABI.**
-
-It may be the natural integration mechanism for this particular Engine.
-
-That Engine-specific decision must not automatically become a universal Vapor semantic rule.
-
----
-
-# Extension Capability Is Not Necessarily Narrowing
-
-An earlier working intuition was that extension surfaces become progressively narrower:
-
-```text
-Engine
-→ Game
-→ Game Mod
-→ Extension Mod
-```
-
-This is not a valid general invariant.
-
-A downstream artifact may expose a much larger or more general extension platform than the artifact it depends on.
-
-The correct model is:
-
-> **Any Vapor artifact may consume, implement, specialize, combine, or extend capabilities exposed by its dependencies, and may expose arbitrary new capabilities to its own dependents.**
-
-For example:
-
-```text
-small Engine Mod
-    ↓
-large Game Mod
-    ↓
-large public addon API
-    ↓
-an ecosystem of Extension Mods
-```
-
-is completely legitimate.
-
-The dependency structure is a graph of explicitly authored capabilities, not a hierarchy of monotonically decreasing extensibility.
-
----
-
-# Library Content
-
-A missing Content concept has now become apparent:
-
-```text
-Library
-```
-
-A Vapor Library is conceptually:
-
-> A Vapor-managed, versioned reusable Rust library which participates in Vapor dependency/source/publication semantics without inherently representing runnable Engine/Game/Mod behavior.
-
-A Library may provide:
-
-* ordinary Rust types;
-* traits;
-* algorithms;
-* builders;
-* ECS vocabulary;
-* Components;
-* Resources;
-* Events;
-* SystemSets;
-* registration interfaces;
-* shared schemas;
-* extension contracts.
-
-Libraries make it possible to publish reusable APIs through Vapor without requiring crates.io publication.
-
-Conceptually:
-
-```text
-Cargo crate
-+ Vapor identity
-+ Vapor SemVer
-+ Vapor dependency resolution
-+ Vapor source/publication lifecycle
-- crates.io requirement
-- inherent runtime/composition meaning
-```
-
-This should become a first-class Content kind before the richer Bevy extension example is developed.
-
----
-
-# Vapor and Cargo
-
-The current direction is **not** for Vapor to replace Cargo manifests entirely.
-
-Instead:
-
-> **Vapor should supervise and reconcile the portions of the Cargo graph that realize Vapor semantic dependencies while preserving ordinary editable Cargo projects.**
-
-Conceptually:
-
-```text
-Vapor.toml
-    semantic dependency intent
-        ↓
-Vapor resolver
-    exact Vapor graph
-        ↓
-Cargo reconciliation
-    desired physical Rust dependencies
-        ↓
-editable Cargo.toml / Cargo.lock
-        ↓
-normal Cargo
-```
-
-A Content project should remain an ordinary understandable Rust/Cargo project.
-
-Developers should still be free to maintain ordinary Cargo configuration such as:
-
-```text
-package metadata
-features
-lints
-build dependencies
-target-specific dependencies
-binary/library declarations
-non-Vapor crates.io dependencies
-profiles
-other Cargo-native configuration
-```
-
-Vapor supervises only the subset whose meaning derives from Vapor semantic dependencies.
-
----
-
-# Cargo Reconciliation
-
-A Vapor dependency may eventually resemble:
-
-```toml
-[dependencies.weighted-roll]
-id = "ghf-studios/example/weighted-roll-api"
-version = "^0.1"
-```
-
-After resolution, Vapor knows the exact semantic dependency and its physical Rust source.
-
-Vapor then ensures that Cargo has an equivalent usable dependency.
-
-This should be reconciliation rather than blind manifest generation.
-
-Conceptually Vapor compares:
-
-```text
-desired Vapor-resolved state
-previous Vapor realization state
-current editable Cargo.toml state
-```
-
-and can distinguish:
-
-```text
-valid
-stale
-conflicting
-locally overridden
-repairable
-```
-
-Likely operations include:
-
-```text
-verify
-repair
-build
-test
-```
-
-where `verify` diagnoses disagreement and `repair` may reconcile managed entries.
-
-Explicit local/unlocked overrides remain useful for development but must not silently become publishable state.
-
----
-
-# Build Script Boundary
-
-Cargo `build.rs` should not be treated as the primary Vapor dependency manager.
-
-Dependency resolution occurs before package build scripts can meaningfully alter the normal dependency graph.
-
-Additionally, Vapor must not steal the package's build-script mechanism from projects which legitimately require their own build script.
-
-A future build-time hook may still be useful for stale-state detection or integrity checks, but dependency realization belongs before Cargo execution.
-
----
-
-# Steam App Instance Direction
-
-The long-term installed Vapor environment is the Steam App Instance.
-
-Conceptually:
-
-```text
-Steam App Instance
-├── bin/
-├── rustup/
-├── rustup-home/
-├── cargo-home/
-├── steam/
-├── cache/
-├── apps/
-└── state/
-```
-
-Authored source does **not** belong there.
-
-Development source belongs in a separate Superworkspace because Steam uninstall/repair/update operations must never destroy unpushed authored work.
-
-Therefore:
-
-```text
-Steam App Instance
-= installed/disposable Vapor environment
-
-Superworkspace
-= durable authored Git source
-```
-
-Vapor binaries should primarily discover the installed environment relative to their own executable location.
-
-External Steam APIs may additionally verify or locate installations where necessary.
-
----
-
-# Local Deployment Before Steam Deployment
-
-Real deployment semantics should be tested locally before involving Steam publication.
-
-Distinguish:
-
-```text
-build
-= produce artifacts
-
-local deploy
-= materialize a realistic Vapor installation/staging layout
-
-official deploy
-= deliver that validated layout to an externally protected target
-```
-
-A future local workflow should be able to do something conceptually equivalent to:
-
-```text
-Vapor source
-→ ecosystem build
-→ ecosystem local deploy
-→ staged Vapor installation
-→ run staged Vapor
-→ install/promote tooling
-→ build/test/develop Vapor again
-```
-
-Steam deployment should then become primarily a provider-specific delivery step over an already-valid installation artifact.
-
----
-
-# Current Boundary
-
-The implementation is currently between two generations of architecture:
-
-## Already generalized
-
-```text
-Vapor Content identity/versioning
-Vapor manifests
-local Content discovery
-semantic dependency graph
-generic graph resolution
-Library Content
-initial Cargo inspection/reconciliation
-role / authority separation
-declarative CLI model
-Installation-owned managed toolchain
-managed Cargo handoff
-workspace/ecosystem self-hosting
-local ecosystem deployment
-Steam deployment backend
-source / Superworkspace discovery
-initial Project-context resolution
-```
-
-## Still Vertical-Slice-specific / incomplete
-
-```text
-final Cargo-reconciliation edge cases
-local-override persistence/publishability
-final App realization
-Engine/Game/Mod static integration
-example runtime APIs
-multi-Mod realization
-provider-backed general source acquisition
-complete context/session implementation
-semantic identity / structural-address implementation
-multi-realization selection
-full Launcher/SDK GUI
-production Registry/publication/distribution
-```
-
-This remains the correct broad pressure boundary.
-
-A bounded Context / Identity / Session / SDK design checkpoint has been inserted before the Bevy extension slice because the rewrite's self-hosting workflows exposed real ambiguity around Project identity, source realization, CWD, persistent context, CLI targeting, and future GUI behavior.
-
----
-
-# Revised Forward Roadmap
-
-## Phase A — Library Content
-
-Implemented at the initial architecture-proving level.
-
-Add the `Library` Content kind and its basic semantics.
-
-Minimum proof:
-
-```text
-Library
-→ discovered
-→ resolved
-→ listed/inspected
-→ usable as a dependency
-```
-
-Do not prematurely invent a separate library registry or package manager.
-
-Reuse Vapor identity/version/dependency machinery.
-
----
-
-## Phase B — Vapor-Managed Cargo Reconciliation
-
-**Status: architecture proof complete.**
-
-Vapor has now proven the required conservative reconciliation behavior using the real `wheel-rules → wheel-core` Library relationship.
-
-Observed proof:
-
-```text
-valid semantic dependency
-→ physical Cargo dependency present
-→ verify reports Valid
-
-physical Cargo dependency removed
-→ verify reports Missing
-
-repair invoked outside the source checkout
-→ Vapor resolves source context
-→ Installation-owned managed Cargo adds the missing binding
-→ verify reports Valid
-
-physical binding deliberately changed to a different real Cargo package
-→ verify reports Conflict
-
-repair attempted
-→ Vapor refuses unsafe overwrite
-→ conflicting developer-authored Cargo state remains untouched
-
-correct physical dependency restored
-→ verify reports Valid
-
-Vapor-managed Cargo
-→ builds/tests the consuming wheel-rules package successfully
-```
-
-This proves the intended principle:
-
-> **Vapor may safely establish missing physical realization state when the answer is unambiguous, but it must refuse to overwrite conflicting developer intent when it lacks sufficient provenance to decide safely.**
-
-Phase B is complete.
-
-Do not expand Cargo reconciliation speculatively.
-
-Future reconciliation semantics should arise from actual authored-project pressure.
-
----
-
-## Architecture Checkpoint — Context, Identity, Session, and SDK
-
-The self-hosting workflow exposed that filesystem path, shell CWD, short Project names, durable development state, and future graphical SDK behavior had been conflated.
-
-The normalized model distinguishes:
-
-```text
-Semantic Identity
-Structural Address
-Local Realization
-Development Session
-Open
-Focus
-Transient Selection
-Operation Target Cardinality
-Selector Resolution
-```
-
-Important invariant:
-
-> **Structural Address is not Semantic Identity, and Local Realization is neither of those.**
-
-The current implementation only needs to preserve a clean path toward the complete model.
-
-The complete SDK is not a prerequisite for continued runtime work.
-
----
-
-## Architecture Checkpoint — Client, Platform, and Repository Topology
-
-The ecosystem terminology now distinguishes:
-
-```text
-Vapor Client
-Vapor Platform Server
-future Vapor App Server
-```
-
-together with:
-
-```text
-Platform Communication
-≠
-App-Session Communication
-```
-
-Target repository naming is:
-
-```text
-Vapor-Root
-→ Vapor-Client
-
-Vapor-Server-Root
-→ Vapor-Platform-Server
-```
-
-The target model is approved.
-
-The actual provider/repository migration is temporarily deferred until repo-scale integrated refactoring can update code, manifests, scripts, deployment state, documentation references, tests, and remembered development state coherently.
-
-The active legacy provider names may therefore remain temporarily without reopening the naming design.
-
-Do not allow the deferred migration to block runtime development.
-
----
-
-## Phase C — Minimal Bevy ECS Engine
-
-**Status: implemented at the architecture-proving level.**
-
-The Terminal Engine now owns a real Bevy ECS application rather than a temporary callback-only fake runtime.
-
-It currently owns:
+The Engine owns facilities such as:
 
 ```text
 Bevy App / World
+
 terminal lifecycle
-input acquisition
+
+input
+
 Engine timing
+
 Terminal framebuffer
-Engine lifecycle control
+
+lifecycle control
 
 EngineSet::Configure
 EngineSet::Input
@@ -839,95 +820,155 @@ EngineSet::Simulate
 EngineSet::Present
 ```
 
-The Engine exposes Engine-specific ECS integration surfaces.
-
-Crossterm remains an Engine implementation detail.
-
-The Engine does not establish Bevy Plugin or any other particular mechanism as a universal Vapor ABI.
-
-This satisfies the intended Phase C proof.
+This proved that Vapor can host a real Engine-defined ECS runtime.
 
 ---
 
-## Phase D — Coherent Wheel Game
+# 17 — Bevy Is Not a Universal Vapor ABI
 
-**Status: implemented at the architecture-proving level.**
+Status:
 
-The Game now implements a real tiny wheel/spin game over the Terminal Engine.
+```text
+NORMATIVE CONCLUSION
+```
 
-Its authored/runtime vocabulary includes:
+The Engine may naturally use:
+
+```text
+Bevy Plugins
+Systems
+Resources
+Events
+Components
+```
+
+as its extension vocabulary.
+
+That does not mean:
+
+```text
+every Vapor behavioral Project
+must be a Bevy Plugin
+```
+
+Vapor composes participants.
+
+The Engine/Game/Library/Mod ecosystem defines the actual extension contract.
+
+---
+
+# 18 — Wheel Game
+
+Status:
+
+```text
+PROVEN
+```
+
+The Game now contains a coherent tiny gameplay model rather than Hello-World-only behavior.
+
+Its vocabulary includes concepts such as:
 
 ```text
 LootTable
+
 Wheel
+
 GameMode
+
 SpinStrategy
+
 LootTableRegistry
+
 WheelRegistry
+
 GameModeRegistry
+
 ActiveGameMode
-
-WheelGameSet::Register
-WheelGameSet::Input
-WheelGameSet::Spin
-WheelGameSet::Resolve
-WheelGameSet::Present
 ```
 
-The Game owns the meaning of those extension surfaces.
+and Game-owned scheduling/integration surfaces.
 
-The existing Tiny Game Mod already proves that downstream Content may consume those Game-defined extension points by:
-
-```text
-attaching a system to Game registration
-extending a Game-owned LootTable
-implementing SpinStrategy
-registering a new GameMode
-selecting that GameMode
-```
-
-That is a valid basic Game-Mod extension proof.
-
-It is not yet the richer cross-layer Game Mod required later.
-
-Phase D is complete.
+This gives later Mods real authored extension semantics to consume.
 
 ---
 
-## Architecture Checkpoint — Dependency Direction, Targeting, and Constituency
+# 19 — Basic Game-Mod Extension
 
-The richer Engine/Game/Mod example exposed an important missing semantic distinction.
+Status:
 
-The dependency graph remains one graph.
+```text
+PROVEN
+```
 
-However, different views and semantic relationships must be distinguished:
+The existing Game Mod demonstrates downstream use of Game-defined extension surfaces.
+
+It can exercise patterns such as:
+
+```text
+attach a system to Game registration
+
+extend a Game-owned LootTable
+
+implement SpinStrategy
+
+register a GameMode
+
+select a GameMode
+```
+
+This proves basic Game-side extension.
+
+It does not yet prove the richer cross-layer dependency example.
+
+---
+
+# 20 — Dependency / Target / Constituency Model
+
+Status:
+
+```text
+NORMATIVE MODEL CORRECTED
+IMPLEMENTATION MIGRATION PENDING
+```
+
+The richer runtime examples exposed that one dependency graph needs several semantic views:
 
 ```text
 Outbound Requirements
+
 Inbound Dependents
+
 Runtime Foundation
+
 Extension Target
+
 Selected Dependency Closure
+
 Effective Constituency
 ```
 
-The governing model is:
+The governing rule is:
 
 > **Selection comes from dependency reachability. Constituency comes from semantic classification of selected Content.**
 
-For example:
+Example:
 
 ```text
 Game
 ├── requires Engine
 ├── requires Engine Mod A
 └── requires Engine Mod B
+```
 
+with:
+
+```text
 Engine Mod A
-└── targets Engine
+    targets Engine
 
 Engine Mod B
-└── targets Engine
+    targets Engine
 ```
 
 derives:
@@ -939,142 +980,1076 @@ Effective Engine
 └── Engine Mod B
 ```
 
-without requiring the Packagepack to redundantly restate those Mods.
+without Packagepack redundantly listing those Mods again.
 
-Likewise:
-
-```text
-Packagepack
-→ Game Mod
-→ Game
-```
-
-selects the Game Mod into the effective Game constituency.
-
-A Registry entry targeting the same Engine/Game does not participate unless it is reachable from the selected dependency closure.
-
-The complete normative model is defined by:
-
-```text
-Vapor Dependency, Target, Constituency And Composition Model.md
-```
-
-This checkpoint should be reflected in the resolver/composition model before generic static realization is implemented.
+This correction must be reflected in resolver/composition structures before generic static realization.
 
 ---
 
-## Phase E — Effective Engine Constituency
+# 21 — Source Identity / Context / Selection Model
 
-Create the first meaningful Engine Mod and prove it as an actual constituent of the effective Engine.
+Status:
 
-A deliberately small candidate is:
+```text
+NORMATIVE MODEL NOW STABILIZED ENOUGH TO IMPLEMENT
+```
+
+Implementation pressure from self-hosting exposed ambiguity around:
+
+```text
+filesystem path
+
+CWD
+
+source identity
+
+working context
+
+operation target
+
+GUI navigation
+
+CLI selection
+```
+
+The old attempt introduced concepts such as:
+
+```text
+Semantic Identity
+
+Structural Address
+
+Local Realization
+
+Development Session
+
+Open
+
+Focus
+
+multiple realizations
+```
+
+That model is now superseded.
+
+The current model is:
+
+```text
+one canonical Superworkspace
+    no identity
+
+Authority
+    ↓
+Source Repo Container
+    ↓
+Source Repo / Vapor Workspace
+    ↓
+Project
+```
+
+and:
+
+```text
+Context
+    → Operation Subject
+    → Selection
+```
+
+with:
+
+```text
+Context
+    supplies missing left-side hierarchy
+
+Operation Subject
+    establishes natural complete operation scope
+
+Selection
+    supplies/narrows right-side topology
+```
+
+This is now implementation work.
+
+---
+
+# 22 — First-Party Facility Model
+
+Status:
+
+```text
+NORMATIVE MODEL STABILIZED
+IMPLEMENTATION PENDING
+```
+
+Stable first-party semantic subjects include:
+
+```text
+Client
+
+Platform Server
+
+Examples
+```
+
+These should be backed by trusted Registry/model bindings to current source.
+
+Their public semantics should not be hard-bound throughout Vapor to exact repository names.
+
+Conceptually:
+
+```text
+client
+    → trusted Client facility binding
+
+platform-server
+    → trusted Platform Server facility binding
+
+examples
+    → trusted Examples facility binding
+```
+
+The backing source topology may evolve.
+
+---
+
+# 23 — SDK Experience Model
+
+Status:
+
+```text
+NORMATIVE UX DIRECTION ESTABLISHED
+GRAPHICAL IMPLEMENTATION FUTURE
+```
+
+The SDK is the primary first-party graphical development surface.
+
+The old:
+
+```text
+Open
+Focus
+multiple Superworkspaces
+multiple canonical realizations
+```
+
+targeting model is retired.
+
+The SDK should instead project:
+
+```text
+one Superworkspace
+
+Authority
+Container
+Source Repo
+Project
+
+frontend Resume State
+
+persistent Context
+
+operation Subject
+
+transient Selection
+```
+
+A complete graphical SDK is **not** required before runtime composition development resumes.
+
+---
+
+# Current Documentation Convergence
+
+Status:
+
+```text
+ACTIVE
+```
+
+The Premium Docs are currently being rewritten to converge on the new architecture.
+
+This pass is intentionally broad because many files contained overlapping copies of older architecture.
+
+The goal is not:
+
+```text
+rewrite everything forever
+```
+
+The goal is:
+
+> **Reach one coherent set of conceptual owners before asking code/repository migration to implement them.**
+
+---
+
+# Documentation Ownership Goal
+
+Each concept should have one natural normative owner.
+
+Other documents should:
+
+```text
+reference
+
+specialize
+
+apply
+```
+
+rather than independently redefine it.
+
+Examples:
+
+```text
+Context / Identity / Selection
+    → Context model
+
+public command grammar
+    → CLI model
+
+source workflows
+    → Development Experience
+
+product/runtime topology
+    → Client / Platform / Runtime
+
+operational state
+    → Operational Model
+
+GUI development behavior
+    → SDK Experience
+
+repository migration
+    → Migration model + execution ledger
+
+implementation sequence
+    → this Roadmap
+```
+
+---
+
+# Documentation Folderization
+
+Status:
+
+```text
+DESIRED STRUCTURAL MIGRATION
+CODING-ASSISTANT WORK
+```
+
+The flat `Premium Docs` layout has outgrown itself.
+
+After conceptual ownership stabilizes, the documentation corpus should be reorganized into topic folders.
+
+Each major folder should have a central file/index which:
+
+```text
+explains the folder's domain
+
+lists the contained normative documents
+
+states conceptual ownership
+
+provides reading order
+
+links to adjacent domains
+```
+
+The exact folder names/layout should be chosen from the final concept ownership map rather than frozen prematurely here.
+
+The structural migration must:
+
+```text
+move files coherently
+
+repair links
+
+repair diagram links
+
+repair references in code/docs
+
+avoid duplicate normative owners
+
+preserve Git history where practical
+```
+
+This is well suited to an integrated coding assistant operating on the real repository.
+
+Do not hand-edit hundreds of paths independently during the conceptual pass.
+
+---
+
+# Repository Rename / Topology Migration
+
+Status:
+
+```text
+DESIGNED
+EXECUTION PENDING
+CODING-ASSISTANT WORK
+```
+
+Target first-party Source Repo Container names:
+
+```text
+Vapor-Root
+→ Vapor-Client
+
+Vapor-Server-Root
+→ Vapor-Platform-Server
+```
+
+This is not merely folder renaming.
+
+The migration has separate waves for:
+
+```text
+provider rename
+
+Registry provider linkage
+
+canonical Vapor identity migration
+
+local canonical Superworkspace layout
+
+manifest/CLI vocabulary
+
+historical Source Repo consolidation
+```
+
+The Repository Migration Execution Ledger owns the actual sequence.
+
+---
+
+# Near-Term Implementation Strategy
+
+The next work should be divided into two broad tracks:
+
+```text
+A. architecture/source-system migration
+
+B. runtime/composition continuation
+```
+
+Track A should establish a clean enough implementation base that Track B is no longer building on obviously retired source/context semantics.
+
+Track A must not expand into “finish the entire Vapor product before runtime work can resume.”
+
+---
+
+# TRACK A — Architecture / Source-System Migration
+
+# A0 — Finish Premium Docs Convergence
+
+Status:
+
+```text
+CURRENT
+```
+
+Complete the current rewrite pass across remaining relevant Premium Docs.
+
+Then perform a contradiction sweep.
+
+The goal is:
+
+```text
+one model
++
+clear conceptual owners
++
+known intentional open questions
+```
+
+not merely:
+
+```text
+every file has newer wording
+```
+
+---
+
+# A1 — Documentation Repository Structure
+
+Status:
+
+```text
+PENDING
+```
+
+Use integrated repository tooling/coding assistance to:
+
+```text
+design topic folders from final ownership map
+
+create central/index file for each folder
+
+move model documents
+
+move/reassociate diagrams where appropriate
+
+repair relative links
+
+repair cross-document references
+
+repair code links where any exist
+
+leave no duplicate old copies behind
+```
+
+This is a structural operation.
+
+It should be performed coherently rather than through manual piecemeal moves.
+
+---
+
+# A2 — Provider Repository Renames
+
+Status:
+
+```text
+PENDING
+```
+
+Execute the first migration wave:
+
+```text
+GitHub:
+
+GHF-Studios/Vapor-Root
+→
+GHF-Studios/Vapor-Client
+
+GHF-Studios/Vapor-Server-Root
+→
+GHF-Studios/Vapor-Platform-Server
+```
+
+Preserve working source.
+
+Reconcile:
+
+```text
+Git remotes
+
+Registry provider linkage
+
+scripts
+
+deployment configuration
+
+provider-facing documentation/references
+```
+
+Do not simultaneously mutate canonical Vapor identity unless the execution ledger reaches that wave.
+
+---
+
+# A3 — Registry Source Identity Model
+
+Status:
+
+```text
+PENDING
+```
+
+Migrate the Registry/Core model toward:
+
+```text
+Authority
+→ Source Repo Container
+→ Source Repo
+→ Project
+```
+
+Support:
+
+```text
+provider linkage
+
+first-party trust
+
+facility bindings
+
+acquisition policy
+
+old→new identity migration
+```
+
+The currently working Registry is migration input.
+
+Do not replace it gratuitously if its mechanisms can be cleanly adapted.
+
+---
+
+# A4 — Canonical First-Party Identity Migration
+
+Status:
+
+```text
+PENDING
+```
+
+After Registry readiness, migrate:
+
+```text
+GHF-Studios/Vapor-Root
+→
+GHF-Studios/Vapor-Client
+```
+
+and:
+
+```text
+GHF-Studios/Vapor-Server-Root
+→
+GHF-Studios/Vapor-Platform-Server
+```
+
+with deterministic descendant-prefix migration.
+
+This includes Source Repo and Project identities.
+
+Historical identity mappings must remain explicit through the migration period.
+
+---
+
+# A5 — Canonical Superworkspace Realization
+
+Status:
+
+```text
+PENDING
+```
+
+Converge local development source on:
+
+```text
+<Superworkspace>/
+└── Authority/
+    └── Source Repo Container/
+        └── Source Repo/
+```
+
+Example:
+
+```text
+<Superworkspace>/
+└── GHF-Studios/
+    ├── Vapor-Client/
+    ├── Vapor-Platform-Server/
+    └── Loo-Cast/
+```
+
+The Superworkspace itself has no Vapor identity.
+
+There is one canonical local realization per registered source identity in the managed model.
+
+Preserve authored Git state during migration.
+
+---
+
+# A6 — Source Repo Container / Source Repo Operations
+
+Status:
+
+```text
+PENDING
+```
+
+Replace the ambiguous generic source model with:
+
+```text
+source-repo-container
+
+source-repo
+```
+
+Implement/align:
+
+```text
+create
+
+acquire
+
+inspect/status
+
+Context navigation where appropriate
+```
+
+Container is the conservative default acquisition boundary.
+
+Independent Source Repo acquisition is explicitly modeled rather than inferred from technical Git clonability.
+
+---
+
+# A7 — Explicit Parent Creation
+
+Status:
+
+```text
+PENDING
+```
+
+Project creation should follow:
+
+```text
+create Container if intentionally requested
+    ↓
+create Source Repo if intentionally requested
+    ↓
+typed Project create
+```
+
+Example:
+
+```text
+source-repo-container create
+source-repo create
+game create
+```
+
+Higher-level create operations do not silently manufacture missing parents.
+
+Diagnostics should teach the missing step.
+
+---
+
+# A8 — Context / Subject / Selection Core
+
+Status:
+
+```text
+PENDING
+```
+
+Implement the now-settled resolution model:
+
+```text
+Context
+    left-side resolution prefix
+
+Operation Subject
+    middle semantic owner
+
+Selection
+    right-side refinement
+```
+
+Required properties:
+
+```text
+persistent Context optional
+
+per-operation Context override
+
+CWD not semantic targeting
+
+minimal unambiguous selectors allowed
+
+ambiguity never guessed
+
+no Selection = natural complete subject scope
+
+explicit Selection = operation-specific refinement
+```
+
+---
+
+# A9 — CLI Migration
+
+Status:
+
+```text
+PENDING
+```
+
+Converge public CLI away from:
+
+```text
+ecosystem
+
+generic source
+
+kind-redundant existing-object operations
+
+Open/Focus targeting
+```
+
+toward:
+
+```text
+source-repo-container
+
+source-repo
+
+client
+
+platform-server
+
+examples
+
+typed Project creation
+
+generic existing-object operations where appropriate
+
+--context
+
+--select
+```
+
+Exact final syntax for a few open details may be resolved during implementation.
+
+The semantic model is sufficiently defined.
+
+---
+
+# A10 — First-Party Facility Operations
+
+Status:
+
+```text
+PENDING
+```
+
+Model and implement shared machinery for:
+
+```text
+client
+
+platform-server
+
+examples
+```
+
+including:
+
+```text
+trusted identity resolution
+
+source acquisition
+
+build/test
+
+operation recipes
+
+selection legality
+
+diagnostics
+
+deployment primitives
+```
+
+Bespoke public semantics should reuse common Core implementation.
+
+---
+
+# A11 — Lightweight Operation Recipes
+
+Status:
+
+```text
+PENDING / IMPLEMENT ONLY UNDER REAL PRESSURE
+```
+
+Introduce lightweight authored workflow configuration where first-party operations require it.
+
+Target character:
+
+```text
+declarative workflow
++
+Vapor-native primitives
++
+small checked-in scripts where useful
+```
+
+Not:
+
+```text
+arbitrary application/plugin framework
+```
+
+Implement the minimum required to remove brittle hardcoded operation orchestration.
+
+---
+
+# A12 — Re-Prove Source Recovery
+
+Status:
+
+```text
+PENDING AFTER SOURCE MODEL MIGRATION
+```
+
+Repeat the previous recovery proof against the new model.
+
+Conceptually:
+
+```text
+working environment
+→ remove only proven-recoverable application/source state
+→ reacquire Vapor
+→ Registry resolves Source Repo Containers
+→ canonical Superworkspace restored
+→ authored topology reconciled
+→ derived state regenerated
+→ build/test/run
+```
+
+Do not destroy unique local authored work as part of the proof.
+
+---
+
+# Track A Exit Criterion
+
+Track A is sufficiently complete to resume deeper runtime work when:
+
+```text
+canonical source identity works
+
+canonical Superworkspace works
+
+source acquisition uses modeled Container/Repo semantics
+
+Context/Selection works coherently
+
+first-party Client/Platform subjects resolve correctly
+
+working self-hosting/build/test paths survive migration
+
+old ecosystem/source/Open/Focus architecture is no longer required
+```
+
+It does **not** require:
+
+```text
+complete SDK GUI
+
+complete publication platform
+
+complete Steam Workshop
+
+final Installer UX
+
+final Registry administration UI
+```
+
+---
+
+# TRACK B — Runtime / Composition Continuation
+
+The runtime work should resume from the existing proven Engine/Game/Mod/Cargo foundation.
+
+Do not restart the runtime architecture merely because source topology changed.
+
+---
+
+# B0 — Resolver / Composition Constituency Migration
+
+Status:
+
+```text
+NEXT RUNTIME MODEL IMPLEMENTATION
+```
+
+Update resolver/composition structures to express:
+
+```text
+Selected Dependency Closure
+
+Runtime Foundation
+
+Extension Target
+
+Effective Engine Constituency
+
+Effective Game Constituency
+```
+
+without hardcoding Mod cardinality.
+
+The model should derive constituency from the resolved graph.
+
+---
+
+# B1 — First Meaningful Engine Mod
+
+Status:
+
+```text
+QUEUED
+```
+
+Create a real Engine Mod.
+
+A small candidate remains:
 
 ```text
 Engine Diagnostics Mod
 ```
 
-which may consume Engine-owned facilities such as:
+It might consume Engine-owned facilities such as:
 
 ```text
 EngineTime
+
 TerminalFrame
+
 EngineSet::Present
 ```
 
-and visibly present diagnostic information.
-
-The exact feature matters less than the semantic proof:
+The semantic proof is:
 
 ```text
 Engine Mod
-→ directly targets Terminal Engine
-→ selected into Packagepack closure
-→ derived as Effective Engine constituent
-→ uses Engine-defined extension API
+→ targets Terminal Engine
+→ selected into dependency closure
+→ classified as Effective Engine constituent
+→ consumes Engine-defined API
 ```
 
-The Engine Mod should have its own Vapor manifest and ordinary Cargo project.
+It receives its own Project/manifest/Cargo realization.
 
-Do not add hardcoded Engine-Mod fields to Vapor realization.
+Vapor Core must not acquire a fixed `engine_mod` field.
 
 ---
 
-## Phase F — Cross-Layer Game Mod
+# B2 — Cross-Layer Game Mod
 
-Create a Game Mod which genuinely requires capabilities across layers.
+Status:
 
-For example:
+```text
+QUEUED
+```
+
+Create a Game Mod requiring capabilities from several layers.
+
+A useful form:
 
 ```text
 Casino Game Mod
 ├── targets Wheel Game
-├── requires Engine Diagnostics / Weighted Roll Engine Mod
-└── requires supporting Libraries as appropriate
+├── requires Engine Mod capability
+└── requires Library APIs
 ```
 
-A stronger eventual candidate remains a Weighted Roll capability because it creates useful cross-layer semantics rather than purely visual demonstration.
-
-The Game Mod should exercise:
+It should consume:
 
 ```text
-Game-owned extension points
+Game-owned extension API
+
 Engine-owned API
+
 Engine-Mod-owned capability
-ordinary Library APIs
+
+Library APIs
 ```
 
-This proves that Vapor's dependency model can express:
+This proves:
 
-> A Game-side constituent requiring a particular effective Engine constituency.
+> A Game-side constituent may require a particular effective Engine constituency.
 
-No hardcoded notion of which Mod is allowed to depend on which other Mod count should exist.
+No artificial dependency-direction restriction should forbid this.
 
 ---
 
-## Phase G — Manually Prove Real Static Integration
+# B3 — Manual Rich Static Integration
 
-Before teaching Vapor a generic static-realization algorithm, manually prove one ordinary Rust composition containing at least:
+Status:
+
+```text
+QUEUED
+```
+
+Before generating a generic realization, manually assemble one ordinary Rust composition containing at least:
 
 ```text
 Base Engine
+
 Engine Mod
+
 Base Game
+
 Game Mod
+
 Libraries
 ```
-
-The manually assembled composition should be derived conceptually from the same selected dependency graph Vapor resolves.
 
 Observe:
 
 ```text
-which Rust packages must be linked
-which APIs are called
-which Content requires initialization
-which ordering constraints are genuine
-which constraints belong to Engine/Game semantics
-which information Vapor actually needs to generate
+which Cargo packages must participate
+
+what initialization is actually required
+
+which calls/order are genuine
+
+what belongs to Engine semantics
+
+what belongs to Game semantics
+
+what information Vapor must know
+
+what information Vapor should remain ignorant of
 ```
 
-Do not prematurely decree:
+Do not prematurely impose a universal:
 
 ```text
-all behavioral Content implements one universal Vapor trait
-all Mods are Bevy Plugins
-all Content exposes install(&mut App)
+VaporContent::install(&mut App)
 ```
 
-unless implementation pressure actually proves such a contract necessary.
+or:
 
-The purpose of Phase G is to discover the smallest correct static integration contract.
+```text
+every Mod = Bevy Plugin
+```
+
+contract.
 
 ---
 
-## Phase H — Generic Graph-Derived Static Realization
+# B4 — Discover Minimal Static Integration Contract
 
-Replace the current vertical-slice realization machinery.
+Status:
 
-The following model must disappear:
+```text
+QUEUED
+```
+
+Use B3 to determine the smallest general contract Vapor actually needs.
+
+Possible outcomes may involve:
+
+```text
+generated registration
+
+Engine-defined composition entrypoints
+
+Cargo feature/package structure
+
+authored integration metadata
+
+macro-generated glue
+
+some combination
+```
+
+Do not select the abstraction in advance.
+
+---
+
+# B5 — Generic Graph-Derived Static Realization
+
+Status:
+
+```text
+QUEUED
+```
+
+Replace the Vertical-Slice-specific realization.
+
+The fixed model:
 
 ```rust
 struct AppPackages {
@@ -1084,7 +2059,9 @@ struct AppPackages {
 }
 ```
 
-and the generated composition must no longer assume:
+must disappear.
+
+Likewise, generated assumptions equivalent to:
 
 ```rust
 engine::run(|app| {
@@ -1093,61 +2070,83 @@ engine::run(|app| {
 });
 ```
 
-Those structures were valid architecture-proving scaffolding.
+must disappear unless later generalized semantics truly justify them.
 
-They are not the production model.
-
-The new realization should derive from:
+Target conceptual structure:
 
 ```text
 ResolvedContentGraph
         ↓
-validated target relationships
+validated semantic relationships
         ↓
-Effective Engine constituency
+Effective Engine
+    base + constituents
 +
-Effective Game constituency
+Effective Game
+    base + constituents
 +
 support dependency closure
         ↓
-physical Rust package realization
+physical Cargo realization
         ↓
-smallest Engine-defined static integration contract discovered in Phase G
+minimal integration contract
+        ↓
+statically composed Vapor App
 ```
-
-The number of Mods must not be represented in Vapor Core by fixed struct fields.
-
-Conceptually the composition model should evolve toward:
-
-```text
-ResolvedComposition
-├── graph
-├── EffectiveEngine
-│   ├── base
-│   └── constituents
-└── EffectiveGame
-    ├── base
-    └── constituents
-```
-
-Exact Rust ownership/storage types should be chosen during implementation rather than copied literally from documentation.
 
 ---
 
-## Phase I — Rich Pack Examples
+# B6 — Arbitrary Mod Cardinality
 
-After generic realization can handle graph-derived constituency, introduce meaningful:
+Status:
+
+```text
+QUEUED
+```
+
+Vapor Core must naturally support:
+
+```text
+zero Mods
+
+one Mod
+
+many Mods
+
+Mods requiring other Mods
+
+Extension Mods
+
+cross-layer dependency graphs
+```
+
+without corresponding fixed struct fields or special branches.
+
+The graph is the source of multiplicity.
+
+---
+
+# B7 — Rich Pack Examples
+
+Status:
+
+```text
+QUEUED
+```
+
+Once generic realization works, introduce meaningful:
 
 ```text
 Enginepack
+
 Gamepack
+
 Modpack
+
 multiple Packagepacks
 ```
 
-Examples should exercise real selection behavior.
-
-For example:
+Example:
 
 ```text
 Enginepack
@@ -1160,15 +2159,21 @@ Gamepack
 └── Casino Game Mod
 ```
 
-A Packagepack may then select these reusable fragments into one complete closure.
+Packs remain declarative selection/composition fragments.
 
-The point is to prove that Packs are declarative composition selectors rather than special runtime containers.
+They are not special runtime containers.
 
 ---
 
-## Phase J — Extension Ecosystem Explosion
+# B8 — Extension-Ecosystem Explosion
 
-Deliberately demonstrate that an addon may itself become an extension platform.
+Status:
+
+```text
+QUEUED
+```
+
+Deliberately create a ridiculous but small dependency topology.
 
 For example:
 
@@ -1182,235 +2187,905 @@ Roguelike Casino Extension
 ASCII Dungeon Extension
 ```
 
-Extension Mods should derive their effective Engine/Game side through their target chain.
+This should prove:
 
-The example implementation may remain tiny.
+```text
+an extension can itself become an extension platform
+```
 
-The dependency/composition topology should become intentionally ridiculous.
+and that extensibility is not monotonically narrowing.
 
 ---
 
-## Phase K — Content Creation and Templates
+# B9 — Content Creation Templates
 
-Implement creation workflows for:
+Status:
+
+```text
+QUEUED
+```
+
+Implement typed Project creation for:
 
 ```text
 Library
+
 Engine
+
 Game
+
 Engine Mod
+
 Game Mod
+
 Extension Mod
+
 Enginepack
+
 Gamepack
+
 Modpack
+
 Packagepack
 ```
 
-Use small built-in canonical templates first.
-
-Do not create a generalized remote template ecosystem until real pressure requires it.
-
----
-
-## Phase L — Local Ecosystem Deployment
-
-**Status: initial architecture-proving implementation already exists ahead of roadmap order.**
-
-Vapor can build the active Vapor Workspace and deploy the resulting Vapor binaries back into the canonical Steam App Instance.
-
-Continue refining this only when runtime/development pressure requires it.
-
-Do not reopen it merely because its historical roadmap phase appears later.
-
----
-
-## Phase M — SDK / IDE Integration
-
-Continue toward plug-and-play development using:
+This phase must use the new explicit parent topology:
 
 ```text
-managed pinned Rust
-stdlib source
-rust-analyzer
-Cargo environment
-Workspace/Project attachment
-SDK
-external IDE integration
+Authority
+→ Container
+→ Source Repo
+→ Project
 ```
 
-The integrated SDK remains the primary first-party graphical development surface.
+Templates should start small and built-in.
 
-External IDEs remain complementary.
+Do not create a generalized remote template marketplace without pressure.
 
 ---
 
-## Phase N — Provider and Authorization Integration
+# B10 — Real Loo Cast / Spacetime Pressure
 
-Add provider-backed operations for:
+Status:
 
 ```text
-Git
+FUTURE AFTER TOY ARCHITECTURE PROVES GENERALITY
+```
+
+Once the toy graph can express arbitrary realistic extension topology, begin applying the model to actual:
+
+```text
+Spacetime Engine
+
+Loo Cast
+
+USF
+```
+
+requirements.
+
+The toy ecosystem exists to make architectural mistakes cheap.
+
+It should not become an endless substitute for the real project.
+
+---
+
+# TRACK C — Product / Platform Expansion
+
+These phases remain important but do not all block Track B.
+
+---
+
+# C1 — SDK Graphical Implementation
+
+Status:
+
+```text
+FUTURE / MAY BEGIN IN PARALLEL
+```
+
+Architecture-proving implementation order:
+
+```text
+application shell
+
+real Role/toolchain state
+
+canonical Superworkspace Explorer
+
+Authority / Container / Repo / Project topology
+
+Context navigation
+
+GUI Selection → Operation Selection
+
+Inspector
+
+Problems
+
+Build/Test
+
+Content graphs
+
+Git/provider views
+
+Client / Platform Server surfaces
+
+publication/deployment surfaces
+
+integrated editing
+```
+
+The old Open/Focus session model must not be implemented.
+
+---
+
+# C2 — External IDE Integration
+
+Status:
+
+```text
+INITIAL RUSTROVER RECONCILIATION PROVEN
+FURTHER INTEGRATION FUTURE
+```
+
+Continue deriving external IDE state from:
+
+```text
+canonical Superworkspace
+
+managed toolchain
+
+Source Repo / Project topology
+
+Cargo realization
+```
+
+IDE state should remain derived/reconcilable where possible.
+
+---
+
+# C3 — Provider Authentication and Authorization
+
+Status:
+
+```text
+PARTIAL / FUTURE EXPANSION
+```
+
+Integrate:
+
+```text
+Git provider
+
 GitHub
+
 Steam
+
 SteamCMD
-Registry
+
+Vapor Platform identity
 ```
 
 while preserving:
 
 ```text
-Role
+local Role
 ≠
-Authority
+remote authorization
 ```
 
-Local Ecosystem Developer workflows must remain possible without official authority.
+Local development must remain possible without protected official authority.
 
 ---
 
-## Phase O — Steam Development Deployment
+# C4 — Publication
 
-**Status: backend work exists ahead of roadmap order; complete production proof remains future work.**
+Status:
+
+```text
+FUTURE
+```
+
+Implement immutable Content publication:
+
+```text
+canonical Project/Vapor ID
+
+SemVer
+
+exact Git commit binding
+
+provider release
+
+Registry record
+
+Yank/Ban
+```
+
+Publication should build on the source topology rather than define a second identity system.
+
+---
+
+# C5 — Packagepack Built Distribution
+
+Status:
+
+```text
+FUTURE
+```
+
+For complete Packagepacks:
+
+```text
+published Packagepack version
+→ exact historical dependency resolution
+→ target build
+→ provenance
+→ Steam Workshop / appropriate distribution
+```
+
+Default Loo Cast remains Steam-depot-distributed.
+
+Additional Player-facing Vapor Apps use Workshop according to current distribution direction.
+
+---
+
+# C6 — Production Build Provenance
+
+Status:
+
+```text
+FUTURE
+```
+
+Record enough to identify:
+
+```text
+Packagepack version
+
+exact resolved graph
+
+all source commits
+
+managed toolchain
+
+target
+
+build configuration
+
+physical artifacts
+```
+
+Semantic reproducibility is required.
+
+Bitwise reproducibility remains a strong target.
+
+---
+
+# C7 — Full Steam Development Self-Hosting
+
+Status:
+
+```text
+PARTIALLY PROVEN / FUTURE COMPLETE PROOF
+```
 
 Target:
 
 ```text
-build Vapor installation
-→ local stage/deploy
-→ SteamPipe preview
-→ publish vapor-dev
-→ launch Steam-installed Vapor
-→ use installed Vapor to develop/build/deploy Vapor again
+build Client
+→ local deployment proof
+→ Steam preview/development deployment
+→ launch Steam-installed Client
+→ use installed Client to acquire/develop/build/test/deploy Vapor again
+```
+
+This is a strong future self-hosting milestone.
+
+---
+
+# C8 — Production Platform Server Operations
+
+Status:
+
+```text
+PARTIAL SERVICE IMPLEMENTATION EXISTS
+FUTURE SYSTEMATIC FACILITY MODEL
+```
+
+Converge Platform Server operations on:
+
+```text
+platform-server build
+
+platform-server test
+
+platform-server deploy local
+
+platform-server deploy vps
+```
+
+with operation recipes, service scope, health checks, and authorization.
+
+---
+
+# C9 — Registry Archaeology Resolution
+
+Status:
+
+```text
+PENDING
+```
+
+Resolve the historical overlap between:
+
+```text
+Vapor-Registry
+
+Vapor-Registry-Server
+```
+
+There must be one canonical Registry authority.
+
+Archive or narrowly repurpose the old repository.
+
+---
+
+# C10 — Vapor App Server
+
+Status:
+
+```text
+FUTURE
+```
+
+Do not create:
+
+```text
+Vapor-App-Server
+```
+
+merely to complete the product topology.
+
+Create it when actual server-side Vapor App runtime pressure appears.
+
+---
+
+# Source Cleanroom / Consolidation Track
+
+The source cleanroom effort should happen in coordination with repository stabilization.
+
+It should not become an endless prerequisite.
+
+---
+
+# Client Source Consolidation
+
+Historical Client Source Repos such as:
+
+```text
+Vapor-Entrypoint
+
+Vapor-Installer
+
+Vapor-Launcher
+
+Vapor-SDK
+
+Vapor-Shell
+```
+
+should be treated as archaeology/migration sources.
+
+Where their independent Source Repo boundaries no longer match semantic ownership:
+
+```text
+understand
+→ preserve valid implementation/design
+→ cleanly integrate into Vapor
+→ prove replacement
+→ remove submodule membership
+→ archive
+```
+
+The product/application roles may remain.
+
+The repository boundaries need not.
+
+---
+
+# Preserve SDK Visual Ancestry
+
+The historical Figma/Tauri SDK prototype is not disposable.
+
+Preserve:
+
+```text
+visual design
+
+layout
+
+interaction character
+
+useful frontend implementation
+
+design tokens/components where extractable
+```
+
+Do not preserve:
+
+```text
+obsolete SDK semantic Core
+
+obsolete independent SDK CLI
+
+old Open/Focus/source identity architecture
 ```
 
 ---
 
-## Phase P — Registry / Publication / Distribution
+# Cleanroom Rule
 
-Expand from the proven local semantic model into:
+For old code:
 
 ```text
-remote Content acquisition
-Registry resolution
+inspect mechanism
+→ understand why it worked
+→ identify still-valid invariant
+→ design simplest current equivalent
+→ implement
+→ prove
+→ fossilize old version
+```
+
+Prefer this over:
+
+```text
+copy old implementation
+→ rename types
+→ accumulate compatibility layers
+```
+
+---
+
+# Docsification
+
+Once source ownership settles, active code should be made approachable to an uninitiated but technical developer.
+
+Desired layering:
+
+```text
+clear code
+
+→ module/crate documentation
+
+→ public API docs
+
+→ normative architecture docs
+
+→ generated reference
+
+→ approachable Vapor Books/tutorials
+```
+
+Do not heavily docsify repositories scheduled for imminent archival.
+
+---
+
+# Development Method
+
+Continue:
+
+> **Model enough → implement a vertical slice → observe real pressure → refine the model → continue implementation.**
+
+The current process is evidence that this works.
+
+Examples:
+
+```text
+simple Packagepack realization
+    → revealed Cargo graph distinction
+
+Library relationship
+    → revealed conservative Cargo reconciliation
+
+self-hosting
+    → revealed source/context/session problems
+
+richer Mod examples
+    → revealed target/constituency distinction
+```
+
+Architecture should continue emerging from real pressure without allowing temporary scaffolding to become permanent merely through age.
+
+---
+
+# Do Not Speculate Past Pressure
+
+Avoid expanding systems merely because they appear on the future roadmap.
+
+Examples:
+
+```text
+do not build universal operation-recipe language
+before real first-party recipes need it
+
+do not build remote template marketplace
+before templates require it
+
+do not build App Server
+before server-runtime pressure exists
+
+do not build arbitrary provider abstraction
+before another provider matters
+
+do not generalize Cargo reconciliation
+without another real conflict/state
+```
+
+---
+
+# What Should Not Block Runtime Progress Forever
+
+The following do **not** need to be production-complete before runtime composition work continues:
+
+```text
+full SDK GUI
+
+Steam Workshop publication
+
+final Launcher polish
+
+complete App Server
+
+all provider integrations
+
+all Content publication workflows
+
+final docs folder placement
+```
+
+However, the canonical source identity/Context/Selection migration should be established enough that new core work does not continue deepening obviously retired development architecture.
+
+---
+
+# Immediate Next Sequence
+
+The current intended sequence is:
+
+```text
+Premium Docs convergence
+        ↓
+contradiction / ownership sweep
+        ↓
+integrated coding-assistant handoff
+        ↓
+documentation folderization + central indexes
+        ↓
+repository/provider rename wave
+        ↓
+Registry source identity readiness
+        ↓
+canonical Container identity migration
+        ↓
+canonical Superworkspace layout
+        ↓
+source-repo-container / source-repo operations
+        ↓
+Context / Subject / Selection implementation
+        ↓
+first-party Client / Platform Server facility migration
+        ↓
+re-prove build / test / run / recovery
+        ↓
+resume runtime constituency work
+        ↓
+first Engine Mod
+        ↓
+cross-layer Game Mod
+        ↓
+manual rich static integration
+        ↓
+generic graph-derived realization
+```
+
+Some independent steps may overlap where safe.
+
+The dependency direction is what matters.
+
+---
+
+# Coding-Assistant Handoff Boundary
+
+After the Premium Docs convergence pass, produce one integrated coding-assistant handoff for the structural migration.
+
+That handoff should give the agent:
+
+```text
+final terminology
+
+identity hierarchy
+
+Superworkspace invariant
+
+Registry migration requirements
+
+provider rename sequence
+
+documentation folderization requirements
+
+CLI target model
+
+Context / Selection semantics
+
+first-party facility semantics
+
+migration safety rules
+
+required verification gates
+```
+
+The coding assistant should inspect actual current local state before changing:
+
+```text
+Git
+
+.gitmodules
+
+manifests
+
+Registry schema/data
+
+scripts
+
+deployment configuration
+
+IDE paths
+
+documentation links
+```
+
+The normative docs define the target.
+
+The local repository state defines the actual migration inputs.
+
+---
+
+# Important Migration Safety Rule
+
+The integrated migration must never assume:
+
+```text
+remote exists
+therefore local source is disposable
+```
+
+Before moving/renaming/consolidating source, preserve:
+
+```text
+dirty changes
+
+unpushed commits
+
+branches
+
+detached development commits
+
+submodule state
+
 provider linkage
-GitHub release/source publication
-Packagepack release artifacts
-Workshop publication
-yank/ban
-historical versions
-production provenance/locking
 ```
 
-These systems should consume the established dependency/composition model rather than redefine it.
+Derived state may be regenerated.
+
+Authored source must be protected.
 
 ---
 
-# Immediate Next Work
+# Recovery Gate
 
-The current immediate sequence is:
+After major source/identity migration, re-prove:
 
 ```text
-Phase B
-    COMPLETE
+Vapor starts
 
-Phase C
-    COMPLETE
+managed toolchain works
 
-Phase D
-    COMPLETE
+managed Cargo works
 
-        ↓
+Client builds
 
-dependency / target / constituency model correction
-        ↓
-update resolver/composition structures enough to express it cleanly
-        ↓
-Phase E — first Engine Mod
-        ↓
-derive Effective Engine constituency
-        ↓
-Phase F — cross-layer Game Mod
-        ↓
-Phase G — manually observe real static integration
-        ↓
-Phase H — DELETE fixed AppPackages realization
-        ↓
-generic graph-derived static realization
+Client tests
+
+semantic run works
+
+source discovery works
+
+Registry lookup works
+
+source acquisition works
+
+canonical Superworkspace works
+
+IDE integration repairs
+
+local deployment works
 ```
 
-Do not perform the deferred repository migration as a prerequisite.
-
-Do not build the complete SDK as a prerequisite.
-
-Do not expand Cargo reconciliation without new pressure.
-
-The immediate architecture question is now:
-
-> **How does one resolved Vapor dependency graph derive a complete effective Engine/Game constituency which can later be realized statically without Vapor inventing the participating ecosystem's runtime semantics?**
+Do not stack subsequent migration waves on a broken foundation.
 
 ---
 
-# Development Method — Restated
+# Runtime Return Gate
 
-Continue using:
-
-> **Model enough → implement a vertical slice → observe real pressure → refine the model → continue.**
-
-Avoid both extremes:
+Return to deeper runtime realization once:
 
 ```text
-design everything first
+new source identity is operational
+
+self-hosting survives
+
+Context/Selection semantics no longer depend on Open/Focus/CWD
+
+first-party Client subject works coherently
+
+old ecosystem command semantics are no longer architectural dependencies
 ```
 
-and:
-
-```text
-preserve vertical-slice scaffolding until it accidentally becomes architecture
-```
-
-The current constituency correction is a direct example of the method working correctly.
-
-The existing hardcoded App realization was useful because it produced enough real Engine/Game/Mod pressure to reveal the model it now needs to become.
+Then stop polishing infrastructure and return to Engine/Game/Mod pressure.
 
 ---
 
 # Current Summary
 
 ```text
-Semantic Content model                  ✅
-Local discovery                         ✅
-Packagepack vertical slice              ✅
-Pinned managed Rust                     ✅
-Vapor self-build/test                   ✅
-Role / authority model                  ✅
-CLI model                               ✅
-Generic Content resolution              ✅
-Library Content                         ✅
-Cargo inspection/reconciliation         ✅ proven
-Managed Cargo Project resolution        ✅
-Local ecosystem deployment              ✅ initial
-Steam deployment backend                ✅ initial
+VERTICAL / CONTENT FOUNDATION
 
-Minimal Bevy ECS Engine                 ✅
-Coherent Wheel Game                     ✅
-Basic Game Mod extension                ✅
+Vertical Slice 0                         PROVEN
+Semantic Content graph                   PROVEN
+Generic Content resolution               PROVEN
+Packagepack composition                  PROVEN initial
+Library Content                          PROVEN
+Cargo realization                        PROVEN initial
+Cargo inspection/reconciliation          PROVEN
+Managed Cargo                            PROVEN
+Pinned managed Rust                      PROVEN
+Vapor self-build/test                    PROVEN
+Semantic run                             PROVEN
 
-Dependency target semantics             MODEL CORRECTION NOW
-Effective Engine/Game constituency       NEXT
-Engine Mod capability                    NEXT
-Cross-layer Game Mod                     queued
-Manual rich static integration           queued
-Generic graph-derived realization        queued
-Rich Pack ecosystem                      queued
-Extension ecosystem explosion            queued
 
-Repository migration                    designed / deferred
-Full source cleanroom/docsification      planned
-SDK graphical implementation             later checkpoint
-Registry/publication                     later
+SOURCE / DEVELOPMENT
+
+Role / Authority separation              STABLE
+One Superworkspace model                 DESIGNED
+Authority/Container/Repo/Project          DESIGNED
+Context / Subject / Selection             DESIGNED
+Source Repo = Vapor Workspace             STABLE
+Container acquisition model               DESIGNED
+First-party facility model                DESIGNED
+
+Old Open/Focus/session model               RETIRED
+Old multiple-realization model             RETIRED
+CWD semantic targeting                     RETIRED
+
+
+INFRASTRUCTURE
+
+Local Client deployment                   PROVEN initial
+Steam deployment backend                  PROVEN initial
+Registry service                           WORKING, SCHEMA MIGRATION NEEDED
+Source recovery                            PROVEN under old model
+Canonical recovery                         RE-PROVE AFTER MIGRATION
+
+Docs conceptual convergence                ACTIVE
+Docs folderization                         PENDING
+Vapor-Root → Vapor-Client                  DESIGNED / PENDING
+Vapor-Server-Root → Platform Server        DESIGNED / PENDING
+Registry identity migration                PENDING
+CLI semantic migration                     PENDING
+
+
+RUNTIME
+
+Minimal Bevy ECS Engine                    PROVEN
+Wheel Game                                 PROVEN
+Basic Game Mod                             PROVEN
+
+Dependency targeting                       MODEL STABLE
+Effective constituency                     NEXT RUNTIME WORK
+First Engine Mod                           QUEUED
+Cross-layer Game Mod                       QUEUED
+Manual rich static integration             QUEUED
+Generic graph-derived realization          QUEUED
+Rich Packs                                 QUEUED
+Extension ecosystem explosion              QUEUED
+Real Spacetime/Loo Cast pressure            FUTURE
+
+
+PRODUCT
+
+SDK semantic model                         DESIGNED
+SDK implementation                         FUTURE / PARALLEL
+Publication model                          DESIGNED
+Publication implementation                 FUTURE
+Workshop distribution                      FUTURE
+Platform facility operations               PARTIAL / FUTURE
+Vapor App Server                           FUTURE
 ```
 
-The rewrite has now crossed from merely resolving Content graphs into modeling how those graphs describe real effective runtime compositions.
+---
 
-> **The next milestone is not “support more Mods.” It is making arbitrary Mod cardinality and constituency a natural consequence of the graph rather than a special case in Vapor's code.**
+# Current Frontiers
+
+There are now two clear frontiers.
+
+## Immediate infrastructure frontier
+
+> **Migrate Vapor's working self-hosting/source infrastructure into the new canonical source identity, Superworkspace, CLI, Registry, Context, and first-party facility model.**
+
+## Immediate runtime frontier after that migration gate
+
+> **Derive arbitrary effective Engine/Game constituency from one resolved dependency graph and use real implementation pressure to discover the smallest correct generic static integration contract.**
+
+These are concrete implementation problems.
+
+They no longer require reopening Vapor's foundational terminology from scratch.
+
+---
+
+# Roadmap Invariants
+
+* Existing proven behavior is migration input rather than disposable legacy merely because terminology changed.
+* Current normative Premium Docs outrank historical implementation vocabulary.
+* Vertical Slice 0 remains a regression specimen.
+* Vapor semantic graph and Cargo physical graph remain distinct.
+* Vapor determines semantic composition; Cargo performs Rust realization.
+* Vapor does not define universal Mod/runtime extension semantics.
+* Library remains first-class Vapor Content.
+* Cargo reconciliation remains conservative around developer intent.
+* First-party development uses the Vapor-managed toolchain where required.
+* Role and Authority remain independent.
+* The canonical local source root is one Superworkspace with no Vapor identity.
+* Canonical source identity is Authority → Source Repo Container → Source Repo → Project.
+* Source Repo equals Vapor Workspace.
+* Context supplies missing left-side hierarchy.
+* Operation Subject establishes natural complete scope.
+* Selection supplies/narrows right-side topology.
+* CWD is not semantic Vapor targeting.
+* Open/Focus are not canonical Core targeting concepts.
+* First-party Client, Platform Server, and Examples are semantic facilities rather than arbitrary repository aliases.
+* Repository provider names, canonical Vapor identity, and local paths are distinct migration dimensions.
+* Documentation folderization is structural repository work, not a new conceptual architecture.
+* Source migration must preserve unique authored Git state.
+* Repair is not source reacquisition or Git reset.
+* Registry recovery mechanisms should be preserved while its canonical schema is migrated.
+* Full SDK implementation does not block runtime architecture indefinitely.
+* Static realization must derive naturally from graph topology rather than fixed Mod fields.
+* Packs remain declarative composition selectors rather than runtime containers.
+* Runtime extension contracts belong to participating Engine/Game/Mod/Library ecosystems.
+* Future systems should be implemented only when actual pressure requires them.
+* After the source/identity migration is sufficiently proven, Vapor returns to runtime work rather than polishing infrastructure forever.
+
+---
+
+# Open Roadmap Questions
+
+The following remain implementation questions rather than foundational architecture blockers:
+
+* Exact Premium Docs folder names and final index hierarchy.
+* Exact final spelling of `source-repo-container` if a shorter equally precise name proves superior.
+* Exact `open` / Context-navigation CLI wording.
+* Exact `--select` multi-selection grammar.
+* Exact Registry schema implementation for hierarchical identities and migrations.
+* Exact persistent old-ID compatibility duration.
+* Exact first-party operation-recipe manifest schema.
+* Exact Project filesystem/Cargo layout templates.
+* Exact minimal static integration contract discovered by rich manual composition.
+* Exact Run-development composition model.
+* Exact long-term managed-toolchain physical storage.
+* Exact SDK frontend technology.
+* Exact provider permission/creation UX.
+* Exact publication transaction implementation.
+* Exact Workshop version/artifact mapping.
+* Exact point at which Spacetime Engine/Loo Cast replaces toy examples as the primary architecture pressure source.

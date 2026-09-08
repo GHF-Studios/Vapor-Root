@@ -1,339 +1,418 @@
-# Vapor Rewrite Bootstrap
-
 > [!info]
-> This document defines the original implementation direction and architecture-proving bootstrap for the Vapor rewrite.
+> This document records the architectural rationale and first proof milestone of the Vapor rewrite.
 >
-> It is intentionally focused on the boundary between the conceptual model and the first implementation slice.
+> It is intentionally historical.
 >
-> The rewrite has since progressed beyond this initial bootstrap. Current implementation status and forward phases are tracked in:
+> It explains:
+>
+> * why the rewrite was started;
+> * how legacy Vapor source should be treated;
+> * what Vertical Slice 0 was intended to prove;
+> * what that slice actually proved;
+> * which implementation principles emerged from it.
+>
+> It does **not** define Vapor's current architecture in full.
+>
+> Current normative semantics belong to the focused Premium Docs.
+>
+> Current implementation state and future work belong to:
 >
 > **`Vapor Rewrite Progress And Roadmap.md`**
->
-> This document remains useful as the historical rationale and specification for Vertical Slice 0.
 
 ---
 
-# Rewrite Position
+# Rewrite Thesis
 
-The current Vapor implementation should generally be treated as legacy/reference material.
+The rewrite began from a simple conclusion:
 
-Existing code may still contain:
+> **Existing Vapor implementation was useful evidence, but it was no longer a trustworthy architectural authority.**
 
-* Useful implementation ideas.
-* Valid integration details.
-* Steam/GitHub identifiers.
-* Repository-layout knowledge.
-* Toolchain configuration.
-* Naming worth preserving.
-* Small pieces that remain architecturally sound.
+Legacy source contained valuable:
 
-However:
+```text id="ap22dy"
+Steam integration
 
-> **The new implementation is not required to preserve compatibility with legacy Vapor internals.**
+Git/provider knowledge
 
-Existing implementation structure must not override the current Premium Docs model.
+toolchain integration
 
-Where legacy code conflicts with the current model, the current model wins.
+repository-layout knowledge
+
+implementation mechanisms
+
+identifiers
+
+experiments
+
+working edge cases
+```
+
+but also embodied superseded models.
+
+Therefore the rewrite would not preserve old internal architecture merely for compatibility.
+
+The governing hierarchy became:
+
+```text id="qt6znx"
+current normative model
+    ↓
+implementation pressure
+    ↓
+new implementation
+    ↓
+legacy mechanism where still useful
+```
+
+not:
+
+```text id="vt32jz"
+legacy implementation
+    ↓
+new architecture must imitate it
+```
+
+---
+
+# Legacy Source Policy
+
+Historical Vapor source is **archaeology**.
+
+For any old mechanism:
+
+```text id="snz14n"
+inspect
+→ understand
+→ identify useful invariant/mechanism
+→ compare against current model
+→ preserve, adapt, or cleanly reimplement
+→ prove
+→ fossilize obsolete source
+```
+
+Possible dispositions are:
+
+```text id="ec1rmq"
+reuse
+
+adapt
+
+extract
+
+reimplement
+
+archive
+
+ignore
+```
+
+The choice depends on architectural fit.
+
+---
+
+# Avoid Both Rewrite Extremes
+
+Do not preserve obsolete code merely because it exists.
+
+Likewise, do not discard correct useful mechanisms merely because they are old.
+
+The preferred question is:
+
+> **What is the simplest implementation which satisfies the current model while preserving useful proven behavior?**
 
 ---
 
 # Normative Design Source
 
-The current `Premium Docs` define the intended Vapor domain and experience model.
+The Premium Docs own the intended Vapor model.
 
-Implementation should primarily proceed downward from:
+The exact document organization may evolve, including future folderization of the documentation corpus.
 
-* `Glossary - Ecosystem Model.md`
-* `Glossary - USF Model.md`
-* `Vapor Ecosystem Experience Model.md`
-* `Vapor Ecosystem Operational Model.md`
-* `Vapor Development Experience Model.md`
-* `Vapor Publishing And Distribution Model.md`
-* `Vapor CLI Model.md`
-* `Vapor Rewrite Progress And Roadmap.md`
+Conceptually the normative areas include:
 
-These documents are not expected to answer every implementation question in advance.
+```text id="jwklja"
+terminology
 
-Their purpose is to provide enough semantic structure that implementation can proceed coherently.
+identity and source topology
+
+Context and Selection
+
+CLI semantics
+
+development experience
+
+operational state
+
+Content/dependency/composition
+
+publishing/distribution
+
+Client / Platform / runtime
+
+SDK experience
+
+repository migration
+
+implementation roadmap
+```
+
+Implementation should not reproduce architecture from this Bootstrap document where a newer focused model owns that concept.
 
 ---
 
-# Implementation Principle
+# Reuse the Underlying Ecosystem
 
-Vapor should avoid recreating mechanisms already provided well by its underlying ecosystem.
+Before implementing new Vapor machinery, ask:
 
-Before introducing a new Vapor mechanism, ask:
+```text id="myn6hh"
+Does Rust solve this?
 
-1. Does Rust already solve this?
-2. Does Cargo already solve this?
-3. Does Git already solve this?
-4. Does GitHub already solve this?
-5. Does Steam already solve this?
+Does Cargo solve this?
+
+Does Git solve this?
+
+Does the Git provider solve this?
+
+Does Steam solve this?
+```
 
 If yes:
 
-> **Prefer wrapping, orchestrating, constraining, or re-exposing the existing mechanism.**
+> **Use, wrap, orchestrate, constrain, or expose the existing mechanism.**
 
-If the existing mechanism almost fits:
+If almost:
 
-> Adapt it minimally.
+> **Adapt minimally.**
 
-Only introduce genuinely new Vapor machinery where Vapor requires semantics not provided by the underlying systems.
-
----
-
-# Current Ecosystem Position
-
-Vapor is primarily a semantic and orchestration layer over:
-
-* Rust.
-* Cargo.
-* Git.
-* GitHub.
-* Steam.
-* Steam Workshop.
-* Vapor-specific composition, identity, distribution, and realization semantics.
-
-Vapor should own concepts such as:
-
-* Vapor Content identity.
-* Vapor Content kinds.
-* Vapor dependency semantics.
-* Generic Vapor Content graph resolution.
-* Composition semantics.
-* Packagepack validation and Vapor App Composition derivation.
-* Vapor App identity.
-* Vapor Role- and Installation Profile-aware workflows.
-* Physical build/realization orchestration.
-* Publication coordination.
-
-Vapor should **not** automatically own the programmatic/runtime meaning of Content dependency relationships.
-
-Engines, Games, Mods, Libraries, and their authored APIs define what their relationships mean programmatically.
-
-For example, an Engine or Game may explicitly expose extension semantics through:
-
-* Rust APIs.
-* Traits.
-* Registries.
-* Builders.
-* ECS Components.
-* ECS Resources.
-* ECS Events.
-* ECS Systems.
-* ECS SystemSets.
-* Plugins.
-* Data schemas.
-* Other domain-specific mechanisms.
-
-A Vapor dependency edge ensures that the required artifact participates in the semantic graph.
-
-It does not itself invent an extension mechanism.
-
-Vapor should not unnecessarily replace the lower-level systems implementing compilation, source control, hosting, distribution, language safety, or runtime architecture.
+Only create genuinely new Vapor machinery where Vapor owns semantics that the underlying tools do not provide.
 
 ---
 
-# Current Design Decisions to Preserve
+# Vapor's Layer
 
-The implementation should preserve the following current conclusions.
+Vapor primarily owns semantic relationships such as:
 
-## Identity
+```text id="1tuvfm"
+canonical Vapor identity
 
-* Every Vapor Content artifact has one immutable, human-readable, globally unique Vapor ID.
-* The Vapor ID does not contain its version.
-* Changing the Vapor ID creates a new identity.
-* Display names may change independently.
-* Provider IDs such as Steam Workshop Item IDs are linked external identities, not the Vapor semantic identity.
+Project kinds
 
-## Versioning
+Content identity/versioning
 
-* Published Vapor Content uses SemVer.
-* Git commits represent source evolution between published versions.
-* Published versions are immutable.
-* A version number may never be reused within the semantic history of one Vapor ID.
-* Local development may use non-published/dirty source state without pretending it is a published release.
+dependency semantics
 
-## Dependencies
+composition
 
-* Vapor Content declares dependencies using SemVer constraints.
+Packagepack resolution
 
-* Vapor dependency semantics should behave broadly like Cargo where Cargo already provides a useful proven model.
+source topology
 
-* Compatible version requirements should preferably unify.
+source acquisition policy
 
-* Multiple SemVer-incompatible versions of the same Vapor ID may coexist when required.
+Context / Selection
 
-* A resolved Content node is effectively identified by:
+operation semantics
 
-  `(Vapor ID, Version)`
+managed development environment
 
-* Dependency bindings may use local aliases to disambiguate multiple versions.
+Cargo realization orchestration
 
-* Binding names are local names rather than semantic slots.
+publication coordination
 
-* Versions do not become part of the permanent Vapor namespace.
+first-party facility semantics
+```
 
-* The Vapor semantic graph and the physical Cargo package graph are distinct.
+Vapor does not need to replace:
 
-* Cargo-native metadata and resolution may be used to inspect and validate physical Rust realization without replacing Vapor identity or dependency semantics.
+```text id="j1u5b7"
+Rust type safety
 
-## Generic Resolution
+Cargo package resolution/build execution
 
-Vapor dependency resolution is a generic Content-graph operation.
+Git source history
 
-Any supported Content root may conceptually resolve its dependency graph independently of whether that root is a complete composition.
+Git provider hosting
 
-Generic resolution determines:
+Steam distribution
+```
 
-* exact resolved Vapor identities and versions;
-* dependency bindings;
-* graph structure;
-* missing dependencies;
-* cycles;
-* applicable initial kind-specific structural constraints.
+---
 
-Kind-specific semantic validation may then impose additional requirements on the resolved graph.
+# Semantic Graph vs Runtime Meaning
 
-## Packagepack Resolution
+A Vapor dependency says:
 
-A Packagepack is the complete Vapor App composition root.
+> **This Project/version semantically depends on that Project/version.**
 
-Generic Content resolution may occur outside Packagepack context.
+It does not automatically define the programmatic extension mechanism.
 
-However:
+Engine, Game, Mod, Library, and other authored systems may expose extension behavior through ordinary mechanisms such as:
 
-> **Final resolution and validation of a complete runnable Vapor App Composition occurs in Packagepack context.**
+```text id="tkoqrs"
+Rust APIs
 
-A valid Packagepack must ultimately derive:
+traits
 
-* exactly one effective Engine;
-* exactly one effective Game;
-* all applicable Mods;
-* all Libraries and other dependencies required by the composition.
+builders
 
-The resolved Packagepack records the exact Vapor Content graph used for that realized release/build.
+registries
 
-This resolved state functions conceptually like a composition-level lock.
+Bevy Plugins
 
-Packagepack-specific constraints are layered above the generic dependency resolver rather than defining how generic dependency resolution works.
+Components
 
-## Definition vs Runtime Instance
+Resources
 
-A resolved Vapor dependency defines behavior/code/content.
+Events
 
-It does not imply any particular number of runtime instances.
+Systems
 
-Multiple dependents resolving the same version share the same resolved definition node.
+SystemSets
 
-Runtime object/state multiplicity remains controlled by the runtime/domain model.
+data schemas
 
-Different resolved versions of the same Vapor ID are separate definition environments by default.
+other explicitly authored contracts
+```
 
-## Publication
+Vapor ensures the required definitions participate in the composition.
 
-* Git/GitHub handle source history and source publication.
-* Steam Workshop handles Player-facing distribution of complete Packagepack compositions.
-* The Vapor Registry records semantic history and linkage per Vapor ID.
-* Packagepack target artifacts belong to the GitHub release of that exact Packagepack version.
-* Old Packagepack versions are not bundled into later GitHub releases.
-* Steam Workshop publication remains focused on complete final compositions.
-* Historical Workshop-version retrieval semantics remain implementation-dependent until Steamworks capabilities are proven.
-
-## Withdrawal
-
-* Yank is author-controlled withdrawal similar to Cargo.
-* Ban is administrative/moderation-controlled hard denial through official Vapor tooling.
-* Historical identity remains known even when content is yanked or banned.
-* Banned content may be prevented from resolution, acquisition, installation, and launch.
+The participating software defines what those relationships mean at runtime.
 
 ---
 
 # Development Method
 
-The rewrite should follow this cycle:
+The rewrite follows:
 
-> **Model enough → implement a vertical slice → observe real pressure → refine the model → continue implementation.**
+```text id="ys4kb8"
+model enough
+→ implement a vertical slice
+→ observe real pressure
+→ refine model
+→ implement next pressure point
+→ repeat
+```
 
-Do not attempt to fully design every future Vapor subsystem before implementation begins.
+The goal is not:
 
-Conceptual modeling should resume when implementation exposes a real unresolved semantic question.
+```text id="i0yxzd"
+fully specify the entire future ecosystem
+before writing implementation
+```
+
+Nor is it:
+
+```text id="ocua99"
+code first
+and let accidental implementation choices become architecture
+```
+
+Model and implementation constrain each other deliberately.
 
 ---
 
 # Vertical Slice 0
 
-## Purpose
+Vertical Slice 0 was the first architecture-proving rewrite milestone.
 
-Vertical Slice 0 exists to prove that the current Vapor architecture can produce and run a complete composition from Vapor-level source declarations.
+Its purpose was:
 
-It is not intended to prove:
+> **Prove that Vapor could operationally realize a complete statically composed Vapor App from Vapor-level declarations.**
 
-* Steam Workshop publication.
-* Registry infrastructure.
-* Launcher UX.
-* Installer UX.
-* Full SDK UX.
-* Remote builds.
-* Signing.
-* Cross-platform publication.
-* Historical version retrieval.
-* Full USF integration.
-* Production-grade dependency solving.
+Before this proof, Vapor's composition model could still have been merely descriptive.
 
-It should prove the core architectural path first.
+The slice needed to demonstrate that Vapor semantics actually changed what Rust/Cargo built.
 
 ---
 
-# Scenario
+# Vertical Slice 0 Scenario
 
-Vertical Slice 0 contains:
+The original specimen contained:
 
-## Terminal Engine
+```text id="wck66r"
+Terminal Engine
 
-A minimal Engine which:
+Hello World Game
 
-* Owns the main executable.
-* Provides a tiny runtime/API surface.
-* Starts the composition.
-* Invokes or exposes registered Game behavior.
-* Prints visible lifecycle information.
+Tiny Game Mod
 
-## Hello World Game
-
-A minimal Game which:
-
-* Targets the Terminal Engine.
-* Is statically incorporated into the built Vapor App.
-* Registers or exposes behavior consumed by the Engine.
-* Produces visible output.
-
-## Tiny Game Mod
-
-A minimal Game Mod which:
-
-* Targets the Hello World Game.
-* Extends or changes the Game's behavior.
-* Demonstrates that Mods participate in the composition rather than existing as unrelated Cargo crates.
-
-## Hello World Packagepack
-
-A Packagepack which:
-
-* Selects the Terminal Engine.
-* Selects the Hello World Game.
-* Includes the Tiny Game Mod.
-* Forms one complete Vapor App Composition.
+Hello World Packagepack
+```
 
 ---
 
-# Expected Runtime Result
+# Terminal Engine
 
-The exact text is unimportant, but execution should visibly prove that every layer participated.
+The minimal Engine:
 
-For example:
+```text id="gq59n3"
+owned the main executable
 
-```text
+provided a tiny runtime/API
+
+started the composition
+
+consumed registered Game behavior
+
+produced visible lifecycle output
+```
+
+---
+
+# Hello World Game
+
+The Game:
+
+```text id="f77vwx"
+depended on / targeted the Engine
+
+participated statically in the build
+
+exposed behavior to the Engine
+
+produced visible output
+```
+
+---
+
+# Tiny Game Mod
+
+The Game Mod:
+
+```text id="qft3oz"
+targeted the Game
+
+extended/modified its behavior
+
+participated through the resolved composition
+```
+
+It existed to prove that a Mod was not merely an unrelated Cargo crate sitting beside the Game.
+
+---
+
+# Hello World Packagepack
+
+The Packagepack:
+
+```text id="k7nxee"
+selected the Engine
+
+selected the Game
+
+included the Mod
+
+formed one complete Vapor App composition root
+```
+
+---
+
+# Intended Runtime Proof
+
+Exact output never mattered.
+
+Conceptually:
+
+```text id="o4dj2b"
 [Engine] starting
 [Game] registered
 [Mod] extended game
@@ -342,443 +421,785 @@ For example:
 [Engine] shutting down
 ```
 
+The important fact was:
+
+> Engine, Game, and Mod behavior all visibly participated in the one built executable produced from Vapor composition semantics.
+
 ---
 
 # Required End-to-End Path
 
-The slice should prove this flow:
+Vertical Slice 0 needed to prove:
 
-```text
-Vapor Content source
-        ↓
-Vapor manifests
-        ↓
-Vapor Content identities and dependency declarations
-        ↓
+```text id="gxblo6"
+Vapor Projects
+    ↓
+authored Vapor manifests
+    ↓
+Content identities / kinds / dependencies
+    ↓
 Packagepack resolution
-        ↓
-exact resolved composition
-        ↓
-Rust/Cargo build orchestration
-        ↓
-Engine executable + statically incorporated Game/Mod
-        ↓
-Vapor App artifact
-        ↓
+    ↓
+exact semantic composition
+    ↓
+Cargo realization
+    ↓
+Rust/Cargo build
+    ↓
+Engine-owned executable
+    ↓
+statically incorporated Game + Mod
+    ↓
+Vapor App
+    ↓
 launch
-        ↓
-visible Engine/Game/Mod interaction
+    ↓
+visible composed behavior
 ```
 
 ---
 
-# Primary Acceptance Goal
+# The Critical Boundary
 
-The implementation should eventually support an operation conceptually equivalent to:
+The most important requirement was:
 
-```text
-vapor run <packagepack>
+> **Vapor determines what Cargo is asked to compile. Cargo performs the compilation.**
+
+The slice must not be secretly pre-wired entirely through Cargo while Vapor merely described the same graph in parallel.
+
+Bad proof:
+
+```text id="3hzkbi"
+Cargo.toml already wires:
+
+Engine → Game → Mod
+
+Vapor.toml describes it too
+
+Vapor resolver has no effect
 ```
 
-The exact CLI syntax was deliberately left non-normative by the initial bootstrap.
+Real proof:
 
-The important property is:
-
-> A user identifies a Packagepack, and Vapor itself determines enough of the composition/build/run process to produce and launch the resulting Vapor App.
-
-The user should not need to manually reconstruct the underlying Cargo composition.
-
-The concrete CLI grammar is now defined separately in `Vapor CLI Model.md`.
-
----
-
-# What Vapor Must Actually Prove
-
-Vertical Slice 0 must prove that Vapor can:
-
-* Identify Vapor Content.
-* Parse the minimal required Vapor manifests.
-* Understand Engine, Game, Game Mod, and Packagepack roles.
-* Follow their dependency/target relationships.
-* Resolve one complete Packagepack.
-* Detect structural composition errors.
-* Determine the effective Engine.
-* Determine the effective Game.
-* Include the Mod.
-* Translate or expose the resolved composition to Cargo/Rust.
-* Build the Engine-owned executable.
-* Produce a runnable artifact.
-* Launch it.
-* Demonstrate actual interaction between the resolved content.
-
----
-
-# What May Be Hardcoded Initially
-
-Temporary hardcoding is acceptable where it does not bypass the architectural thing being tested.
-
-Examples that may initially be hardcoded:
-
-* Local content discovery paths.
-* One workspace root.
-* One host platform.
-* Development-only versions.
-* No Registry lookup.
-* No GitHub lookup.
-* No Workshop lookup.
-* No remote source acquisition.
-* Minimal target selection.
-* Minimal diagnostics formatting.
-* Only the subset of Vapor Content kinds used by the slice.
-
-Temporary hardcoding must remain visible as temporary architecture scaffolding rather than becoming accidental permanent semantics.
-
----
-
-# What Must Not Be Faked
-
-The slice should not succeed merely because Cargo already manually encodes the entire composition.
-
-In particular, avoid a situation where:
-
-* Cargo directly wires Engine → Game → Mod,
-* the Packagepack manifest merely describes the same relationship,
-* and Vapor does not actually participate in resolving or constructing anything.
-
-The purpose of the slice is to prove that Vapor's semantic composition model has operational consequences.
-
-Cargo should perform compilation.
-
-Vapor should determine what Cargo is being asked to compile.
-
----
-
-# Manifest Strategy
-
-Do not fully design the final Vapor manifest schema before implementing the slice.
-
-Instead:
-
-1. Start with only the fields required by the slice.
-2. Implement them.
-3. Observe which distinctions are actually required.
-4. Expand the schema only when implementation pressure justifies it.
-
-Existing `*.vapor.toml` files may be mined for ideas but are not automatically authoritative.
-
----
-
-# Initial Manifest Requirements
-
-The first implementation will probably need only concepts equivalent to:
-
-## Common Identity
-
-```toml
-id = "ghf-studios/example/foo"
-version = "0.1.0"
+```text id="30luhv"
+Vapor semantic graph
+    ↓
+Vapor resolution
+    ↓
+Cargo realization derived from that result
+    ↓
+Cargo build
 ```
 
-## Engine
+---
 
-```toml
-kind = "engine"
+# Vapor Graph vs Cargo Graph
+
+Vertical Slice 0 established an important architectural distinction:
+
+```text id="3nsv9c"
+Vapor semantic dependency/composition graph
+
+≠
+
+Cargo physical package/build graph
 ```
 
-plus identification of the Engine-owned binary/build target.
+They interact.
 
-## Game
+They are not the same model.
 
-```toml
-kind = "game"
-```
+Vapor determines semantic intent.
 
-plus an Engine dependency/target.
-
-## Game Mod
-
-```toml
-kind = "game-mod"
-```
-
-plus a Game dependency/target.
-
-## Packagepack
-
-```toml
-kind = "packagepack"
-```
-
-plus dependencies selecting the intended Engine, Game, and Mod.
-
-The exact syntax is deliberately undecided by this bootstrap document.
+Cargo remains authoritative for the Rust graph it actually compiles.
 
 ---
 
-# First Resolver Scope
+# Identity During the Bootstrap
 
-The first resolver does not need to implement every final Cargo-like dependency feature.
+The original slice initially used a much simpler Content-ID model.
 
-It only needs enough semantics to prove the architecture.
+The current canonical source hierarchy is now:
 
-Initial support may include:
+```text id="4kn52m"
+Authority
+└── Source Repo Container
+    └── Source Repo
+        └── Project
+```
 
-* Local source only.
-* Exact versions first if useful.
-* Simple SemVer constraints soon after.
-* Acyclic dependency graph.
-* One complete Engine.
-* One complete Game.
-* Game Mod targeting.
-* Clear failure on invalid composition.
+For a Content Project:
 
-More advanced resolution semantics should be added incrementally.
-
----
-
-# Legacy Code Policy
-
-When implementing Vertical Slice 0, existing Vapor code should be evaluated case by case.
-
-For each old component:
-
-* Reuse unchanged if it still cleanly matches the new architecture.
-* Refactor if the underlying idea remains valid.
-* Extract small useful mechanisms if appropriate.
-* Rewrite if the architecture is wrong.
-* Delete/ignore if obsolete.
-
-Avoid both extremes:
-
-> Do not preserve legacy code merely because it exists.
+```text id="91bcri"
+Project identity
+=
+Content identity
+```
 
 and:
 
-> Do not rewrite useful, correct code merely for the emotional satisfaction of a clean slate.
-
----
-
-# Original Immediate Implementation Sequence
-
-The following phases describe the original bootstrap sequence for Vertical Slice 0.
-
-They are retained here as historical implementation context.
-
-Current and future phases are tracked in `Vapor Rewrite Progress And Roadmap.md`.
-
-## Phase 0 — Bootstrap
-
-* Decide where the rewritten core should physically live.
-* Establish the smallest clean Rust crate/module boundary.
-* Ensure the rewrite can evolve independently from legacy assumptions.
-
-## Phase 1 — Content Model
-
-Implement only the minimal runtime-independent model required for the slice:
-
-* Vapor ID.
-* SemVer version.
-* Content kind.
-* Dependency reference.
-* Local dependency alias.
-* Content manifest.
-* Resolved content node.
-
-## Phase 2 — Local Discovery
-
-Discover the slice's local Engine, Game, Game Mod, and Packagepack.
-
-No Registry.
-
-No GitHub API.
-
-No Workshop.
-
-## Phase 3 — Packagepack Resolution
-
-Resolve:
-
-```text
-Packagepack
-├── Engine
-├── Game
-└── Game Mod
+```text id="q4po0o"
+Project kind
+=
+Engine / Game / Game Mod / Packagepack / ...
 ```
 
-Validate:
+Therefore a modern example identity may look like:
 
-* exactly one effective Engine;
-* exactly one effective Game;
-* valid Mod target;
-* no broken references.
-
-Produce an explicit resolved composition.
-
-## Phase 4 — Cargo Bridge
-
-Translate the resolved Vapor composition into whatever Cargo needs to build it.
-
-Prefer Cargo-native mechanisms wherever possible.
-
-Avoid inventing a new compiler/build graph.
-
-## Phase 5 — Build
-
-Produce the Engine-owned executable containing the resolved Game and Mod behavior.
-
-## Phase 6 — Run
-
-Launch the built Vapor App.
-
-Verify visible Engine/Game/Mod interaction.
-
-## Phase 7 — Review
-
-After the first successful vertical slice:
-
-* identify architectural pain;
-* identify accidental legacy assumptions;
-* update Premium Docs where reality exposed missing semantics;
-* decide the next slice.
-
----
-
-# Definition of Done
-
-Vertical Slice 0 is complete when:
-
-> Starting from a Packagepack's Vapor-level declaration, the new Vapor implementation can resolve a valid Engine + Game + Game Mod composition, orchestrate its Rust/Cargo build, produce a Vapor App executable, launch it, and visibly demonstrate behavior from all three content layers.
-
-At that point, the rewrite has crossed the most important early boundary:
-
-> **Vapor is no longer merely describing compositions. It can operationally realize one.**
-
-Vertical Slice 0 has now reached this boundary.
-
-Further architectural development is tracked in `Vapor Rewrite Progress And Roadmap.md`.
-
----
-
-# Explicitly Deferred by Vertical Slice 0
-
-The original slice deliberately did not attempt to solve these unless absolutely required:
-
-* Steam Workshop.
-* SteamCMD publication.
-* GitHub Releases.
-* Registry server implementation.
-* Account linkage.
-* Namespace ownership enforcement.
-* Yank/Ban infrastructure.
-* Historical package retrieval.
-* Full dependency backtracking.
-* Remote dependencies.
-* Multiple incompatible versions of the same Vapor ID.
-* Production lockfile format.
-* Build provenance.
-* Binary reproducibility.
-* Signing.
-* CI builders.
-* Launcher UI.
-* Installer UI.
-* SDK UI.
-* Production diagnostics UX.
-* Full Content Library.
-* Automatic source acquisition.
-* Cross-compilation.
-* Multi-target builds.
-* Update policy.
-* USF integration.
-
-These remain valid broader ecosystem concerns, although some have since moved closer to the active implementation roadmap.
-
-They were not allowed to prevent Vapor from first proving that one local composition could exist end to end.
-
----
-
-# Current Continuation
-
-The original bootstrap sequence has been completed far enough that this document no longer defines the immediate next implementation task.
-
-Current progress, architectural refinements, and forward implementation phases are maintained in:
-
-> **`Vapor Rewrite Progress And Roadmap.md`**
-
-In particular, the rewrite has moved beyond the original hardcoded Packagepack proof into generic Content resolution, managed toolchains, self-hosting workflows, the CLI model, and the next Rust/Cargo integration boundary.
-
-Use the Progress And Roadmap document as the living implementation map.
-
-Use this document as the rationale and historical specification for the rewrite bootstrap and Vertical Slice 0.
-
----
-
-# Phase 0 — Bootstrap Decisions
-
-## Terminology Boundary
-
-Vapor's product/user-level access model and USF's runtime Capability model are separate concepts.
-
-The following terminology should be preferred:
-
-* **Vapor Role** — a user's locally installed ecosystem role: Player, Composer, Content Developer, or Ecosystem Developer.
-* **Vapor Installation Profile** — the locally installed Vapor tooling/features appropriate to a role or workflow, managed by the Vapor Installer.
-* **Authority** — permission to perform a particular protected operation against a particular external target.
-* **Root Authority** — a special authority relationship, not a locally promotable Vapor Role.
-* **Capability** / **USF Capability** — the runtime Capability concept used by USF, runtime authoring, and related simulation/runtime graphs.
-
-Bare `Capability` should not be used for Launcher/Installer access levels.
-
-The important boundary is:
-
-```text
-Role
-= what kinds of work Vapor equips this installation to perform.
-
-Authorization
-= whether an authenticated identity may perform a particular operation
-  against a particular protected target.
+```text id="svz5a3"
+GHF-Studios/Vapor-Examples/Games/Hello-World
 ```
 
-Therefore:
+according to its actual source topology.
 
-```text
-Role ≠ Authority
+The exact historical IDs used by Vertical Slice 0 are not normative for the current identity model.
+
+---
+
+# Versions During the Bootstrap
+
+The slice used development versions sufficient to exercise dependency resolution.
+
+The current publication model now distinguishes:
+
+```text id="ydb7q9"
+local development version/state
+
+from
+
+immutable published SemVer version
+```
+
+Published Content is identified semantically by:
+
+```text id="pxpku3"
+Vapor ID
++
+SemVer
+```
+
+with the published version bound to an exact Git commit.
+
+Vertical Slice 0 did not need to prove the complete publication lifecycle.
+
+---
+
+# Dependency Resolution Goal
+
+The first resolver needed only enough functionality to prove composition.
+
+It initially needed to model concepts such as:
+
+```text id="rvwk1i"
+Content identity
+
+version
+
+Project kind
+
+dependency requirement
+
+resolved node
+
+dependency graph
+
+Packagepack composition
+```
+
+It did not need production-grade solving from day one.
+
+---
+
+# Generic Resolution
+
+One important refinement after the original slice is that dependency resolution is not fundamentally Packagepack-only.
+
+Conceptually:
+
+```text id="l0j09h"
+any supported Content root
+    ↓
+generic Vapor dependency resolution
+```
+
+may produce a resolved semantic graph.
+
+Packagepack then adds the requirements necessary for a complete runnable composition.
+
+---
+
+# Packagepack Validation
+
+For a runnable Packagepack:
+
+```text id="v97y2d"
+generic resolved dependency graph
+    ↓
+Packagepack-specific validation
+```
+
+must ultimately produce:
+
+```text id="ge594q"
+exactly one effective Engine
+
+exactly one effective Game
+
+selected Mods
+
+required Libraries/support dependencies
+```
+
+The Packagepack is the complete authored composition root.
+
+---
+
+# Definition vs Runtime Instance
+
+A resolved dependency node identifies a definition participating in the composition.
+
+It does not imply a particular number of runtime instances.
+
+For example:
+
+```text id="odghn0"
+one Library definition
+```
+
+may be used by many systems at runtime.
+
+Vapor's semantic dependency graph should not accidentally impose runtime object multiplicity.
+
+---
+
+# Minimal Manifest Strategy
+
+The bootstrap intentionally avoided designing the final manifest language before implementation.
+
+The rule was:
+
+```text id="1nv2v9"
+add only what the proof needs
+→ implement
+→ observe pressure
+→ expand when justified
+```
+
+That principle remains useful.
+
+---
+
+# Modern Minimal Project Example
+
+A modern Project manifest conceptually needs enough information to describe things such as:
+
+```text id="jotx4s"
+Project kind
+
+development/published version metadata
+
+dependencies
+
+kind-specific relationships/configuration
+```
+
+Canonical identity should preferably derive from the known:
+
+```text id="v7vknq"
+Authority
+/ Container
+/ Source Repo
+/ Project
+```
+
+topology rather than requiring every authored file to repeat global hierarchy redundantly.
+
+Exact manifest ownership/schema belongs to the focused current model and implementation pressure.
+
+---
+
+# Temporary Hardcoding
+
+The first slice was permitted to hardcode things not relevant to the proof.
+
+Examples included:
+
+```text id="kcraue"
+local source only
+
+one host platform
+
+development-only versions
+
+no Registry
+
+no provider API
+
+no Workshop
+
+minimal Content-kind support
+
+minimal diagnostics
+```
+
+Temporary scaffolding was acceptable only if it did not fake the thing being proven.
+
+---
+
+# What Could Not Be Hardcoded Away
+
+Vertical Slice 0 had to genuinely prove:
+
+```text id="bdc329"
+Vapor manifest parsing
+
+Vapor semantic identity/kind understanding
+
+Vapor dependency relationships
+
+Packagepack composition
+
+Engine/Game validation
+
+Mod participation
+
+Vapor-derived Cargo realization
+
+build
+
+runnable artifact
+
+runtime interaction
+```
+
+Without those, the slice would not have tested Vapor.
+
+---
+
+# First Implementation Sequence
+
+Historically, the slice proceeded conceptually through:
+
+```text id="zxb91o"
+Bootstrap
+    ↓
+minimal Content model
+    ↓
+local discovery
+    ↓
+Packagepack resolution
+    ↓
+Cargo realization
+    ↓
+build
+    ↓
+run
+    ↓
+review
+```
+
+The exact implementation has since evolved substantially.
+
+This sequence remains useful only as the origin story of the rewrite.
+
+---
+
+# Vertical Slice 0 Definition of Done
+
+The slice was complete when:
+
+> Starting from Vapor-level Packagepack declarations, Vapor could resolve the intended Engine + Game + Game Mod composition, derive the required Cargo/Rust realization, build a Vapor App, launch it, and visibly demonstrate behavior from all three content layers.
+
+That boundary has been crossed.
+
+---
+
+# What Vertical Slice 0 Proved
+
+The rewrite established that Vapor can meaningfully participate in:
+
+```text id="ye3dey"
+semantic Content modeling
+
+dependency resolution
+
+Packagepack composition
+
+Cargo realization
+
+Rust/Cargo build orchestration
+
+static composition
+
+Vapor App execution
+```
+
+This transformed Vapor from:
+
+```text id="esdo11"
+a composition description
+```
+
+into:
+
+```text id="5an6xh"
+a system capable of operationally realizing a composition
 ```
 
 ---
 
-## Rewrite Home
+# What Vertical Slice 0 Did Not Prove
 
-The rewritten generic Vapor implementation lives in:
+It deliberately did not require:
 
-```text
+```text id="crw24f"
+production Registry
+
+source acquisition
+
+Git/provider publication
+
+Steam Workshop publication
+
+full dependency solver
+
+cross-platform builds
+
+artifact signing
+
+remote builders
+
+production Launcher
+
+production Installer
+
+production SDK
+
+complete diagnostics
+
+final source topology
+
+final CLI
+
+full USF integration
+```
+
+Those concerns were allowed to emerge later under real implementation pressure.
+
+---
+
+# What Came After
+
+Subsequent rewrite work proved substantially more than Vertical Slice 0, including areas such as:
+
+```text id="gf1tyc"
+generic Content resolution
+
+Library modeling
+
+Cargo inspection/reconciliation
+
+managed Cargo
+
+pinned managed Rust toolchain
+
+self-hosting Vapor development
+
+local deployment
+
+source/recovery experiments
+
+Registry-backed acquisition
+
+CLI development
+
+development-context pressure
+```
+
+Those milestones belong to the living Progress And Roadmap document rather than being duplicated here.
+
+---
+
+# Historical Terminology Warning
+
+Some implementation and historical material surrounding Vertical Slice 0 may still contain superseded terms such as:
+
+```text id="k1l7jw"
+Vapor-Root
+
+Vapor-Server-Root
+
+ecosystem command
+
+source command
+
+Workspace semantic identity
+
+Local Realization
+
+Open
+
+Focus
+
+multiple Superworkspaces
+```
+
+Those terms should be interpreted as historical implementation context where they conflict with current normative models.
+
+Do not update this Bootstrap by reintroducing those old semantics merely because the historical implementation used them.
+
+---
+
+# Current Source Home
+
+The primary rewritten generic Vapor implementation lives in the Source Repo historically known as:
+
+```text id="34hfw5"
 GHF-Studios/Vapor
 ```
 
-`Vapor-Root` remains the ecosystem/container root and normative documentation/source-organization context rather than the physical home of the generic rewritten Vapor implementation.
+within the first-party Client source family.
 
-The rewrite may continue mining legacy Vapor repositories for useful mechanisms and integration knowledge, but the implementation structure is free to evolve according to the current model.
+Under the target canonical topology, that Source Repo belongs beneath:
 
-The separate server-side ecosystem remains a distinct concern; `Vapor-Root` and server/root source structures must not be conflated merely because both participate in the broader Vapor ecosystem.
+```text id="ay84tu"
+GHF-Studios/Vapor-Client
+```
+
+following migration from the historical:
+
+```text id="j2bk1m"
+GHF-Studios/Vapor-Root
+```
+
+The repository migration documents own the actual rename/identity/local-layout sequence.
+
+---
+
+# Server-Side Separation
+
+Client and Platform source remain separate responsibilities.
+
+Conceptually:
+
+```text id="tmxtf6"
+Vapor Client
+    user-side product/tooling
+
+Vapor Platform Server
+    Registry / Identity / Diagnostics / services / infrastructure
+```
+
+The fact that both participate in Vapor does not justify one generic repository or lifecycle.
+
+---
+
+# Self-Hosting Direction
+
+A major rewrite principle which emerged after the first slice is:
+
+> **Vapor should progressively absorb the manual machinery required to develop Vapor itself.**
+
+This includes areas such as:
+
+```text id="q71o8c"
+managed toolchain
+
+managed Cargo
+
+source acquisition
+
+source topology
+
+build/test
+
+IDE integration
+
+deployment
+
+diagnostics
+
+provider integration
+```
+
+Root/first-party development should use the Vapor-managed locked/vendored toolchain where required rather than relying accidentally on ambient tooling.
+
+---
+
+# Authored vs Derived State
+
+Later implementation pressure also established an important boundary:
+
+```text id="u4bp5w"
+AUTHORED
+    source
+    Git state
+    manifests
+    tests
+    scripts
+    explicit configuration
+
+DERIVED
+    generated realization
+    indexes
+    caches
+    IDE integration
+    generated glue
+```
+
+Derived Vapor state should be safely regeneratable.
+
+Authored source must not be treated as disposable repair state.
+
+---
+
+# Source Model Direction
+
+The current source hierarchy is:
+
+```text id="x5gug6"
+Superworkspace
+    local root, no identity
+
+Authority
+    ↓
+Source Repo Container
+    ↓
+Source Repo / Vapor Workspace
+    ↓
+Project
+```
+
+The Bootstrap does not own this architecture.
+
+It records it here only to prevent historical bootstrap terminology from being mistaken for current truth.
+
+---
+
+# CLI Direction
+
+The historical rewrite temporarily used commands such as:
+
+```text id="ic8lqa"
+vapor ecosystem ...
+```
+
+Those commands were valid implementation milestones.
+
+They are not the target public model.
+
+Current CLI semantics are owned by **Vapor CLI Model**.
+
+Likewise, this Bootstrap's historical:
+
+```text id="a7evmm"
+vapor run <packagepack>
+```
+
+should be read as:
+
+> Vapor must provide a semantic way to run the Packagepack-derived composition.
+
+not as a permanent syntax mandate.
+
+---
+
+# Documentation Structure
+
+The Premium Docs currently contain many focused model documents which grew organically during architecture work.
+
+Their physical folder structure is not part of Vertical Slice 0.
+
+A later repository-structure pass may:
+
+```text id="d7agkd"
+group documents into topic folders
+
+create one central/index document per folder
+
+repair cross-links
+
+move diagrams alongside their owning topics where appropriate
+```
+
+That work should preserve conceptual ownership rather than create duplicate normative sources.
+
+It belongs to deliberate repository/documentation maintenance, ideally performed together with coding-agent-assisted structural changes once the content model has stabilized.
 
 ---
 
 # Bootstrap Status
 
-The bootstrap is no longer the active planning frontier.
+Vertical Slice 0 is complete.
 
-Its core purpose has been achieved:
+This document is therefore **historical architectural context**.
 
-```text
-Vapor-level declaration
-→ semantic resolution
-→ Cargo/Rust realization
-→ build
-→ runnable Vapor App
+It should change rarely.
+
+The living implementation frontier belongs to:
+
+```text id="ncjmsq"
+Vapor Rewrite Progress And Roadmap.md
 ```
 
-The next implementation frontier is documented in:
+---
 
-**`Vapor Rewrite Progress And Roadmap.md`**
+# Bootstrap Invariants
 
-and currently begins with the transition from a proven semantic Content graph toward supervised, editable Rust/Cargo dependency realization and richer explicitly authored extension ecosystems.
+* Current normative Premium Docs outrank historical implementation structure.
+* Legacy source is archaeology and proven mechanism, not automatic architecture.
+* Reuse Rust/Cargo/Git/provider/Steam mechanisms where they already solve the problem well.
+* Vapor owns semantics which the underlying systems do not provide.
+* Vapor semantic dependency graphs and Cargo physical package graphs are distinct.
+* Vapor determines semantic composition; Cargo performs Rust build realization.
+* Vapor dependency edges do not invent runtime extension APIs.
+* Packagepack is the complete composition root.
+* Vertical Slice 0 had to make Vapor semantics operationally affect the resulting build.
+* Temporary hardcoding was valid only where it did not bypass the proof.
+* Implementation pressure should refine the model.
+* Historical bootstrap syntax and identity examples are not current normative grammar.
+* The current canonical source hierarchy is owned by the focused identity/development models.
+* The generic public `ecosystem` object is not part of the current target CLI model.
+* Root Authority is authority rather than an installed Role.
+* Authored source is not disposable derived state.
+* Vapor should increasingly self-host its own development workflows through the managed toolchain and source model.
+* Vertical Slice 0 is complete and should remain a known-good architecture/regression specimen.
+* Current implementation planning belongs to the Progress And Roadmap document.
+
+---
+
+# Historical Non-Goals
+
+The original Bootstrap intentionally did not block on:
+
+```text id="4n4sh7"
+complete Registry infrastructure
+
+provider publication
+
+Workshop publication
+
+production build provenance/signing
+
+cross-compilation
+
+remote builds
+
+final SDK
+
+final Launcher
+
+final Installer
+
+full source-acquisition system
+
+complete dependency solving
+
+full multiplayer/App Server design
+
+USF integration
+```
+
+Some of these have since been partially or substantially explored.
+
+Their current state must be read from the living roadmap rather than inferred from this historical list.
