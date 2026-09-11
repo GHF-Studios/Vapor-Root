@@ -1,6 +1,6 @@
-# Vapor-Root
+# Vapor Client
 
-Vapor-Root is the first-party application source root for Vapor. It assembles
+Vapor Client is the first-party application source root for Vapor. It assembles
 the Steam-installed Vapor app, SDK, launcher, shell, entrypoint, tools, docs,
 and app/depot payload. It is source, not the Steam installation itself.
 
@@ -11,7 +11,7 @@ runs the matching `bin/vapor-launch.*` script. Source repositories stay outside
 the Steam app root and are opened explicitly:
 
 ```text
-source open /path/to/Vapor-Root
+source open /path/to/Vapor-Client
 metadata
 validate
 root package
@@ -37,7 +37,7 @@ root publish --account ACCOUNT --yes
   `bin/<target>/vapor-entrypoint[.exe]`, `bin/<target>/vapor[.exe]`,
   optional bootstrap `bin/vapor`, app-local Rust/Cargo, SteamCMD, caches,
   generated output, installed content, indexes, locks, and receipts.
-- **Vapor-Root**: this source-stage application root. It packages and publishes
+- **Vapor Client**: this source-stage application root. It packages and publishes
   the complete Steam app/depot.
 - **Vapor-Registry**: separate registry authority infrastructure. It is not a
   Cargo workspace and not normal content.

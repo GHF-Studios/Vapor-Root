@@ -259,6 +259,21 @@ Do **not** edit canonical Vapor IDs merely because spelling matches.
 
 # Provider-Rename Verification
 
+Execution note, 2026-09-11:
+
+- GitHub provider rename executed with `gh repo rename`:
+  `GHF-Studios/Vapor-Root` → `GHF-Studios/Vapor-Client`.
+- GitHub provider rename executed with `gh repo rename`:
+  `GHF-Studios/Vapor-Server-Root` → `GHF-Studios/Vapor-Platform-Server`.
+- GitHub lookup verified both old names now resolve to the new provider
+  repositories.
+- Local `origin` remotes were updated to the new provider clone URLs.
+- Provider-facing source records, registry seeds, deployment clone defaults,
+  and active front-door docs were reconciled.
+- Intentional non-goals for this pass: canonical Vapor identity migration,
+  service/local checkout path migration, `/opt/vapor-server-root` migration,
+  script CLI compatibility renames, and historical/rollback text rewrites.
+
 Client:
 
 - [ ] new parent remote fetches

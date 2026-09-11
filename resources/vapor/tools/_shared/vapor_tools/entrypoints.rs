@@ -499,7 +499,7 @@ pub fn patch_rustrover_main() -> Result<(), String> {
     let ide_runner = app_control_runner(&app_root);
     if !is_executable(&ide_runner) {
         return Err(format!(
-            "app-root IDE runner is missing or not executable: {}\nrefresh the installed app-root binaries from Vapor-Root before patching RustRover",
+            "app-root IDE runner is missing or not executable: {}\nrefresh the installed app-root binaries from Vapor Client before patching RustRover",
             ide_runner.display()
         ));
     }

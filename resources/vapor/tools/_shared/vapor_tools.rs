@@ -104,7 +104,7 @@ const SOURCE_PRESETS: &[SourcePreset] = &[
     SourcePreset {
         name: "Vapor-Root",
         role: "app-source-root",
-        remote: "https://github.com/GHF-Studios/Vapor-Root.git",
+        remote: "https://github.com/GHF-Studios/Vapor-Client.git",
         branch: "main",
     },
     SourcePreset {
@@ -122,7 +122,7 @@ const SOURCE_PRESETS: &[SourcePreset] = &[
     SourcePreset {
         name: "Vapor-Server-Root",
         role: "server-orchestration",
-        remote: "https://github.com/GHF-Studios/Vapor-Server-Root.git",
+        remote: "https://github.com/GHF-Studios/Vapor-Platform-Server.git",
         branch: "main",
     },
 ];

@@ -76,7 +76,7 @@ Experience docs do not redefine architecture.
 
 `Migration/` owns temporary current→target transition truth.
 
-Current provider/repository names such as:
+Historical provider/repository names such as:
 
 ```text
 Vapor-Root

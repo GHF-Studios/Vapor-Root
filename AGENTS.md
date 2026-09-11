@@ -1,11 +1,11 @@
-# Vapor-Root Agent Bootstrap
+# Vapor Client Agent Bootstrap
 
-This file bootstraps AI work in Vapor-Root. It does not replace the canonical
+This file bootstraps AI work in Vapor Client. It does not replace the canonical
 planning protocol.
 
 ## Product scope orientation
 
-Vapor-Root is the application/depot source root. It is not the installed Steam
+Vapor Client is the application/depot source root. It is not the installed Steam
 application directory and not a normal custom-content workspace. Vapor-Registry
 is separate registry authority infrastructure. Loo-Cast is normal first-party
 custom content and should use the Workshop/content model rather than app/root

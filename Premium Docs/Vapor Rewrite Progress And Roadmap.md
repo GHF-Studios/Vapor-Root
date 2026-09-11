@@ -2980,8 +2980,8 @@ Canonical recovery                         RE-PROVE AFTER MIGRATION
 
 Docs conceptual convergence                ACTIVE
 Docs folderization                         PENDING
-Vapor-Root → Vapor-Client                  DESIGNED / PENDING
-Vapor-Server-Root → Platform Server        DESIGNED / PENDING
+Vapor-Root → Vapor-Client                  PROVIDER RENAMED / IDENTITY+PATH PENDING
+Vapor-Server-Root → Vapor-Platform-Server  PROVIDER RENAMED / IDENTITY+PATH PENDING
 Registry identity migration                PENDING
 CLI semantic migration                     PENDING
 
